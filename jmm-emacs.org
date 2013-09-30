@@ -1,0 +1,736 @@
+#+TITLE: Josh Moller-Mara's Emacs configuration
+#+OPTIONS: toc:4 h:4
+
+Shamelessly stolen from Sacha Chua
+* Personal information
+
+#+begin_src emacs-lisp
+  (setq user-full-name "Joshua Moller-Mara"
+        user-mail-address "j.moller-mara@berkeley.edu")
+#+end_src
+
+* Emacs initialization
+#+begin_src emacs-lisp
+(add-to-list 'load-path "~/elisp")
+(add-to-list 'load-path "~/elisp/helm/")
+(require 'package)
+(package-initialize)
+(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
+(add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+(add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
+(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+#+end_src
+
+I don't want Custom stuff here. For now.
+#+begin_src emacs-lisp
+(setq custom-file "~/.emacs.d/custom.el")
+(load custom-file)
+#+end_src
+
+** Byte compile stuff?
+
+#+begin_src emacs-lisp
+(defun emacs/byte-recompile ()
+  (interactive)
+  (byte-recompile-directory "~/.emacs.d" 0)
+  (byte-recompile-directory "~/elisp" 0))
+#+end_src
+  
+* Basic configuration
+
+Enable all the disabled commands
+#+begin_src emacs-lisp
+  (setq disabled-command-function nil)
+#+end_src
+
+#+begin_src emacs-lisp
+  ;; I don't like having to type "yes"
+  (fset 'yes-or-no-p 'y-or-n-p)
+
+  (transient-mark-mode 0)
+  (column-number-mode 1)
+  (show-paren-mode 1)
+  (menu-bar-mode -1)
+  (tool-bar-mode 0)
+  
+  (set-register ?e '(file . "~/.emacs.d/init.el"))
+
+  (server-start)
+  
+  (setq visible-bell 1)                   ;Set visible bell on.
+  (setq ring-bell-function 'ignore)       ;Visible bell.
+  
+  (setq frame-title-format "Emacs - %b")
+  (setq set-mark-command-repeat-pop t)
+  (setq uniquify-buffer-name-style 'forward)
+  (winner-mode 1)
+  (setq inhibit-splash-screen t)
+  (setq Man-notify-method 'pushy)
+  (set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
+  (setq visual-line-fringe-indicators '(nil right-curly-arrow))
+#+end_src
+
+Make scripts executable
+#+begin_src emacs-lisp
+(add-hook 'after-save-hook 'executable-make-buffer-file-executable-if-script-p)
+#+end_src
+
+** Prompt before exiting Emacs
+
+#+begin_src emacs-lisp
+(setq kill-emacs-query-functions
+      (cons (lambda () (yes-or-no-p "Really kill Emacs?"))
+     kill-emacs-query-functions))
+#+end_src
+
+** Dealing with the clipboard
+#+begin_src emacs-lisp
+(setq x-select-enable-clipboard t) ; as above
+(setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+;; I think I need this now for my clipboard
+(setq x-select-enable-primary t)
+#+end_src
+** Windmove
+#+begin_src emacs-lisp
+(windmove-default-keybindings 'control)
+(windmove-default-keybindings 'shift)
+#+end_src
+
+* Theme
+#+begin_src emacs-lisp
+(load-theme 'nzenburn)
+#+end_src
+* Keybindings
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-x g") 'gnus)
+(global-set-key (kbd "C-x C-a") 'artist-mode)
+(global-set-key (kbd "C-x C-b") 'ibuffer)
+#+end_src
+
+* Iswitchb/Buffers
+#+begin_src emacs-lisp
+(iswitchb-mode 1)
+(setq iswitchb-default-method 'samewindow)
+(setq iswitchb-prompt-newbuffer nil)
+#+end_src
+
+I don't care if buffers are visible in other frames, just don't demote them!!
+#+begin_src emacs-lisp
+(setq iswitchb-all-frames nil)
+#+end_src
+
+#+begin_src emacs-lisp
+(autoload 'ibuffer "ibuffer" "List buffers." t)
+#+end_src
+
+* Autosaves and backups
+
+Autosaves
+#+begin_src emacs-lisp
+;; Put autosave files (ie #foo#) in one place, *not*
+;; scattered all over the file system!
+(defvar autosave-dir
+ "~/emacs_autosaves/")
+
+(make-directory autosave-dir t)
+
+(defun auto-save-file-name-p (filename)
+  (string-match "^#.*#$" (file-name-nondirectory filename)))
+
+(defun make-auto-save-file-name ()
+  (concat autosave-dir
+   (if buffer-file-name
+      (concat "#" (file-name-nondirectory buffer-file-name) "#")
+    (expand-file-name
+     (concat "#%" (buffer-name) "#")))))
+#+end_src
+
+Backups
+Put backup files (ie foo~) in one place too. (The backup-directory-alist
+list contains regexp=>directory mappings; filenames matching a regexp are
+backed up in the corresponding directory. Emacs will mkdir it if necessary.)
+#+begin_src emacs-lisp
+  (defvar backup-dir "~/emacs_backups/")
+  (make-directory backup-dir t)
+  (setq backup-directory-alist (list (cons ".dreams." ".") (cons "." backup-dir)))
+#+end_src
+
+* Autocompletion, Hippie expand
+  
+#+begin_src emacs-lisp
+(global-set-key (kbd "M-<return>") 'complete-tag) ;;bind complete-tag.
+(global-set-key (kbd "M-?") 'hippie-expand)
+#+end_src
+
+** Hippie Expand stuff:
+
+#+begin_src emacs-lisp
+(setq hippie-expand-try-functions-list (quote (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-line try-expand-dabbrev try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol try-expand-dict-command)))
+#+end_src
+
+#+begin_src emacs-lisp
+(defun he-dict-command-beg ()
+  (let ((p))
+    (save-excursion
+      (backward-word 1)
+      (setq p (point)))
+    p))
+
+(defun try-expand-dict-command (old)
+  (unless old
+    (he-init-string (he-dict-command-beg) (point))
+    (setq he-expand-list (sort
+			  (all-completions he-search-string (mapcar 'list (lookup-words (concat old "*") ispell-complete-word-dict)))
+			  'string-lessp)))
+  (while (and he-expand-list
+              (he-string-member (car he-expand-list) he-tried-table))
+    (setq he-expand-list (cdr he-expand-list)))
+  (if (null he-expand-list)
+      (progn
+	(when old (he-reset-string))
+	())
+    (he-substitute-string (car he-expand-list))
+    (setq he-tried-table (cons (car he-expand-list) (cdr he-tried-table)))
+    (setq he-expand-list (cdr he-expand-list))
+    t))
+#+end_src
+
+* Compiling conveniences
+
+#+begin_src emacs-lisp
+(require 'compile)
+(add-hook 'c++-mode-hook
+	  (lambda ()
+	    (unless (file-exists-p "Makefile")
+	      (set (make-local-variable 'compile-command)
+		   ;; emulate make's .c.o implicit pattern rule, but with
+		   ;; different defaults for the CC, CPPFLAGS, and CFLAGS
+		   ;; variables:
+		   ;; $(CC) -c -o $@ $(CPPFLAGS) $(CFLAGS) $<
+		   (let ((file (file-name-nondirectory buffer-file-name)))
+		     (format "%s %s %s -o %s"
+			     (or (getenv "CPP") "g++")
+			     (or (getenv "CFLAGS") "-g -Os")
+			     file
+			     (file-name-sans-extension file)
+			     ))))))
+#+end_src
+
+#+begin_src emacs-lisp
+(global-set-key "\C-xc" 'compile)
+(global-set-key (kbd "<f9> <f9>") 'recompile)
+#+end_src
+
+#+begin_src emacs-lisp
+(setq compilation-scroll-output 1)
+#+end_src
+
+* Spelling
+
+#+begin_src emacs-lisp
+(setq-default ispell-program-name "aspell")
+(setq-default ispell-grep-command "grep")
+(setq-default ispell-grep-options "-iE")
+(setq-default ispell-complete-word-dict "/usr/share/dict/american-english-large")
+#+end_src
+
+#+begin_src emacs-lisp
+(add-hook `text-mode-hook `flyspell-mode)
+(add-hook `latex-mode-hook `flyspell-mode)
+(add-hook `tex-mode-hook `flyspell-mode)
+(add-hook `bibtex-mode-hook `flyspell-mode)
+#+end_src
+
+** Accepting previous misspelled words
+
+#+begin_src emacs-lisp
+(defun flyspell-accept-prev (position &optional savetype)
+  "Accept the previously mispelled word onscreen. Defaults saving to session, but optional savetype can save to personal dict"
+  (interactive "d")
+  (or savetype (setq savetype 'session))
+  (let ((top (window-start))
+	(bot (window-end))
+	correctpos)
+    (save-excursion
+      (save-restriction
+	(narrow-to-region top bot)
+	(overlay-recenter (point))
+
+	  (let ((overlay-list (overlays-in (point-min) position))
+		(new-overlay 'dummy-value))
+
+	    ;; search for previous (new) flyspell overlay
+	    (while (and new-overlay
+			(or (not (flyspell-overlay-p new-overlay))
+			    ;; check if its face has changed
+			    (not (eq (get-char-property
+				      (overlay-start new-overlay) 'face)
+				     'flyspell-incorrect))))
+	      (setq new-overlay (car-safe overlay-list))
+	      (setq overlay-list (cdr-safe overlay-list)))
+
+	    ;; if nothing new exits new-overlay should be nil
+	    (if new-overlay ;; the length of the word may change so go to the start
+		(setq correctpos
+		      (overlay-start new-overlay))))
+
+	(when correctpos
+	  (save-excursion
+	    (goto-char correctpos)
+	    (let ((cursor-location (point))
+		  (opoint (point))
+		  (word (flyspell-get-word)))
+	      (if (consp word)
+		  (let ((start (car (cdr word)))
+			(end (car (cdr (cdr word))))
+			(word (car word))
+			poss ispell-filter)
+		    (flyspell-do-correct savetype poss word cursor-location start end opoint)
+		    (ispell-pdict-save t))))))))))
+
+(defun flyspell-accept-prev-save (position)
+  "Save the previously mispelled word. See flyspell-accept-prev"
+  (interactive "d")
+  (flyspell-accept-prev position 'save))
+
+(add-hook 'flyspell-mode-hook
+ (lambda ()
+   (define-key flyspell-mode-map (kbd "C-M-;") 'flyspell-accept-prev)
+   (define-key flyspell-mode-map (kbd "C-:") 'flyspell-accept-prev-save)
+   ))
+#+end_src
+
+* LaTeX
+
+#+begin_src emacs-lisp
+(setq latex-run-command "pdflatex")
+(setq tex-output-extension ".pdf")
+#+end_src
+
+#+begin_src emacs-lisp
+(add-hook `latex-mode-hook (lambda () (defun tex-view ()
+  (interactive)
+  (tex-send-command "evince" (tex-append tex-print-file ".pdf") t))))
+#+end_src
+
+** Bibtex stuff (no longer needed?)
+#+begin_src emacs-lisp
+(add-hook 'latex-mode-hook
+	  (lambda ()
+	    (defun tex-bibtex-file ()
+	      "Run BibTeX on the current buffer's file."
+	      (interactive)
+	      (if (tex-shell-running)
+		  (tex-kill-job)
+		(tex-start-shell))
+	      (let* (shell-dirtrack-verbose
+		     (source-file (tex-main-file))
+		     (tex-out-file
+		      (tex-append (file-name-nondirectory source-file) ""))
+		     (file-dir (file-name-directory (expand-file-name source-file))))
+		(tex-send-command tex-shell-cd-command file-dir)
+		(tex-send-command tex-bibtex-command tex-out-file))
+	      (tex-display-shell))))
+#+end_src
+
+** AUCTeX and skeletons
+#+begin_src emacs-lisp
+;; AUCTeX
+;; (setq load-path (append load-path "/usr/share/emacs23/site-lisp/"))
+(load "auctex.el" nil t t)
+(load "preview-latex.el" nil t t)
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
+(setq-default TeX-master nil)
+(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
+
+(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+(setq reftex-plug-into-AUCTeX t)
+
+(setq skeleton-end-newline nil)
+(add-hook 'LaTeX-mode-hook
+ (lambda ()
+   (define-key LaTeX-mode-map (kbd "` v (") 'latex-skeleton-left-paren)
+   (define-key LaTeX-mode-map (kbd "` v [") 'latex-skeleton-left-bracket)
+   (define-key LaTeX-mode-map (kbd "` v {") 'latex-skeleton-left-brace)
+   (define-key LaTeX-mode-map (kbd "` v t") 'latex-math-text)
+   (define-key LaTeX-mode-map (kbd "` v $") 'quoted-parens)
+   (define-key LaTeX-mode-map (kbd "` v %") 'quoted-brackets)
+   ))
+
+(define-skeleton latex-skeleton-left-paren
+  "Insert \\left( ... \\right)."
+  nil "\\left(" _ "\\right)")
+
+(define-skeleton latex-skeleton-left-bracket
+  "Insert \\left[ ... \\right]."
+  nil "\\left[" _ "\\right]")
+
+(define-skeleton latex-skeleton-left-brace
+  "Insert \\left\\{ ... \\right\\}."
+  nil "\\left\\{" _ "\\right\\}")
+
+(define-skeleton latex-math-text
+  "Insert \\text{ ... }."
+  nil "\\text{" _ "}")
+
+(define-skeleton quoted-parens
+  "Insert \\( ... \\)."
+  nil "\\(" _ "\\)")
+
+(define-skeleton quoted-brackets
+  "Insert \\[ ... \\]."
+  nil "\\[" _ "\\]")
+#+end_src
+** AUCTeX handling errors
+Sometimes AUCTex can't parse errors correctly, prompting you to create a directory
+#+begin_src emacs-lisp
+(setq LaTeX-command-style '(("" "%(PDF)%(latex) -file-line-error %S%(PDFout)")))
+#+end_src
+* R/ESS
+#+begin_src emacs-lisp
+(setq comint-scroll-to-bottom-on-input t)
+(setq comint-scroll-to-bottom-on-output t)
+(setq comint-move-point-for-output t)
+#+end_src
+** JAGS
+#+begin_src emacs-lisp
+(require 'ess-jags-d)
+#+end_src
+
+* ERC
+#+begin_src emacs-lisp
+(require 'erc-services)
+(erc-services-mode 1)
+#+end_src
+** Notify
+#+begin_src emacs-lisp
+;;list of regexpes ignored by tray icon
+(defun erc-tray-change-state (arg)
+  "Enables or disable blinking, depending on arg"
+  (if arg
+      (shell-command-to-string
+       "echo B > /tmp/tray_daemon_control")
+    (shell-command-to-string
+     "echo b > /tmp/tray_daemon_control")))
+(defun erc-tray-update-state ()
+  "Updates the state of the tray icon according to the contents
+of erc-modified-channels-alist"
+  (interactive)
+  (let ((blinkify nil))
+    (mapcar (lambda (el)
+	      (when (string-match "erc-current-nick-face" (face-name (nthcdr 2 el)))
+		(setq blinkify t)))
+	    erc-modified-channels-alist)
+    (erc-tray-change-state blinkify)))
+(when window-system
+  (add-hook 'erc-track-list-changed-hook 'erc-tray-update-state))
+(setq erc-track-exclude-types '("JOIN" "NICK" "PART" "QUIT"))
+#+end_src
+
+** More notify stuff
+#+begin_src emacs-lisp
+;; Notify my when someone mentions my nick.
+(defun erc-global-notify (matched-type nick msg)
+  (interactive)
+  (when (eq matched-type 'current-nick)
+    (shell-command
+     (concat "notify-send -t 4000 -c \"im.received\" \""
+             (car (split-string nick "!"))
+             " mentioned your nick\" \""
+             msg
+             "\""))))
+(add-hook 'erc-text-matched-hook 'erc-global-notify)
+#+end_src
+** Timestamp
+#+begin_src emacs-lisp
+(make-variable-buffer-local
+ (defvar erc-last-datestamp nil))
+
+(defun ks-timestamp (string)
+  (erc-insert-timestamp-left string)
+  (let ((datestamp (erc-format-timestamp (current-time) erc-datestamp-format)))
+    (unless (string= datestamp erc-last-datestamp)
+      (erc-insert-timestamp-left datestamp)
+      (setq erc-last-datestamp datestamp))))
+    
+    
+(setq erc-timestamp-only-if-changed-flag t
+      erc-timestamp-format "%H:%M "
+      erc-datestamp-format " === [%Y-%m-%d %a] ===\n" ; mandatory ascii art                          
+      erc-fill-prefix "      "
+      erc-insert-timestamp-function 'ks-timestamp)
+#+end_src
+* Scheme
+#+begin_src emacs-lisp
+(setq scheme-program-name "csi")
+
+(defun run-half-scheme () "
+   Run Scheme in half a window."
+   (interactive)
+   (split-window-vertically nil)
+   (other-window 1)
+   (call-interactively 'run-scheme))
+
+(add-hook 'scheme-mode-hook
+ (lambda ()
+   (define-key scheme-mode-map (kbd "C-c C-s") 'run-half-scheme)
+   ))
+#+end_src
+* C
+#+begin_src emacs-lisp
+(setq-default c-basic-offset 8)
+(setq c-default-style "gnu")
+#+end_src
+* Shells
+#+begin_src emacs-lisp
+(defun run-half-shell ()
+   "Run a shell in half a window."
+   (interactive)
+   (split-window-vertically nil)
+   ;; (other-window 1)
+   (shell (concat (buffer-name) " shell")))
+
+(global-set-key (kbd "C-x 4 s") 'run-half-shell)
+#+end_src
+* Encryption
+#+begin_src emacs-lisp
+(require 'epa-file)			;So we can encrypt authinfo
+(setq epa-file-cache-passphrase-for-symmetric-encryption t) ;So it doesn't ask for password multiple times
+#+end_src
+* BBDB
+#+begin_src emacs-lisp
+(require 'bbdb)
+(bbdb-initialize 'gnus 'message)
+(setq bbdb-use-pop-up nil)		;Don't pop up
+(setq bbdb-quiet-about-name-mismatches nil)
+#+end_src
+* GNUS/Email
+#+begin_src emacs-lisp
+(setq mail-user-agent 'gnus-user-agent)	;Uses Message mode instead of mail mode
+#+end_src
+** Spoofing dates
+#+begin_src emacs-lisp
+(defun gnus-date-spoof ()
+  (interactive)
+  (message-generate-headers '(Date))
+  (setq message-deletable-headers (delq 'Date message-deletable-headers))
+  (message "Deletable headers are %s %s" message-deletable-headers "(DONT FORGET SMTPMAIL-FQDN)"))
+
+(defun gnus-date-unspoof ()
+  (interactive)
+  (add-to-list 'message-deletable-headers 'Date)
+  (message "Deletable headers are %s" message-deletable-headers))
+#+end_src
+
+** Kill IMAP
+Sometimes IMAP freezes, so I like to be able to kill it.
+#+begin_src emacs-lisp
+(defun kill-imap ()
+  "Kill openssl imap"
+  (interactive)
+  ;; (delete-process "imap")
+  (mapc (lambda (x) (if (string-match "imap" (process-name x)) (delete-process x))) (process-list)))
+#+end_src
+
+* Dired
+** Listing switches
+#+begin_src emacs-lisp
+(setq dired-listing-switches "-alh")
+#+end_src
+
+** Dired-X
+Because dired-jump is pretty useful
+#+begin_src emacs-lisp
+(add-hook 'dired-load-hook
+	  (function (lambda () (load "dired-x"))))
+#+end_src
+* Tramp
+#+begin_src emacs-lisp
+(require 'tramp)
+#+end_src
+** Proxies. Allow sudo
+#+begin_src emacs-lisp
+(set-default 'tramp-default-proxies-alist nil)
+(add-to-list 'tramp-default-proxies-alist '((and (string-match system-name (tramp-file-name-host (car target-alist))) "FUCKNO") "\\`root\\'" "/ssh:%h:"))
+#+end_src
+
+** Prompt for Yubikeys
+#+begin_src emacs-lisp
+(setq tramp-password-prompt-regexp "^.*\\(Yubikey\\|[pP]assword\\|[pP]assphrase\\).*: ? *")
+#+end_src
+* Helm
+#+begin_src emacs-lisp
+(require 'helm-config)
+(global-set-key (kbd "C-c h") 'helm-mini)
+(helm-mode 1)
+#+end_src
+* Useful, but unnecessary, functions
+** Word counting
+#+begin_src emacs-lisp
+(defun word-count nil "Count words in buffer" (interactive)
+  (shell-command-on-region (point-min) (point-max) "wc -w"))
+#+end_src
+
+** Aliases
+#+begin_src emacs-lisp
+(defun afm ()				;Shorter than typing auto-fill-mode
+  (interactive)
+  (auto-fill-mode))
+
+(defun ttl ()
+  (interactive)
+  (toggle-truncate-lines))
+#+end_src
+
+** Killing buffers
+#+begin_src emacs-lisp
+;; Display buffers and kill them
+(defun kill-some-buffers2 (&optional list)
+  "Kill some buffers.  Asks the user whether to kill each one of them.
+Non-interactively, if optional argument LIST is non-nil, it
+specifies the list of buffers to kill, asking for approval for each one."
+  (interactive)
+  (if (null list)
+      (setq list (buffer-list)))
+  (while list
+    (let* ((buffer (car list))
+	   (name (buffer-name buffer)))
+      (and name				; Can be nil for an indirect buffer
+					; if we killed the base buffer.
+	   (not (string-equal name ""))
+	   (/= (aref name 0) ?\s)
+	   (switch-to-buffer name)
+	   (kill-buffer-ask buffer)))
+    (setq list (cdr list))))
+(global-set-key (kbd "C-x M-k") 'kill-some-buffers2)
+#+end_src
+
+
+#+begin_src emacs-lisp
+(add-hook 'artist-mode-hook
+ (lambda ()
+   (define-key artist-mode-map [remap artist-next-line] 'picture-move-down)
+   ))
+#+end_src
+** Viewing and killing buffers
+#+begin_src emacs-lisp
+(defun view-and-kill-some-buffers (&optional list)
+  "View and kill buffers"
+  (interactive)
+  (if (null list)
+      (setq list (buffer-list)))
+  (while list
+    (let* ((buffer (car list))
+	   (name (buffer-name buffer)))
+      (switch-to-buffer buffer)
+      (and name				; Can be nil for an indirect buffer
+					; if we killed the base buffer.
+	   (not (string-equal name ""))
+	   (/= (aref name 0) ?\s)
+	   (kill-buffer-ask buffer)))
+    (setq list (cdr list))))
+#+end_src
+
+** What I do when editing some text files
+#+begin_src emacs-lisp
+(defun txt-stuff ()
+  "A lot of stuff you do when writing in text files"
+  (interactive)
+  (auto-fill-mode 1)
+  (use-hard-newlines 1 'always))
+#+end_src
+
+** Starting an Xterm in current directory
+#+begin_src emacs-lisp
+(defun start-xterm ()
+  "Start a new xterm in the current directory. SSH if necessary"
+  (interactive)
+  (let ((path default-directory))
+    "Return the local portion of a path.
+
+If PATH is local, return it unaltered.
+If PATH is remote, return the remote diretory portion of the path."
+    (if (tramp-tramp-file-p path)
+	(let ((loc (elt (tramp-dissect-file-name path) 3))
+	      (host (elt (tramp-dissect-file-name path) 2)))
+	  (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
+      (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd %s; bash" path)))))
+(global-set-key (kbd "<f9> x") 'start-xterm)
+#+end_src
+
+** Copy the path
+#+begin_src emacs-lisp
+(defun file-name-copy-path ()
+  "Copy the path the of the of the current buffer"
+  (interactive)
+  (kill-new (message "%s" (buffer-file-name))))
+(global-set-key (kbd "<f9> c") 'file-name-copy-path)
+#+end_src
+
+** Word wrapping
+#+begin_src emacs-lisp
+ (defun ww ()
+  "Set word wrapping"
+  (interactive)
+  (setq word-wrap (if word-wrap nil t)))
+#+end_src
+** Half Term
+#+begin_src emacs-lisp
+(defun run-half-term ()
+   "Run a shell in half a window."
+   (interactive)
+   (split-window-vertically nil)
+   (other-window 1)
+   (term "/bin/bash")
+   (rename-uniquely)
+   (other-window -1))
+
+(global-set-key (kbd "C-x 4 t") 'run-half-term)
+#+end_src
+** Search Gregg Shorthand Dictionary
+#+begin_src emacs-lisp
+(defun gsd ()
+  (interactive)
+  ;; (save-excursion
+    (find-file-read-only "/home/j2m/Download/gregg/gsd.txt")
+    (isearch-forward)
+    (start-process "evince-gsd" " gsd-processes" "evince"
+		   (concat "--page-label="
+			   (number-to-string (- (string-to-number
+						 (substring (what-page) 5 8))
+						12)))
+		   "/home/j2m/Download/gregg/gsd.pdf"));; )
+(global-set-key (kbd "<f9> g") 'gsd)
+#+end_src
+** Window Dedication
+#+begin_src emacs-lisp
+;; http://dfan.org/blog/2009/02/19/emacs-dedicated-windows/
+(defun toggle-current-window-dedication ()
+ (interactive)
+ (let* ((window    (selected-window))
+        (dedicated (window-dedicated-p window)))
+   (set-window-dedicated-p window (not dedicated))
+   (message "Window %sdedicated to %s"
+            (if dedicated "no longer " "")
+            (buffer-name))))
+
+(global-set-key [pause] 'toggle-current-window-dedication)
+#+end_src
+* Other modes
+** Enriched Mode
+#+begin_src emacs-lisp
+(add-hook 'enriched-mode-hook
+ (lambda ()
+   (define-key enriched-mode-map [remap newline-and-indent] nil)
+   (define-key enriched-mode-map "\C-m" nil)
+   (define-key enriched-mode-map [remap move-beginning-of-line] nil)
+   ))
+#+end_src
+** Java Mode
+#+begin_src emacs-lisp
+(add-hook 'java-mode-hook
+	  (lambda ()
+	    (c-set-style "java")))
+#+end_src
