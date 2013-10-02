@@ -46,7 +46,7 @@ Enable all the disabled commands
 #+begin_src emacs-lisp
   ;; I don't like having to type "yes"
   (fset 'yes-or-no-p 'y-or-n-p)
-
+  
   (transient-mark-mode 0)
   (column-number-mode 1)
   (show-paren-mode 1)
@@ -54,14 +54,15 @@ Enable all the disabled commands
   (tool-bar-mode 0)
   
   (set-register ?e '(file . "~/.emacs.d/init.el"))
-
+  
   (server-start)
   
-  (setq visible-bell 1)                   ;Set visible bell on.
+  (setq visible-bell 0)                   ;Set visible bell on.
   (setq ring-bell-function 'ignore)       ;Visible bell.
   
   (setq frame-title-format "Emacs - %b")
   (setq set-mark-command-repeat-pop t)
+  (require 'uniquify)
   (setq uniquify-buffer-name-style 'forward)
   (winner-mode 1)
   (setq inhibit-splash-screen t)
@@ -103,9 +104,10 @@ Make scripts executable
 * Keybindings
 
 #+begin_src emacs-lisp
-(global-set-key (kbd "C-x g") 'gnus)
-(global-set-key (kbd "C-x C-a") 'artist-mode)
-(global-set-key (kbd "C-x C-b") 'ibuffer)
+  (global-set-key (kbd "C-x g") 'gnus)
+  (global-set-key (kbd "C-x C-a") 'artist-mode)
+  ;; (global-set-key (kbd "C-x C-b") 'ibuffer)
+  ;; Replaced with helm
 #+end_src
 
 * Iswitchb/Buffers
@@ -562,9 +564,14 @@ Because dired-jump is pretty useful
 #+end_src
 * Helm
 #+begin_src emacs-lisp
-(require 'helm-config)
-(global-set-key (kbd "C-c h") 'helm-mini)
-(helm-mode 1)
+  (require 'helm-config)
+  (global-set-key (kbd "C-c h") 'helm-mini)
+  ;; (helm-mode 1)
+  (global-set-key (kbd "C-x b") 'helm-buffers-list)
+  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  (global-set-key (kbd "C-x f") 'helm-for-files)
+  (global-set-key (kbd "M-x") 'helm-M-x)
+  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
 #+end_src
 * Useful, but unnecessary, functions
 ** Word counting
