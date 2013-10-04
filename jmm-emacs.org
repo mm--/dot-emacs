@@ -53,7 +53,7 @@ Enable all the disabled commands
   (menu-bar-mode -1)
   (tool-bar-mode 0)
   
-  (set-register ?e '(file . "~/.emacs.d/init.el"))
+  (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
   
   (server-start)
   
@@ -403,8 +403,12 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 
 * ERC
 #+begin_src emacs-lisp
-(require 'erc-services)
-(erc-services-mode 1)
+  (require 'erc-services)
+  (erc-services-mode 1)
+  (setq erc-nick "emdash"
+        erc-server "localhost"
+        erc-port "1799")
+  (setq erc-auto-query 'bury)
 #+end_src
 ** Notify
 #+begin_src emacs-lisp
@@ -433,17 +437,17 @@ of erc-modified-channels-alist"
 
 ** More notify stuff
 #+begin_src emacs-lisp
-;; Notify my when someone mentions my nick.
-(defun erc-global-notify (matched-type nick msg)
-  (interactive)
-  (when (eq matched-type 'current-nick)
-    (shell-command
-     (concat "notify-send -t 4000 -c \"im.received\" \""
-             (car (split-string nick "!"))
-             " mentioned your nick\" \""
-             msg
-             "\""))))
-(add-hook 'erc-text-matched-hook 'erc-global-notify)
+  ;; Notify my when someone mentions my nick.
+  (defun erc-global-notify (matched-type nick msg)
+    (interactive)
+    (when (eq matched-type 'current-nick)
+      (shell-command
+       (concat "notify-send -t 4000 -c \"im.received\" \""
+               (car (split-string nick "!"))
+               " mentioned your nick\" \""
+               msg
+               "\""))))
+  (add-hook 'erc-text-matched-hook 'erc-global-notify)
 #+end_src
 ** Timestamp
 #+begin_src emacs-lisp
@@ -463,6 +467,71 @@ of erc-modified-channels-alist"
       erc-datestamp-format " === [%Y-%m-%d %a] ===\n" ; mandatory ascii art                          
       erc-fill-prefix "      "
       erc-insert-timestamp-function 'ks-timestamp)
+#+end_src
+
+* rcirc
+#+begin_src emacs-lisp
+(require 'rcirc)
+#+end_src
+** Spelling
+#+begin_src emacs-lisp
+(add-hook 'rcirc-mode-hook (lambda ()
+			     (flyspell-mode 1)))
+#+end_src
+** Other
+#+begin_src emacs-lisp
+  (setq rcirc-debug-flag t)
+  
+  ;; Adjust the colours of one of the faces.
+  (set-face-foreground 'rcirc-my-nick "red" nil)
+  
+  (setq rcirc-default-nick "emdash")
+  (setq rcirc-default-user-name "joshm")
+  (setq rcirc-default-full-name "Josh Moller-Mara")
+  
+  (setq rcirc-server-alist
+      '(("localhost" :port 1799 :nick "emdash" :user-name "joshm" :full-name "Joshua Moller-Mara")))
+  
+  (add-hook 'rcirc-mode-hook
+            (lambda ()
+              (rcirc-track-minor-mode 1)))
+  
+  (add-hook 'rcirc-mode-hook (lambda ()
+                               (flyspell-mode 1)))
+  
+#+end_src
+
+** Reconnect after disconnect
+
+#+begin_src emacs-lisp
+  (eval-after-load 'rcirc
+    '(defun-rcirc-command reconnect (arg)
+       "Reconnect the server process."
+       (interactive "i")
+       (unless process
+         (error "There's no process for this target"))
+       (let* ((server (car (process-contact process)))
+              (port (process-contact process :service))
+              (nick (rcirc-nick process))
+              channels query-buffers)
+         (dolist (buf (buffer-list))
+           (with-current-buffer buf
+             (when (eq process (rcirc-buffer-process))
+               (remove-hook 'change-major-mode-hook
+                            'rcirc-change-major-mode-hook)
+               (if (rcirc-channel-p rcirc-target)
+                   (setq channels (cons rcirc-target channels))
+                 (setq query-buffers (cons buf query-buffers))))))
+         (delete-process process)
+         (rcirc-connect server port nick
+                        rcirc-default-user-name
+                        rcirc-default-full-name
+                        channels))))
+#+end_src
+
+** Load rcirc-notify
+#+begin_src emacs-lisp
+  (eval-after-load 'rcirc '(require 'rcirc-notify))
 #+end_src
 * Scheme
 #+begin_src emacs-lisp
@@ -560,7 +629,7 @@ Because dired-jump is pretty useful
 
 ** Prompt for Yubikeys
 #+begin_src emacs-lisp
-(setq tramp-password-prompt-regexp "^.*\\(Yubikey\\|[pP]assword\\|[pP]assphrase\\).*: ? *")
+  (setq tramp-password-prompt-regexp "^.*\\(Yubikey\\|[pP]assword\\|[pP]assphrase\\).*: ? *")
 #+end_src
 * Helm
 #+begin_src emacs-lisp
@@ -572,6 +641,7 @@ Because dired-jump is pretty useful
   (global-set-key (kbd "C-x f") 'helm-for-files)
   (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
+  (global-set-key (kbd "M-s o") 'helm-occur)
 #+end_src
 * Useful, but unnecessary, functions
 ** Word counting
