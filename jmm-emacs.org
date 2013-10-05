@@ -631,6 +631,68 @@ Because dired-jump is pretty useful
 #+begin_src emacs-lisp
   (setq tramp-password-prompt-regexp "^.*\\(Yubikey\\|[pP]assword\\|[pP]assphrase\\).*: ? *")
 #+end_src
+* Org Mode
+** Setup my agenda file
+#+begin_src emacs-lisp
+  (setq org-agenda-files (concat (file-name-as-directory org-directory) "org-agendas.txt"))
+#+end_src
+
+** Default notes file?
+   Note to self, figure out what the difference between this and agenda is.
+
+#+begin_src emacs-lisp
+  (setq org-default-notes-file (concat (file-name-as-directory org-directory) "gtd-test.org"))
+#+end_src
+** Capturing and agenda keybindings
+#+begin_src emacs-lisp
+  (define-key global-map (kbd "C-c c") 'org-capture)
+  (global-set-key (kbd "C-c a") 'org-agenda)
+#+end_src
+** TODO Capture templates
+   Need to make this more portable across different systems. I think it defaults to org-directory.
+#+begin_src emacs-lisp
+  (setq org-capture-templates
+        '(("t" "Todo" entry (file+headline "gtd-test.org" "Tasks")
+           "* TODO %i %?\n\tAdded: %U")
+          ("c" "Calendar" entry (file+headline "gtd-test.org" "Calendar")
+           "* %i %?\n\tAdded: %U")
+          ("h" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
+           "* %i %?\n\tAdded: %U")
+          ("m" "Someday/Maybe" entry (file+headline "gtd-test.org" "Someday/Maybe")
+           "* %?\n\tAdded: %U")
+          ("o" "thoughts" plain (file "thoughts-misc.txt")
+           "\n\n%U -\n\n %?\n" :empty-lines 1)
+          ("j" "Jokes" plain (file "jokes.txt")
+           "\n\n%U -\n\n %?\n" :empty-lines 1)))
+#+end_src
+** Org agenda listings
+#+begin_src emacs-lisp
+  (setq org-agenda-custom-commands
+        (quote
+         (("w" todo "WAITING")
+          ("W" todo-tree "WAITING")
+          ("H" "Office and Home Lists"
+           ((agenda)
+            (tags-todo "OFFICE")
+            (tags-todo "HOME")
+            (tags-todo "COMPUTER")
+            (tags-todo "DVD")
+            (tags-todo "READING")))
+          ("D" "Daily Action List"
+           ((agenda "" ((org-agenda-ndays 1)
+                        (org-agenda-sorting-strategy
+                         (quote ((agenda time-up priority-down tag-up) )))
+                        (org-deadline-warning-days 0)))))
+          ("U" "Unscheduled NoDeadline" alltodo ""
+           ((org-agenda-skip-function
+            '(org-agenda-skip-entry-if 'scheduled 'deadline))))
+          )))
+#+end_src
+** If I didn't want it to interfere with windmove
+#+begin_src emacs-lisp
+  (setq org-replace-disputed-keys t)
+#+end_src
+
 * Helm
 #+begin_src emacs-lisp
   (require 'helm-config)
@@ -642,6 +704,7 @@ Because dired-jump is pretty useful
   (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
   (global-set-key (kbd "M-s o") 'helm-occur)
+  (global-set-key (kbd "M-g s") 'helm-do-grep)
 #+end_src
 * Useful, but unnecessary, functions
 ** Word counting
