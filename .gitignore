@@ -1,2 +1,6 @@
 elpa/*
 auto-save-list/*
+image-dired/
+/tramp
+/bookmarks
+/jmm-emacs.el
