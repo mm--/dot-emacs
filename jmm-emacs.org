@@ -27,6 +27,12 @@ I don't want Custom stuff here. For now.
 (load custom-file)
 #+end_src
 
+Secret info. (Authentication info)
+#+begin_src emacs-lisp
+(load-file "~/.emacs.secrets")
+#+end_src
+
+
 ** Byte compile stuff?
 
 #+begin_src emacs-lisp
@@ -94,7 +100,6 @@ Make scripts executable
 ** Windmove
 #+begin_src emacs-lisp
 (windmove-default-keybindings 'control)
-(windmove-default-keybindings 'shift)
 #+end_src
 
 * Theme
@@ -401,6 +406,22 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 (require 'ess-jags-d)
 #+end_src
 
+** View an object
+#+begin_src emacs-lisp
+  (defun ess-dump-object-into-view-buffer (object)
+    "Edit an ESS object in its view buffer."
+    (interactive
+     (progn
+       (ess-force-buffer-current "Process to dump from: ")
+       (if (ess-ddeclient-p)
+           (list (read-string "Object to edit: "))
+         (ess-read-object-name "Object to edit"))))
+    (ess-execute (ess-rdired-get ojbect)
+               nil "R view" ))
+
+  (eval-after-load "ess-mode"
+    '(define-key ess-mode-map (kbd "C-c v") 'ess-dump-object-into-view-buffer))
+#+end_src
 * ERC
 #+begin_src emacs-lisp
   (require 'erc-services)
@@ -489,8 +510,7 @@ of erc-modified-channels-alist"
   (setq rcirc-default-user-name "joshm")
   (setq rcirc-default-full-name "Josh Moller-Mara")
   
-  (setq rcirc-server-alist
-      '(("localhost" :port 1799 :nick "emdash" :user-name "joshm" :full-name "Joshua Moller-Mara")))
+  ;; rcirc-server-alist moved to secrets file, as it contains passwords.
   
   (add-hook 'rcirc-mode-hook
             (lambda ()
@@ -532,6 +552,11 @@ of erc-modified-channels-alist"
 ** Load rcirc-notify
 #+begin_src emacs-lisp
   (eval-after-load 'rcirc '(require 'rcirc-notify))
+#+end_src
+
+** Load rcirc color
+#+begin_src emacs-lisp
+  (eval-after-load 'rcirc '(require 'rcirc-color))
 #+end_src
 * Scheme
 #+begin_src emacs-lisp
@@ -690,7 +715,7 @@ Because dired-jump is pretty useful
 #+end_src
 ** If I didn't want it to interfere with windmove
 #+begin_src emacs-lisp
-  (setq org-replace-disputed-keys t)
+  ;; (setq org-replace-disputed-keys t)
 #+end_src
 
 * Helm
