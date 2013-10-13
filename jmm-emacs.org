@@ -60,6 +60,7 @@ Enable all the disabled commands
   (tool-bar-mode 0)
   
   (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
+  (set-register ?l '(file . "~/org/josh-ledger.dat"))
   
   (server-start)
   
@@ -718,6 +719,34 @@ Because dired-jump is pretty useful
   ;; (setq org-replace-disputed-keys t)
 #+end_src
 
+** Writing my current task to a file
+   I have a conky script that displays my current task. That way, even
+   when I'm not in Emacs, I can see what task I'm supposed to be
+   working on, and how long I've been clocked into it.
+#+begin_src emacs-lisp
+  (setq josh/clock-current-task-file "~/.currenttask")
+  
+  (defun josh/org-clock-in-conky ()
+    (interactive)
+    "Creates a file `josh/clock-current-task-file' with the current task and the time started.
+  To be used with a script in conky to display what I'm working on."
+    (if org-clock-current-task
+        (with-temp-file josh/clock-current-task-file
+            (progn
+              (insert org-clock-current-task)
+              (newline)
+              (insert (format-time-string "%s" org-clock-start-time))
+              (newline)))))
+  
+  (defun josh/org-clock-out-conky ()
+    (interactive)
+    "When I clock out, remove `josh/clock-current-task-file'"
+    (if (file-exists-p josh/clock-current-task-file)
+            (delete-file josh/clock-current-task-file)))
+  
+  (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky)
+  (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky)
+#+end_src
 * Helm
 #+begin_src emacs-lisp
   (require 'helm-config)
