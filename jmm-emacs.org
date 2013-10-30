@@ -11,14 +11,15 @@ Shamelessly stolen from Sacha Chua
 
 * Emacs initialization
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/elisp")
-(add-to-list 'load-path "~/elisp/helm/")
-(require 'package)
-(package-initialize)
-(add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
-(add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
-(add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
-(add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  (add-to-list 'load-path "~/elisp")
+  (add-to-list 'load-path "~/elisp/helm/")
+  (add-to-list 'load-path "~/elisp/ledger/")
+  (require 'package)
+  (package-initialize)
+  (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
+  (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+  (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
+  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 #+end_src
 
 I don't want Custom stuff here. For now.
@@ -76,6 +77,9 @@ Enable all the disabled commands
   (setq Man-notify-method 'pushy)
   (set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
   (setq visual-line-fringe-indicators '(nil right-curly-arrow))
+  
+  (setq browse-url-browser-function 'browse-url-generic
+        browse-url-generic-program "chromium")
 #+end_src
 
 Make scripts executable
@@ -105,7 +109,8 @@ Make scripts executable
 
 * Theme
 #+begin_src emacs-lisp
-(load-theme 'nzenburn)
+(add-to-list 'custom-theme-load-path "~/elisp/zenburn-emacs/")
+(load-theme 'zenburn)
 #+end_src
 * Keybindings
 
@@ -417,9 +422,9 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
        (if (ess-ddeclient-p)
            (list (read-string "Object to edit: "))
          (ess-read-object-name "Object to edit"))))
-    (ess-execute (ess-rdired-get ojbect)
+    (ess-execute (ess-rdired-get object)
                nil "R view" ))
-
+  
   (eval-after-load "ess-mode"
     '(define-key ess-mode-map (kbd "C-c v") 'ess-dump-object-into-view-buffer))
 #+end_src
@@ -511,6 +516,7 @@ of erc-modified-channels-alist"
   (setq rcirc-default-user-name "joshm")
   (setq rcirc-default-full-name "Josh Moller-Mara")
   
+  (setq rcirc-buffer-maximum-lines 2000)
   ;; rcirc-server-alist moved to secrets file, as it contains passwords.
   
   (add-hook 'rcirc-mode-hook
@@ -747,18 +753,28 @@ Because dired-jump is pretty useful
   (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky)
   (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky)
 #+end_src
+
+* Sawfish
+  Automatically load .jl files as sawfish (not Julia)
+#+begin_src emacs-lisp
+  (setq auto-mode-alist (cons '("\\.sawfishrc$"  . sawfish-mode) auto-mode-alist)
+        auto-mode-alist (cons '("\\.jl$"         . sawfish-mode) auto-mode-alist)
+        auto-mode-alist (cons '("\\.sawfish/rc$" . sawfish-mode) auto-mode-alist))
+  
+#+end_src
 * Helm
 #+begin_src emacs-lisp
   (require 'helm-config)
   (global-set-key (kbd "C-c h") 'helm-mini)
   ;; (helm-mode 1)
   (global-set-key (kbd "C-x b") 'helm-buffers-list)
-  (global-set-key (kbd "C-x C-f") 'helm-find-files)
+  ;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
   (global-set-key (kbd "C-x f") 'helm-for-files)
   (global-set-key (kbd "M-x") 'helm-M-x)
   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
   (global-set-key (kbd "M-s o") 'helm-occur)
   (global-set-key (kbd "M-g s") 'helm-do-grep)
+  (global-set-key (kbd "C-c SPC") 'helm-all-mark-rings)
 #+end_src
 * Useful, but unnecessary, functions
 ** Word counting
