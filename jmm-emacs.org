@@ -13,7 +13,6 @@ Shamelessly stolen from Sacha Chua
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/elisp")
   (add-to-list 'load-path "~/elisp/helm/")
-  (add-to-list 'load-path "~/elisp/ledger/")
   (require 'package)
   (package-initialize)
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
@@ -54,7 +53,7 @@ Enable all the disabled commands
   ;; I don't like having to type "yes"
   (fset 'yes-or-no-p 'y-or-n-p)
   
-  (transient-mark-mode 0)
+  (transient-mark-mode 1)
   (column-number-mode 1)
   (show-paren-mode 1)
   (menu-bar-mode -1)
@@ -62,6 +61,7 @@ Enable all the disabled commands
   
   (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
   (set-register ?l '(file . "~/org/josh-ledger.dat"))
+  (set-register ?o '(file . "~/org/gtd-test.org"))
   
   (server-start)
   
@@ -245,7 +245,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 (setq-default ispell-program-name "aspell")
 (setq-default ispell-grep-command "grep")
 (setq-default ispell-grep-options "-iE")
-(setq-default ispell-complete-word-dict "/usr/share/dict/american-english-large")
+(setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
 #+end_src
 
 #+begin_src emacs-lisp
@@ -427,6 +427,23 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   
   (eval-after-load "ess-mode"
     '(define-key ess-mode-map (kbd "C-c v") 'ess-dump-object-into-view-buffer))
+#+end_src
+
+** Clear the shell
+#+begin_src emacs-lisp
+(defun clear-shell ()
+   (interactive)
+   (let ((old-max comint-buffer-maximum-size))
+     (setq comint-buffer-maximum-size 0)
+     (comint-truncate-buffer)
+     (setq comint-buffer-maximum-size old-max)))
+#+end_src
+
+** Truncate automatically
+#+begin_src emacs-lisp
+  (setq comint-buffer-maximum-size 2000)
+  (add-hook 'comint-output-filter-functions
+            'comint-truncate-buffer)
 #+end_src
 * ERC
 #+begin_src emacs-lisp
@@ -686,6 +703,8 @@ Because dired-jump is pretty useful
   (setq org-capture-templates
         '(("t" "Todo" entry (file+headline "gtd-test.org" "Tasks")
            "* TODO %i %?\n\tAdded: %U")
+          ("a" "Today" entry (file+headline "gtd-test.org" "Tasks")
+           "* TODO %i %?\n\tSCHEDULED: <%<%Y-%m-%d %a>>\n\tAdded: %U")
           ("c" "Calendar" entry (file+headline "gtd-test.org" "Calendar")
            "* %i %?\n\tAdded: %U")
           ("h" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
@@ -854,20 +873,20 @@ specifies the list of buffers to kill, asking for approval for each one."
 
 ** Starting an Xterm in current directory
 #+begin_src emacs-lisp
-(defun start-xterm ()
-  "Start a new xterm in the current directory. SSH if necessary"
-  (interactive)
-  (let ((path default-directory))
-    "Return the local portion of a path.
-
-If PATH is local, return it unaltered.
-If PATH is remote, return the remote diretory portion of the path."
-    (if (tramp-tramp-file-p path)
-	(let ((loc (elt (tramp-dissect-file-name path) 3))
-	      (host (elt (tramp-dissect-file-name path) 2)))
-	  (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
-      (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd %s; bash" path)))))
-(global-set-key (kbd "<f9> x") 'start-xterm)
+  (defun start-xterm ()
+    "Start a new xterm in the current directory. SSH if necessary"
+    (interactive)
+    (let ((path default-directory))
+      "Return the local portion of a path.
+  
+  If PATH is local, return it unaltered.
+  If PATH is remote, return the remote diretory portion of the path."
+      (if (tramp-tramp-file-p path)
+          (let ((loc (elt (tramp-dissect-file-name path) 3))
+                (host (elt (tramp-dissect-file-name path) 2)))
+            (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
+        (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd %s; zsh" path)))))
+  (global-set-key (kbd "<f9> x") 'start-xterm)
 #+end_src
 
 ** Copy the path
@@ -901,18 +920,18 @@ If PATH is remote, return the remote diretory portion of the path."
 #+end_src
 ** Search Gregg Shorthand Dictionary
 #+begin_src emacs-lisp
-(defun gsd ()
-  (interactive)
-  ;; (save-excursion
-    (find-file-read-only "/home/j2m/Download/gregg/gsd.txt")
-    (isearch-forward)
-    (start-process "evince-gsd" " gsd-processes" "evince"
-		   (concat "--page-label="
-			   (number-to-string (- (string-to-number
-						 (substring (what-page) 5 8))
-						12)))
-		   "/home/j2m/Download/gregg/gsd.pdf"));; )
-(global-set-key (kbd "<f9> g") 'gsd)
+  (defun gsd ()
+    (interactive)
+    ;; (save-excursion
+      (find-file-read-only "~/Downloads/gregg/gsd.txt")
+      (isearch-forward)
+      (start-process "evince-gsd" " gsd-processes" "evince"
+                     (concat "--page-label="
+                             (number-to-string (- (string-to-number
+                                                   (substring (what-page) 5 8))
+                                                  12)))
+                     "/home/jm3/Downloads/gregg/gsd.pdf"));; )
+  (global-set-key (kbd "<f9> g") 'gsd)
 #+end_src
 ** Window Dedication
 #+begin_src emacs-lisp
@@ -928,6 +947,34 @@ If PATH is remote, return the remote diretory portion of the path."
 
 (global-set-key [pause] 'toggle-current-window-dedication)
 #+end_src
+* Emacs Rocks
+  Things I got from watching "Emacs Rocks"
+** Multiple Cursors
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/Downloads/multiple-cursors/")
+  (require 'multiple-cursors)
+  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
+  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
+  (global-set-key (kbd "C-M-<") 'mc/mark-all-like-this-dwim)
+#+end_src
+** Expand Region
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/Downloads/expand-region.el/")
+  (require 'expand-region)
+  (global-set-key (kbd "C-=") 'er/expand-region)
+#+end_src
+** Ace Jump Mode
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/elisp/ace-jump-mode/")
+  (require 'ace-jump-mode)
+  (global-set-key (kbd "C-0") 'ace-jump-mode)
+  (setq ace-jump-mode-case-fold t)
+  (setq ace-jump-mode-scope 'frame)
+  ;; To set to only use lowercase
+  ;; (setq ace-jump-mode-move-keys (loop for i from ?a to ?z collect i))
+#+end_src
+
 * Other modes
 ** Enriched Mode
 #+begin_src emacs-lisp
@@ -943,4 +990,24 @@ If PATH is remote, return the remote diretory portion of the path."
 (add-hook 'java-mode-hook
 	  (lambda ()
 	    (c-set-style "java")))
+#+end_src
+** Ledger
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/elisp/ledger/")
+  (require 'ledger)
+#+end_src
+** Swank-js
+#+begin_src emacs-lisp
+  (add-hook 'css-mode-hook
+             (lambda ()
+               (define-key css-mode-map "\M-\C-x" 'slime-js-refresh-css)
+               (define-key css-mode-map "\C-c\C-r" 'slime-js-embed-css)))
+#+end_src
+#+begin_src emacs-lisp
+  (global-set-key [f5] 'slime-js-reload)
+  (add-hook 'javascript-mode-hook
+            (lambda ()
+              (js2-minor-mode 1)
+              (auto-complete-mode 1)
+              (slime-js-minor-mode 1)))
 #+end_src
