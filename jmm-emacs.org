@@ -734,7 +734,7 @@ Because dired-jump is pretty useful
 #+end_src
    Fix a bug causing org-capture to mess up line numbers
 #+begin_src emacs-lisp
-  (setq cache-long-scans nil)
+  (setq-default cache-long-scans nil)
 #+end_src
 ** Org agenda listings
 #+begin_src emacs-lisp
