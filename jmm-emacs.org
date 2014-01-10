@@ -12,7 +12,6 @@ Shamelessly stolen from Sacha Chua
 * Emacs initialization
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/elisp")
-  (add-to-list 'load-path "~/elisp/helm/")
   (require 'package)
   (package-initialize)
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
@@ -58,6 +57,7 @@ Enable all the disabled commands
   (show-paren-mode 1)
   (menu-bar-mode -1)
   (tool-bar-mode 0)
+  (blink-cursor-mode 0)
   
   (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
   (set-register ?l '(file . "~/org/josh-ledger.dat"))
@@ -80,6 +80,7 @@ Enable all the disabled commands
   
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program "chromium")
+  (setq shr-external-browser 'browse-url-generic) ;For eww
 #+end_src
 
 Make scripts executable
@@ -117,7 +118,7 @@ Make scripts executable
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-x g") 'gnus)
   (global-set-key (kbd "C-x C-a") 'artist-mode)
-  ;; (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (global-set-key (kbd "C-x C-b") 'ibuffer)
   ;; Replaced with helm
 #+end_src
 
@@ -327,6 +328,11 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
   (tex-send-command "evince" (tex-append tex-print-file ".pdf") t))))
 #+end_src
 
+Make it easier to insert Greek symbols
+#+begin_src emacs-lisp
+  (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
+#+end_src
+
 ** Bibtex stuff (no longer needed?)
 #+begin_src emacs-lisp
 (add-hook 'latex-mode-hook
@@ -349,52 +355,52 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 
 ** AUCTeX and skeletons
 #+begin_src emacs-lisp
-;; AUCTeX
-;; (setq load-path (append load-path "/usr/share/emacs23/site-lisp/"))
-(load "auctex.el" nil t t)
-(load "preview-latex.el" nil t t)
-(setq TeX-auto-save t)
-(setq TeX-parse-self t)
-(setq-default TeX-master nil)
-(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
-
-(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-(setq reftex-plug-into-AUCTeX t)
-
-(setq skeleton-end-newline nil)
-(add-hook 'LaTeX-mode-hook
- (lambda ()
-   (define-key LaTeX-mode-map (kbd "` v (") 'latex-skeleton-left-paren)
-   (define-key LaTeX-mode-map (kbd "` v [") 'latex-skeleton-left-bracket)
-   (define-key LaTeX-mode-map (kbd "` v {") 'latex-skeleton-left-brace)
-   (define-key LaTeX-mode-map (kbd "` v t") 'latex-math-text)
-   (define-key LaTeX-mode-map (kbd "` v $") 'quoted-parens)
-   (define-key LaTeX-mode-map (kbd "` v %") 'quoted-brackets)
-   ))
-
-(define-skeleton latex-skeleton-left-paren
-  "Insert \\left( ... \\right)."
-  nil "\\left(" _ "\\right)")
-
-(define-skeleton latex-skeleton-left-bracket
-  "Insert \\left[ ... \\right]."
-  nil "\\left[" _ "\\right]")
-
-(define-skeleton latex-skeleton-left-brace
-  "Insert \\left\\{ ... \\right\\}."
-  nil "\\left\\{" _ "\\right\\}")
-
-(define-skeleton latex-math-text
-  "Insert \\text{ ... }."
-  nil "\\text{" _ "}")
-
-(define-skeleton quoted-parens
-  "Insert \\( ... \\)."
-  nil "\\(" _ "\\)")
-
-(define-skeleton quoted-brackets
-  "Insert \\[ ... \\]."
-  nil "\\[" _ "\\]")
+  ;; AUCTeX
+  ;; (setq load-path (append load-path "~/.emacs.d/elpa/auctex-11.87.2/"))
+  ;; (load "auctex.el" nil t t)
+  ;; (load "preview-latex.el" nil t t)
+  (setq TeX-auto-save t)
+  (setq TeX-parse-self t)
+  (setq-default TeX-master nil)
+  (add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
+  
+  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+  (setq reftex-plug-into-AUCTeX t)
+  
+  (setq skeleton-end-newline nil)
+  (add-hook 'LaTeX-mode-hook
+   (lambda ()
+     (define-key LaTeX-mode-map (kbd "` v (") 'latex-skeleton-left-paren)
+     (define-key LaTeX-mode-map (kbd "` v [") 'latex-skeleton-left-bracket)
+     (define-key LaTeX-mode-map (kbd "` v {") 'latex-skeleton-left-brace)
+     (define-key LaTeX-mode-map (kbd "` v t") 'latex-math-text)
+     (define-key LaTeX-mode-map (kbd "` v $") 'quoted-parens)
+     (define-key LaTeX-mode-map (kbd "` v %") 'quoted-brackets)
+     ))
+  
+  (define-skeleton latex-skeleton-left-paren
+    "Insert \\left( ... \\right)."
+    nil "\\left(" _ "\\right)")
+  
+  (define-skeleton latex-skeleton-left-bracket
+    "Insert \\left[ ... \\right]."
+    nil "\\left[" _ "\\right]")
+  
+  (define-skeleton latex-skeleton-left-brace
+    "Insert \\left\\{ ... \\right\\}."
+    nil "\\left\\{" _ "\\right\\}")
+  
+  (define-skeleton latex-math-text
+    "Insert \\text{ ... }."
+    nil "\\text{" _ "}")
+  
+  (define-skeleton quoted-parens
+    "Insert \\( ... \\)."
+    nil "\\(" _ "\\)")
+  
+  (define-skeleton quoted-brackets
+    "Insert \\[ ... \\]."
+    nil "\\[" _ "\\]")
 #+end_src
 ** AUCTeX handling errors
 Sometimes AUCTex can't parse errors correctly, prompting you to create a directory
@@ -402,6 +408,11 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 (setq LaTeX-command-style '(("" "%(PDF)%(latex) -file-line-error %S%(PDFout)")))
 #+end_src
 * R/ESS
+  This seems to be necessary when installing ESS from MELPA.
+#+begin_src emacs-lisp
+  (require 'ess-site)
+#+end_src
+
 #+begin_src emacs-lisp
 (setq comint-scroll-to-bottom-on-input t)
 (setq comint-scroll-to-bottom-on-output t)
@@ -682,10 +693,12 @@ Because dired-jump is pretty useful
 #+end_src
 * Org Mode
 ** Setup my agenda file
+   Read from "org-agendas" where the agenda files are.
+   Set the default span to a day view.
 #+begin_src emacs-lisp
   (setq org-agenda-files (concat (file-name-as-directory org-directory) "org-agendas.txt"))
+  (setq org-agenda-span 'day)
 #+end_src
-
 ** Default notes file?
    Note to self, figure out what the difference between this and agenda is.
 
@@ -714,7 +727,14 @@ Because dired-jump is pretty useful
           ("o" "thoughts" plain (file "thoughts-misc.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
           ("j" "Jokes" plain (file "jokes.txt")
-           "\n\n%U -\n\n %?\n" :empty-lines 1)))
+           "\n\n%U -\n\n %?\n" :empty-lines 1)
+          ("v" "Vocabulary" entry
+           (file+headline "vocab.org" "Vocabulary")
+           "* %^{The word} :drill:\n %t\n %^{Extended word (may be empty)|%\\1} \n** Answer \n%^{The definition}")))
+#+end_src
+   Fix a bug causing org-capture to mess up line numbers
+#+begin_src emacs-lisp
+  (setq cache-long-scans nil)
 #+end_src
 ** Org agenda listings
 #+begin_src emacs-lisp
@@ -739,6 +759,13 @@ Because dired-jump is pretty useful
             '(org-agenda-skip-entry-if 'scheduled 'deadline))))
           )))
 #+end_src
+** Define a stuck project
+#+begin_src emacs-lisp
+  (setq org-stuck-projects
+             '("+PROJECT/-MAYBE-DONE" ("NEXT" "TODO") ("@SHOP")
+                                      "\\<IGNORE\\>"))
+#+end_src
+
 ** If I didn't want it to interfere with windmove
 #+begin_src emacs-lisp
   ;; (setq org-replace-disputed-keys t)
@@ -771,6 +798,19 @@ Because dired-jump is pretty useful
   
   (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky)
   (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky)
+#+end_src
+
+** Org-drill
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/elisp/org-mode/contrib/lisp/")
+  (add-to-list 'org-modules 'org-drill)
+  (require 'org-drill)
+#+end_src
+
+** For exporting latex
+http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
+#+begin_src emacs-lisp
+  (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
 #+end_src
 
 * Sawfish
@@ -957,6 +997,8 @@ specifies the list of buffers to kill, asking for approval for each one."
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
   (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
   (global-set-key (kbd "C-M-<") 'mc/mark-all-like-this-dwim)
+  (global-unset-key (kbd "C-<down-mouse-1>"))
+  (global-set-key (kbd "C-<mouse-1>") 'mc/add-cursor-on-click)
 #+end_src
 ** Expand Region
 #+begin_src emacs-lisp
@@ -1011,3 +1053,15 @@ specifies the list of buffers to kill, asking for approval for each one."
               (auto-complete-mode 1)
               (slime-js-minor-mode 1)))
 #+end_src
+** Projectile
+#+begin_src emacs-lisp
+  (require 'projectile)
+  (projectile-global-mode)
+  (setq projectile-completion-system 'helm-comp-read)
+#+end_src
+** Yasnippet
+   So I can have recursive snippets.
+#+begin_src emacs-lisp
+  (setq yas-triggers-in-field t)
+#+end_src
+
