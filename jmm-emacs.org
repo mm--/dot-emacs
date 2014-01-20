@@ -119,6 +119,7 @@ Make scripts executable
   (global-set-key (kbd "C-x g") 'gnus)
   (global-set-key (kbd "C-x C-a") 'artist-mode)
   (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (define-key (current-global-map) [remap imenu] 'helm-imenu)
   ;; Replaced with helm
 #+end_src
 
@@ -718,10 +719,14 @@ Because dired-jump is pretty useful
            "* TODO %i %?\n\tAdded: %U")
           ("a" "Today" entry (file+headline "gtd-test.org" "Tasks")
            "* TODO %i %?\n\tSCHEDULED: <%<%Y-%m-%d %a>>\n\tAdded: %U")
+          ("l" "Lookup" entry (file+headline "gtd-test.org" "Lookup")
+           "* %?\n\tAdded: %U")
           ("c" "Calendar" entry (file+headline "gtd-test.org" "Calendar")
            "* %i %?\n\tAdded: %U")
-          ("h" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
+          ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
            "* %i %?\n\tAdded: %U")
+          ("n" "Research" entry (file+headline "neuroecon.org" "Neuroecon")
+           "* %?\n%i\n\tAdded: %U")
           ("m" "Someday/Maybe" entry (file+headline "gtd-test.org" "Someday/Maybe")
            "* %?\n\tAdded: %U")
           ("o" "thoughts" plain (file "thoughts-misc.txt")
