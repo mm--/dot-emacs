@@ -415,9 +415,15 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 #+end_src
 
 #+begin_src emacs-lisp
-(setq comint-scroll-to-bottom-on-input t)
-(setq comint-scroll-to-bottom-on-output t)
-(setq comint-move-point-for-output t)
+  (setq comint-scroll-to-bottom-on-input t)
+  (setq comint-scroll-to-bottom-on-output t)
+  (setq comint-move-point-for-output t)
+  
+  (add-hook 'ess-mode-hook
+            (lambda ()
+              (flyspell-prog-mode)
+              (auto-complete-mode 1)
+              (ac-flyspell-workaround)))
 #+end_src
 ** JAGS
 #+begin_src emacs-lisp
