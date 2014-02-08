@@ -424,6 +424,13 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
               (flyspell-prog-mode)
               (auto-complete-mode 1)
               (ac-flyspell-workaround)))
+  
+  (add-hook 'inferior-ess-mode-hook
+            (lambda ()
+              (auto-complete-mode 1)))
+  
+  (autoload 'ess-rdired "ess-rdired" 
+    "View *R* objects in a dired-like buffer." t)
 #+end_src
 ** JAGS
 #+begin_src emacs-lisp
@@ -731,7 +738,7 @@ Because dired-jump is pretty useful
            "* %i %?\n\tAdded: %U")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
            "* %i %?\n\tAdded: %U")
-          ("n" "Research" entry (file+headline "neuroecon.org" "Neuroecon")
+          ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
            "* %?\n%i\n\tAdded: %U")
           ("m" "Someday/Maybe" entry (file+headline "gtd-test.org" "Someday/Maybe")
            "* %?\n\tAdded: %U")
@@ -768,6 +775,7 @@ Because dired-jump is pretty useful
           ("U" "Unscheduled NoDeadline" alltodo ""
            ((org-agenda-skip-function
             '(org-agenda-skip-entry-if 'scheduled 'deadline))))
+          ("X" agenda "" nil ("~/org/newtab/agenda.html"))
           )))
 #+end_src
 ** Define a stuck project
