@@ -747,8 +747,8 @@ Because dired-jump is pretty useful
           ("j" "Jokes" plain (file "jokes.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
           ("v" "Vocabulary" entry
-           (file+headline "vocab.org" "Vocabulary")
-           "* %^{The word} :drill:\n %t\n %^{Extended word (may be empty)|%\\1} \n** Answer \n%^{The definition}")))
+           (file "~/reading/words-i-learned.org")
+           "* %^{The word} :drill:\n Added: %U\n %^{Extended word (may be empty)|%\\1}\n** Answer \n%^{The definition}")))
 #+end_src
    Fix a bug causing org-capture to mess up line numbers
 #+begin_src emacs-lisp
