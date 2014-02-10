@@ -827,7 +827,11 @@ Because dired-jump is pretty useful
   (add-to-list 'org-modules 'org-drill)
   (require 'org-drill)
 #+end_src
-
+** Org-habit
+#+begin_src emacs-lisp
+  (add-to-list 'org-modules 'org-habit)
+  (require 'org-habit)
+#+end_src
 ** For exporting latex
 http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
 #+begin_src emacs-lisp
