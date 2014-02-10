@@ -775,7 +775,7 @@ Because dired-jump is pretty useful
           ("U" "Unscheduled NoDeadline" alltodo ""
            ((org-agenda-skip-function
             '(org-agenda-skip-entry-if 'scheduled 'deadline))))
-          ("X" agenda "" nil ("~/org/newtab/agenda.html"))
+          ("X" agenda "" ((org-agenda-ndays 3)) ("~/org/newtab/agenda.html"))
           )))
 #+end_src
 ** Define a stuck project
