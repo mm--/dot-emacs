@@ -747,7 +747,7 @@ Because dired-jump is pretty useful
           ("j" "Jokes" plain (file "jokes.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
           ("v" "Vocabulary" entry
-           (file "~/reading/words-i-learned.org")
+           (file+headline "~/reading/words-i-learned.org" "Vocabulary")
            "* %^{The word} :drill:\n Added: %U\n %^{Extended word (may be empty)|%\\1}\n** Answer \n%^{The definition}")))
 #+end_src
    Fix a bug causing org-capture to mess up line numbers
@@ -844,6 +844,42 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
 http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
 #+begin_src emacs-lisp
   (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
+#+end_src
+** Easier method to clock into some frequent habits
+Some habits occur quite frequently, and it's kind of a pain to have to
+find them in my GTD org file before clocking in. This simplifies
+clocking into frequent tasks. (Mostly helps me track bad habits.)
+#+begin_src elisp
+  (defvar josh/helm-org-clock-list
+    '("Reddit" "ProbMods" "org-drill" "TV" "Internet" "Programming" "Check Email" "Learn Elisp" "Learn Emacs"))
+  (defvar josh/org-clock-in-file "~/org/gtd-test.org")
+  
+  (defvar josh/helm-source-org-clock
+    '((name . "Clock in to what Bookmarks")
+      (init . (lambda ()))
+      (candidates . (lambda () josh/helm-org-clock-list))
+      (filtered-candidate-transformer
+       helm-adaptive-sort)
+      (action . (("Clock in"
+                  . (lambda (candidate)
+                      (josh/org-clock-in candidate)))))))
+  
+  (defun josh/org-clock-in (taskname)
+    "Clock into taskname in gtd-test"
+    (interactive)
+    (save-excursion
+      (let ((place (org-find-exact-headline-in-buffer taskname (find-buffer-visiting josh/org-clock-in-file))))
+        (with-current-buffer (marker-buffer place)
+          (goto-char place)
+          (org-clock-in)))))
+  
+  (defun josh/helm-org-clock-in ()
+    "Use helm to clock into a task"
+    (interactive)
+    (helm-other-buffer 'josh/helm-source-org-clock
+                       "*Helm Clock-in*"))
+  
+  (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in)
 #+end_src
 
 * Sawfish
