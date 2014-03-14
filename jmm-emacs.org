@@ -61,6 +61,7 @@ Enable all the disabled commands
   
   (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
   (set-register ?l '(file . "~/org/josh-ledger.dat"))
+  (set-register ?n '(file . "~/org/neuroecon.org"))
   (set-register ?o '(file . "~/org/gtd-test.org"))
   
   (server-start)
@@ -767,6 +768,8 @@ Because dired-jump is pretty useful
             (tags-todo "COMPUTER")
             (tags-todo "DVD")
             (tags-todo "READING")))
+          ("b" "Things to do if bored"
+           ((tags "IFBORED")))
           ("D" "Daily Action List"
            ((agenda "" ((org-agenda-ndays 1)
                         (org-agenda-sorting-strategy
@@ -776,7 +779,7 @@ Because dired-jump is pretty useful
            ((org-agenda-skip-function
             '(org-agenda-skip-entry-if 'scheduled 'deadline))))
           ("X" agenda "" ((org-agenda-span 3)
-                          (org-agenda-start-with-log-mode t)
+                          ;; (org-agenda-start-with-log-mode t)
                           (org-agenda-start-with-clockreport-mode t)) ("~/org/newtab/agenda.html"))
           )))
 #+end_src
@@ -833,7 +836,7 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
   (setq org-drill-hint-separator "||")
   (setq org-drill-left-cloze-delimiter "<[")
   (setq org-drill-right-cloze-delimiter "]>")
-  
+  (setq org-drill-learn-fraction 0.3)
 #+end_src
 ** Org-habit
 #+begin_src emacs-lisp
@@ -849,7 +852,7 @@ http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
 Some habits occur quite frequently, and it's kind of a pain to have to
 find them in my GTD org file before clocking in. This simplifies
 clocking into frequent tasks. (Mostly helps me track bad habits.)
-#+begin_src elisp
+#+begin_src emacs-lisp
   (defvar josh/helm-org-clock-list
     '("Reddit" "ProbMods" "org-drill" "TV" "Internet" "Programming" "Check Email" "Learn Elisp" "Learn Emacs"))
   (defvar josh/org-clock-in-file "~/org/gtd-test.org")
@@ -881,7 +884,12 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   
   (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in)
 #+end_src
-
+** Error out on invisible edits
+   Sometimes I accidentally edit invisible parts of an org buffer.
+   Setting this variable prevents it.
+#+begin_src emacs-lisp
+  (setq org-catch-invisible-edits 'show-and-error)
+#+end_src
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
@@ -904,6 +912,20 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (global-set-key (kbd "M-g s") 'helm-do-grep)
   (global-set-key (kbd "C-c SPC") 'helm-all-mark-rings)
 #+end_src
+* Elfeed
+  Elfeed is an RSS reader that I'm currently trying out.
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-x w") 'elfeed)
+  (setq elfeed-feeds
+        '(("http://nedroid.com/feed/" webcomic)
+          ("http://xkcd.com/rss.xml" webcomic)
+          ("http://feeds.feedburner.com/StatisticalModeling" statistics)
+          ))
+  (add-hook 'elfeed-new-entry-hook
+            (elfeed-make-tagger :before "2 weeks ago"
+                                :remove 'unread))
+#+end_src
+
 * Useful, but unnecessary, functions
 ** Word counting
 #+begin_src emacs-lisp
@@ -1116,7 +1138,7 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 #+begin_src emacs-lisp
   (global-set-key [f5] 'slime-js-reload)
-  (add-hook 'javascript-mode-hook
+  (add-hook 'js-mode-hook
             (lambda ()
               (js2-minor-mode 1)
               (auto-complete-mode 1)
