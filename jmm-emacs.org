@@ -853,6 +853,7 @@ Some habits occur quite frequently, and it's kind of a pain to have to
 find them in my GTD org file before clocking in. This simplifies
 clocking into frequent tasks. (Mostly helps me track bad habits.)
 #+begin_src emacs-lisp
+  (require 'helm-adaptative)
   (defvar josh/helm-org-clock-list
     '("Reddit" "ProbMods" "org-drill" "TV" "Internet" "Programming" "Check Email" "Learn Elisp" "Learn Emacs"))
   (defvar josh/org-clock-in-file "~/org/gtd-test.org")
@@ -888,7 +889,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
    Sometimes I accidentally edit invisible parts of an org buffer.
    Setting this variable prevents it.
 #+begin_src emacs-lisp
-  (setq org-catch-invisible-edits 'show-and-error)
+  ;; (setq org-catch-invisible-edits 'nil)
 #+end_src
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
@@ -919,6 +920,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (setq elfeed-feeds
         '(("http://nedroid.com/feed/" webcomic)
           ("http://xkcd.com/rss.xml" webcomic)
+          ("http://pbfcomics.com/feed/feed.xml" webcomic)
           ("http://feeds.feedburner.com/StatisticalModeling" statistics)
           ))
   (add-hook 'elfeed-new-entry-hook
