@@ -4,3 +4,5 @@ image-dired/
 /tramp
 /bookmarks
 /jmm-emacs.el
+newsticker/*
+url/*

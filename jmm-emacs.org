@@ -124,22 +124,6 @@ Make scripts executable
   ;; Replaced with helm
 #+end_src
 
-* Iswitchb/Buffers
-#+begin_src emacs-lisp
-(iswitchb-mode 1)
-(setq iswitchb-default-method 'samewindow)
-(setq iswitchb-prompt-newbuffer nil)
-#+end_src
-
-I don't care if buffers are visible in other frames, just don't demote them!!
-#+begin_src emacs-lisp
-(setq iswitchb-all-frames nil)
-#+end_src
-
-#+begin_src emacs-lisp
-(autoload 'ibuffer "ibuffer" "List buffers." t)
-#+end_src
-
 * Autosaves and backups
 
 Autosaves
@@ -234,7 +218,6 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 #+end_src
 
 #+begin_src emacs-lisp
-(global-set-key "\C-xc" 'compile)
 (global-set-key (kbd "<f9> <f9>") 'recompile)
 #+end_src
 
@@ -916,11 +899,13 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 * Elfeed
   Elfeed is an RSS reader that I'm currently trying out.
 #+begin_src emacs-lisp
+  (require 'elfeed)
   (global-set-key (kbd "C-x w") 'elfeed)
   (setq elfeed-feeds
         '(("http://nedroid.com/feed/" webcomic)
           ("http://xkcd.com/rss.xml" webcomic)
           ("http://pbfcomics.com/feed/feed.xml" webcomic)
+          ("http://feeds.feedburner.com/PoorlyDrawnLines?format=xml" webcomic)
           ("http://feeds.feedburner.com/StatisticalModeling" statistics)
           ))
   (add-hook 'elfeed-new-entry-hook
