@@ -752,7 +752,9 @@ Because dired-jump is pretty useful
             (tags-todo "DVD")
             (tags-todo "READING")))
           ("b" "Things to do if bored"
-           ((tags "IFBORED")))
+           tags "IFBORED"
+           ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done)))
+           ("~/org/blockreddit/ifbored.html"))
           ("D" "Daily Action List"
            ((agenda "" ((org-agenda-ndays 1)
                         (org-agenda-sorting-strategy
@@ -873,6 +875,12 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
    Setting this variable prevents it.
 #+begin_src emacs-lisp
   ;; (setq org-catch-invisible-edits 'nil)
+#+end_src
+** Refiling to other places
+   This is so we're able to refile to other files
+#+begin_src emacs-lisp
+  (setq org-refile-targets (quote ((nil :maxlevel . 1)
+                                   (org-agenda-files :maxlevel . 1))))
 #+end_src
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
