@@ -805,9 +805,36 @@ Because dired-jump is pretty useful
     (if (file-exists-p josh/clock-current-task-file)
             (delete-file josh/clock-current-task-file)))
   
-  (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky)
-  (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky)
+  ;; (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky)
+  ;; (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky)
 #+end_src
+
+   Here's another hook that works with my "ceftoolbar" in sawfish.
+
+   The ceftoolbar is a Chromium embedded framework toolbar that
+   displays CPU usage, network usage, as well as my current task
+
+#+begin_src emacs-lisp
+  (defun josh/org-clock-2 ()
+    (interactive)
+    "When I clock in or out, call a script that updates the ceftoolbar"
+    (start-process "LogTime"
+                   (get-buffer-create " *josh-clock-buffer*")
+                   "~/.sawfish/scripts/clock-in.sh"))
+  
+  (defun josh/org-clock-in-conky2 ()
+    (josh/org-clock-in-conky)
+    (josh/org-clock-2))
+  
+  (defun josh/org-clock-out-conky2 ()
+    (josh/org-clock-out-conky)
+    (josh/org-clock-2))
+  
+  (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky2)
+  (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky2)
+  
+#+end_src
+
 
 ** Org-drill
 Require org-drill.
@@ -843,9 +870,17 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
     '("Reddit" "ProbMods" "org-drill" "TV" "Internet" "Programming" "Check Email" "Learn Elisp" "Learn Emacs"))
   (defvar josh/org-clock-in-file "~/org/gtd-test.org")
   
+  (defun josh/org-refresh-helm ()
+    (interactive)
+    (setq josh/helm-org-clock-list 
+          (org-map-entries
+           (lambda () (nth 4 (org-heading-components)))
+           nil
+           '("~/org/gtd-test.org"))))
+  
   (defvar josh/helm-source-org-clock
     '((name . "Clock in to what Bookmarks")
-      (init . (lambda ()))
+      (init . (lambda () josh/org-refresh-helm))
       (candidates . (lambda () josh/helm-org-clock-list))
       (filtered-candidate-transformer
        helm-adaptive-sort)
@@ -869,6 +904,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
                        "*Helm Clock-in*"))
   
   (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in)
+  
 #+end_src
 ** Error out on invisible edits
    Sometimes I accidentally edit invisible parts of an org buffer.
@@ -882,6 +918,12 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (setq org-refile-targets (quote ((nil :maxlevel . 1)
                                    (org-agenda-files :maxlevel . 1))))
 #+end_src
+** Store links
+   Storing links in Emacs
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c l") 'org-store-link)
+#+end_src
+
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
