@@ -880,7 +880,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   
   (defvar josh/helm-source-org-clock
     '((name . "Clock in to what Bookmarks")
-      (init . (lambda () josh/org-refresh-helm))
+      (init . josh/org-refresh-helm)
       (candidates . (lambda () josh/helm-org-clock-list))
       (filtered-candidate-transformer
        helm-adaptive-sort)
