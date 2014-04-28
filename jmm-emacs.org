@@ -663,6 +663,25 @@ Sometimes IMAP freezes, so I like to be able to kill it.
   (mapc (lambda (x) (if (string-match "imap" (process-name x)) (delete-process x))) (process-list)))
 #+end_src
 
+** Espeak article
+   Read an article out loud
+#+begin_src emacs-lisp
+  (defun josh/espeak-article ()
+    "Select the gnus article and read it"
+    (interactive)
+    (with-current-buffer gnus-article-buffer
+      (save-excursion
+        (save-restriction
+          (widen)
+          (when (article-goto-body)
+            (let ((process (start-process "espeak-process" " *espeak-gnus*" "espeak" "-a" "200" "-v" "english-us" "-s" "500")))
+              (process-send-region process (point) (point-max))
+              (process-send-string process "\n")
+              (process-send-eof process)))))))
+  
+  (global-set-key (kbd "<f9> e") 'josh/espeak-article)
+#+end_src
+
 * Dired
 ** Listing switches
 #+begin_src emacs-lisp
