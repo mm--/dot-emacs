@@ -982,7 +982,12 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
             (elfeed-make-tagger :before "2 weeks ago"
                                 :remove 'unread))
 #+end_src
-
+* Processing
+  Define the location of processing.
+  Will be different for you.
+#+begin_src emacs-lisp
+  (setq processing-location "~/Downloads/processing-2.1.2/processing-java")
+#+end_src
 * Useful, but unnecessary, functions
 ** Word counting
 #+begin_src emacs-lisp
@@ -1200,6 +1205,11 @@ specifies the list of buffers to kill, asking for approval for each one."
               (js2-minor-mode 1)
               (auto-complete-mode 1)
               (slime-js-minor-mode 1)))
+#+end_src
+** js2-mode
+   Use js2-mode by default
+#+begin_src emacs-lisp
+  (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
 #+end_src
 ** Projectile
 #+begin_src emacs-lisp
