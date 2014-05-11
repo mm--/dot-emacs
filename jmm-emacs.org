@@ -628,6 +628,14 @@ of erc-modified-channels-alist"
 (require 'epa-file)			;So we can encrypt authinfo
 (setq epa-file-cache-passphrase-for-symmetric-encryption t) ;So it doesn't ask for password multiple times
 #+end_src
+  Put the following on the top of files to encrypt them to myself.
+  May need to run "normal-mode" to set the file local variables.
+  Also, remember that just because files are encrypted to you does not
+  mean they're signed by you. So when encrypting stuff for yourself,
+  you may want to sign it.
+#+begin_src emacs-lisp
+  (set-register ?G "-*- epa-file-encrypt-to: (\"j.moller-mara@berkeley.edu\") -*-\n")
+#+end_src
 * BBDB
 #+begin_src emacs-lisp
 (require 'bbdb)
