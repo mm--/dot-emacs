@@ -895,33 +895,29 @@ find them in my GTD org file before clocking in. This simplifies
 clocking into frequent tasks. (Mostly helps me track bad habits.)
 #+begin_src emacs-lisp
   (require 'helm-adaptative)
-  (defvar josh/helm-org-clock-list
-    '("Reddit" "ProbMods" "org-drill" "TV" "Internet" "Programming" "Check Email" "Learn Elisp" "Learn Emacs"))
-  (defvar josh/org-clock-in-file "~/org/gtd-test.org")
-  
-  (defun josh/org-refresh-helm ()
+  (defun josh/org-helm-candidates ()
     (interactive)
-    (setq josh/helm-org-clock-list 
-          (org-map-entries
-           (lambda () (nth 4 (org-heading-components)))
-           nil
-           '("~/org/gtd-test.org"))))
+    (org-map-entries
+     (lambda () (let* ((title (nth 4 (org-heading-components))))
+                  (cons title (cons title (current-buffer)))))
+     nil
+     'agenda))
   
-  (defvar josh/helm-source-org-clock
+  (setq josh/helm-source-org-clock
     '((name . "Clock in to what Bookmarks")
-      (init . josh/org-refresh-helm)
-      (candidates . (lambda () josh/helm-org-clock-list))
+      (candidates . josh/org-helm-candidates)
       (filtered-candidate-transformer
        helm-adaptive-sort)
       (action . (("Clock in"
-                  . (lambda (candidate)
-                      (josh/org-clock-in candidate)))))))
+                  . josh/org-clock-in)))))
   
-  (defun josh/org-clock-in (taskname)
+  (defun josh/org-clock-in (candidate)
     "Clock into taskname in gtd-test"
     (interactive)
     (save-excursion
-      (let ((place (org-find-exact-headline-in-buffer taskname (find-buffer-visiting josh/org-clock-in-file))))
+      (let* ((taskname (car candidate))
+             (taskbuffer (cdr candidate))
+             (place (org-find-exact-headline-in-buffer taskname taskbuffer)))
         (with-current-buffer (marker-buffer place)
           (goto-char place)
           (org-clock-in)))))
