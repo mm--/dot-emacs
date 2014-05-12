@@ -1122,7 +1122,7 @@ specifies the list of buffers to kill, asking for approval for each one."
     (interactive)
     ;; (save-excursion
       (find-file-read-only "~/Downloads/gregg/gsd.txt")
-      (isearch-forward)
+      (helm-occur)
       (start-process "evince-gsd" " gsd-processes" "evince"
                      (concat "--page-label="
                              (number-to-string (- (string-to-number
