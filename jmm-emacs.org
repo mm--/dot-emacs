@@ -12,6 +12,7 @@ Shamelessly stolen from Sacha Chua
 * Emacs initialization
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/elisp")
+  (add-to-list 'load-path "~/.emacs.d/elisp")
   (require 'package)
   (package-initialize)
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
@@ -1147,6 +1148,23 @@ specifies the list of buffers to kill, asking for approval for each one."
             (buffer-name))))
 
 (global-set-key [pause] 'toggle-current-window-dedication)
+#+end_src
+** Chinese Cangjie 5 input
+   I created a quail package for Cangjie version 5 using libcangjie's
+   dictionary.  The main advantage to using it over the built-in
+   =chinese-cns-tsangchi= or =chinese-b5-tsangchi= is that this method
+   allows you to type simplified Chinese characters.
+   
+#+begin_src emacs-lisp
+  (register-input-method
+   "Cangjie5" "Chinese-BIG5" 'quail-use-package
+   "C5" "Cangjie version 5"
+   "cangjie5.el")
+#+end_src
+
+   A quick key to help look up Cangjie codes for characters I don't know.
+#+begin_src emacs-lisp
+  (global-set-key (kbd "<f9> s") 'quail-show-key)
 #+end_src
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
