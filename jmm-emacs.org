@@ -121,6 +121,7 @@ Make scripts executable
   (global-set-key (kbd "C-x g") 'gnus)
   (global-set-key (kbd "C-x C-a") 'artist-mode)
   (global-set-key (kbd "C-x C-b") 'ibuffer)
+  (global-set-key (kbd "<f9> m") 'magit-status)
   (define-key (current-global-map) [remap imenu] 'helm-imenu)
   ;; Replaced with helm
 #+end_src
@@ -1120,7 +1121,6 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (defun gsd ()
     (interactive)
-    ;; (save-excursion
       (find-file-read-only "~/Downloads/gregg/gsd.txt")
       (helm-occur)
       (start-process "evince-gsd" " gsd-processes" "evince"
@@ -1128,7 +1128,7 @@ specifies the list of buffers to kill, asking for approval for each one."
                              (number-to-string (- (string-to-number
                                                    (substring (what-page) 5 8))
                                                   12)))
-                     "/home/jm3/Downloads/gregg/gsd.pdf"));; )
+                     "/home/jm3/Downloads/gregg/gsd.pdf"))
   (global-set-key (kbd "<f9> g") 'gsd)
 #+end_src
 ** Window Dedication
