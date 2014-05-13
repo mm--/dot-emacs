@@ -1,7 +1,7 @@
 #+TITLE: Josh Moller-Mara's Emacs configuration
 #+OPTIONS: toc:4 h:4
 
-Shamelessly stolen from Sacha Chua
+The whole org-babel setup is shamelessly stolen from Sacha Chua.
 * Personal information
 
 #+begin_src emacs-lisp
@@ -865,7 +865,7 @@ Because dired-jump is pretty useful
   
 #+end_src
 
-
+   
 ** Org-drill
 Require org-drill.
 Add random noise to the due dates of cards, so they're not always clumped together.
@@ -948,6 +948,27 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
    Storing links in Emacs
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-c l") 'org-store-link)
+#+end_src
+** Setting a timer on the current task
+   I use =<f9> z= to set the current task. When I want to set a timer,
+   for instance in a pomodoro-type fashion, I'll use this function
+   which I have bound to =<f9> p=. It's the same thing as
+   =org-timer-set-timer=, but I don't have to switch buffers to find
+   the task I'm already clocked into.
+#+begin_src emacs-lisp
+  (defun josh/org-current-task-timer (&optional opt)
+    "Find the current clocking task and set a timer on it."
+    (interactive "P")
+    (when (org-clocking-p)
+      (save-excursion
+        (org-no-warnings (set-buffer (org-clocking-buffer)))
+        (save-restriction
+          (widen)
+          (goto-char org-clock-marker)
+          (beginning-of-line 1)
+          (org-timer-set-timer opt)))))
+  
+  (global-set-key (kbd "<f9> p") 'josh/org-current-task-timer)
 #+end_src
 
 * Sawfish
