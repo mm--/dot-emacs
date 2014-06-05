@@ -738,7 +738,7 @@ Because dired-jump is pretty useful
   (define-key global-map (kbd "C-c c") 'org-capture)
   (global-set-key (kbd "C-c a") 'org-agenda)
 #+end_src
-** TODO Capture templates
+** Capture templates
    Need to make this more portable across different systems. I think it defaults to org-directory.
 #+begin_src emacs-lisp
   (setq org-capture-templates
@@ -991,6 +991,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (global-set-key (kbd "M-y") 'helm-show-kill-ring)
   (global-set-key (kbd "M-s o") 'helm-occur)
   (global-set-key (kbd "M-g s") 'helm-do-grep)
+  (global-set-key (kbd "M-g b") 'helm-resume)
   (global-set-key (kbd "C-c SPC") 'helm-all-mark-rings)
 #+end_src
 ** Other Helm actions I find useful
@@ -1280,6 +1281,11 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
 #+end_src
+   I prefer less indentation.
+#+begin_src emacs-lisp
+  (setq-default js2-basic-offset 4)
+#+end_src
+
 ** Projectile
 #+begin_src emacs-lisp
   (require 'projectile)
