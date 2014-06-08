@@ -905,7 +905,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
      'agenda))
   
   (setq josh/helm-source-org-clock
-    '((name . "Clock in to what Bookmarks")
+    '((name . "Clock in to what")
       (candidates . josh/org-helm-candidates)
       (filtered-candidate-transformer
        helm-adaptive-sort)
@@ -931,6 +931,30 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   
   (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in)
   
+  (defun josh/helm-org-jump-candidate (candidate)
+    "Jump to a candidate with org"
+    (interactive)
+    (let* ((taskname (car candidate))
+           (taskbuffer (cdr candidate))
+           (place (org-find-exact-headline-in-buffer taskname taskbuffer)))
+      (switch-to-buffer (marker-buffer place))
+      (goto-char place)))
+  
+  (setq josh/helm-jump-org
+    '((name . "Jump to org")
+      (candidates . josh/org-helm-candidates)
+      (filtered-candidate-transformer
+       helm-adaptive-sort)
+      (action . (("Jump to"
+                  . josh/helm-org-jump-candidate)))))
+  
+  (defun josh/helm-org-jump ()
+    "Use helm to clock into a task"
+    (interactive)
+    (helm-other-buffer 'josh/helm-jump-org
+                       "*Org Jump*"))
+  
+  (global-set-key (kbd "<f9> j") 'josh/helm-org-jump)
 #+end_src
 ** Error out on invisible edits
    Sometimes I accidentally edit invisible parts of an org buffer.
