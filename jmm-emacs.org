@@ -1235,6 +1235,23 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (global-set-key (kbd "<f9> s") 'quail-show-key)
 #+end_src
+** Auto fill line
+   Sometimes I want to wrap a line, but pressing =M-q= will treat
+   everything as one huge paragraph, messing up the structure.
+   This simple function acts like we temporarily turn on
+   auto-fill-mode, wrap the line, and then turn it off.
+   
+#+begin_src emacs-lisp
+  (defun josh/fill-line ()
+    "Wrap the line"
+    (interactive)
+    (save-excursion
+      (end-of-line)
+      (funcall normal-auto-fill-function)))
+  
+  (global-set-key (kbd "M-Q") 'josh/fill-line)
+#+end_src
+
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
