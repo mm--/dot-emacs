@@ -938,7 +938,8 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
            (taskbuffer (cdr candidate))
            (place (org-find-exact-headline-in-buffer taskname taskbuffer)))
       (switch-to-buffer (marker-buffer place))
-      (goto-char place)))
+      (goto-char place)
+      (org-show-context)))
   
   (setq josh/helm-jump-org
     '((name . "Jump to org")
