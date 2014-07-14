@@ -1,15 +1,17 @@
 #+TITLE: Josh Moller-Mara's Emacs configuration
-#+OPTIONS: toc:4 h:4
+#+OPTIONS: toc:1 h:4
 
 The whole org-babel setup is shamelessly stolen from Sacha Chua.
 * Personal information
-
+  Here I set up my name and email, which is used for things like Gnus.
 #+begin_src emacs-lisp
   (setq user-full-name "Joshua Moller-Mara"
         user-mail-address "j.moller-mara@berkeley.edu")
 #+end_src
 
-* Emacs initialization
+* Emacs initialization and package management
+  Here I set up where to find my Elisp files, and the repositories for
+  packages.
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/elisp")
   (add-to-list 'load-path "~/.emacs.d/elisp")
@@ -21,13 +23,13 @@ The whole org-babel setup is shamelessly stolen from Sacha Chua.
   (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 #+end_src
 
-I don't want Custom stuff here. For now.
+  If I make any changes using Custom, I want them to be in a separate file.
 #+begin_src emacs-lisp
-(setq custom-file "~/.emacs.d/custom.el")
-(load custom-file)
+  (setq custom-file "~/.emacs.d/custom.el")
+  (load custom-file)
 #+end_src
 
-Secret info. (Authentication info)
+  Secret info. (Authentication info)
 #+begin_src emacs-lisp
 (load-file "~/.emacs.secrets")
 #+end_src
@@ -41,7 +43,7 @@ Secret info. (Authentication info)
   (byte-recompile-directory "~/.emacs.d" 0)
   (byte-recompile-directory "~/elisp" 0))
 #+end_src
-  
+
 * Basic configuration
 
 Enable all the disabled commands
@@ -52,24 +54,24 @@ Enable all the disabled commands
 #+begin_src emacs-lisp
   ;; I don't like having to type "yes"
   (fset 'yes-or-no-p 'y-or-n-p)
-  
+
   (transient-mark-mode 1)
   (column-number-mode 1)
   (show-paren-mode 1)
   (menu-bar-mode -1)
   (tool-bar-mode 0)
   (blink-cursor-mode 0)
-  
+
   (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
   (set-register ?l '(file . "~/org/josh-ledger.dat"))
   (set-register ?n '(file . "~/org/neuroecon.org"))
   (set-register ?o '(file . "~/org/gtd-test.org"))
-  
+
   (server-start)
-  
+
   (setq visible-bell 0)                   ;Set visible bell on.
   (setq ring-bell-function 'ignore)       ;Visible bell.
-  
+
   (setq frame-title-format "Emacs - %b")
   (setq set-mark-command-repeat-pop t)
   (require 'uniquify)
@@ -79,7 +81,7 @@ Enable all the disabled commands
   (setq Man-notify-method 'pushy)
   (set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
   (setq visual-line-fringe-indicators '(nil right-curly-arrow))
-  
+
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program "chromium")
   (setq shr-external-browser 'browse-url-generic) ;For eww
@@ -159,7 +161,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 #+end_src
 
 * Autocompletion, Hippie expand
-  
+
 #+begin_src emacs-lisp
 (global-set-key (kbd "M-<return>") 'complete-tag) ;;bind complete-tag.
 (global-set-key (kbd "M-?") 'hippie-expand)
@@ -350,10 +352,10 @@ Make it easier to insert Greek symbols
   (setq TeX-parse-self t)
   (setq-default TeX-master nil)
   (add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
-  
+
   (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
   (setq reftex-plug-into-AUCTeX t)
-  
+
   (setq skeleton-end-newline nil)
   (add-hook 'LaTeX-mode-hook
    (lambda ()
@@ -364,27 +366,27 @@ Make it easier to insert Greek symbols
      (define-key LaTeX-mode-map (kbd "` v $") 'quoted-parens)
      (define-key LaTeX-mode-map (kbd "` v %") 'quoted-brackets)
      ))
-  
+
   (define-skeleton latex-skeleton-left-paren
     "Insert \\left( ... \\right)."
     nil "\\left(" _ "\\right)")
-  
+
   (define-skeleton latex-skeleton-left-bracket
     "Insert \\left[ ... \\right]."
     nil "\\left[" _ "\\right]")
-  
+
   (define-skeleton latex-skeleton-left-brace
     "Insert \\left\\{ ... \\right\\}."
     nil "\\left\\{" _ "\\right\\}")
-  
+
   (define-skeleton latex-math-text
     "Insert \\text{ ... }."
     nil "\\text{" _ "}")
-  
+
   (define-skeleton quoted-parens
     "Insert \\( ... \\)."
     nil "\\(" _ "\\)")
-  
+
   (define-skeleton quoted-brackets
     "Insert \\[ ... \\]."
     nil "\\[" _ "\\]")
@@ -404,18 +406,18 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   (setq comint-scroll-to-bottom-on-input t)
   (setq comint-scroll-to-bottom-on-output t)
   (setq comint-move-point-for-output t)
-  
+
   (add-hook 'ess-mode-hook
             (lambda ()
               (flyspell-prog-mode)
               (auto-complete-mode 1)
               (ac-flyspell-workaround)))
-  
+
   (add-hook 'inferior-ess-mode-hook
             (lambda ()
               (auto-complete-mode 1)))
-  
-  (autoload 'ess-rdired "ess-rdired" 
+
+  (autoload 'ess-rdired "ess-rdired"
     "View *R* objects in a dired-like buffer." t)
 #+end_src
 ** JAGS
@@ -435,7 +437,7 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
          (ess-read-object-name "Object to edit"))))
     (ess-execute (ess-rdired-get object)
                nil "R view" ))
-  
+
   (eval-after-load "ess-mode"
     '(define-key ess-mode-map (kbd "C-c v") 'ess-dump-object-into-view-buffer))
 #+end_src
@@ -515,11 +517,11 @@ of erc-modified-channels-alist"
     (unless (string= datestamp erc-last-datestamp)
       (erc-insert-timestamp-left datestamp)
       (setq erc-last-datestamp datestamp))))
-    
-    
+
+
 (setq erc-timestamp-only-if-changed-flag t
       erc-timestamp-format "%H:%M "
-      erc-datestamp-format " === [%Y-%m-%d %a] ===\n" ; mandatory ascii art                          
+      erc-datestamp-format " === [%Y-%m-%d %a] ===\n" ; mandatory ascii art
       erc-fill-prefix "      "
       erc-insert-timestamp-function 'ks-timestamp)
 #+end_src
@@ -536,24 +538,24 @@ of erc-modified-channels-alist"
 ** Other
 #+begin_src emacs-lisp
   (setq rcirc-debug-flag t)
-  
+
   ;; Adjust the colours of one of the faces.
   (set-face-foreground 'rcirc-my-nick "red" nil)
-  
+
   (setq rcirc-default-nick "emdash")
   (setq rcirc-default-user-name "joshm")
   (setq rcirc-default-full-name "Josh Moller-Mara")
-  
+
   (setq rcirc-buffer-maximum-lines 2000)
   ;; rcirc-server-alist moved to secrets file, as it contains passwords.
-  
+
   (add-hook 'rcirc-mode-hook
             (lambda ()
               (rcirc-track-minor-mode 1)))
-  
+
   (add-hook 'rcirc-mode-hook (lambda ()
                                (flyspell-mode 1)))
-  
+
 #+end_src
 
 ** Reconnect after disconnect
@@ -689,7 +691,7 @@ Sometimes IMAP freezes, so I like to be able to kill it.
               (process-send-region process (point) (point-max))
               (process-send-string process "\n")
               (process-send-eof process)))))))
-  
+
   (global-set-key (kbd "<f9> e") 'josh/espeak-article)
 #+end_src
 
@@ -816,7 +818,7 @@ Because dired-jump is pretty useful
    working on, and how long I've been clocked into it.
 #+begin_src emacs-lisp
   (setq josh/clock-current-task-file "~/.currenttask")
-  
+
   (defun josh/org-clock-in-conky ()
     (interactive)
     "Creates a file `josh/clock-current-task-file' with the current task and the time started.
@@ -828,13 +830,13 @@ Because dired-jump is pretty useful
               (newline)
               (insert (format-time-string "%s" org-clock-start-time))
               (newline)))))
-  
+
   (defun josh/org-clock-out-conky ()
     (interactive)
     "When I clock out, remove `josh/clock-current-task-file'"
     (if (file-exists-p josh/clock-current-task-file)
             (delete-file josh/clock-current-task-file)))
-  
+
   ;; (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky)
   ;; (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky)
 #+end_src
@@ -851,21 +853,20 @@ Because dired-jump is pretty useful
     (start-process "LogTime"
                    (get-buffer-create " *josh-clock-buffer*")
                    "~/.sawfish/scripts/clock-in.sh"))
-  
+
   (defun josh/org-clock-in-conky2 ()
     (josh/org-clock-in-conky)
     (josh/org-clock-2))
-  
+
   (defun josh/org-clock-out-conky2 ()
     (josh/org-clock-out-conky)
     (josh/org-clock-2))
-  
+
   (add-hook 'org-clock-in-hook 'josh/org-clock-in-conky2)
   (add-hook 'org-clock-out-hook 'josh/org-clock-out-conky2)
-  
+
 #+end_src
 
-   
 ** Org-drill
 Require org-drill.
 Add random noise to the due dates of cards, so they're not always clumped together.
@@ -890,7 +891,8 @@ http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
 #+begin_src emacs-lisp
   (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
 #+end_src
-** Easier method to clock into some frequent habits
+** Clocking
+*** Easier method to clock into some frequent habits
 Some habits occur quite frequently, and it's kind of a pain to have to
 find them in my GTD org file before clocking in. This simplifies
 clocking into frequent tasks. (Mostly helps me track bad habits.)
@@ -903,7 +905,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
                   (cons title (cons title (current-buffer)))))
      nil
      'agenda))
-  
+
   (setq josh/helm-source-org-clock
     '((name . "Clock in to what")
       (candidates . josh/org-helm-candidates)
@@ -911,7 +913,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
        helm-adaptive-sort)
       (action . (("Clock in"
                   . josh/org-clock-in)))))
-  
+
   (defun josh/org-clock-in (candidate)
     "Clock into taskname in gtd-test"
     (interactive)
@@ -922,15 +924,15 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
         (with-current-buffer (marker-buffer place)
           (goto-char place)
           (org-clock-in)))))
-  
+
   (defun josh/helm-org-clock-in ()
     "Use helm to clock into a task"
     (interactive)
     (helm-other-buffer 'josh/helm-source-org-clock
                        "*Helm Clock-in*"))
-  
+
   (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in)
-  
+
   (defun josh/helm-org-jump-candidate (candidate)
     "Jump to a candidate with org"
     (interactive)
@@ -940,7 +942,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
       (switch-to-buffer (marker-buffer place))
       (goto-char place)
       (org-show-context)))
-  
+
   (setq josh/helm-jump-org
     '((name . "Jump to org")
       (candidates . josh/org-helm-candidates)
@@ -948,33 +950,16 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
        helm-adaptive-sort)
       (action . (("Jump to"
                   . josh/helm-org-jump-candidate)))))
-  
+
   (defun josh/helm-org-jump ()
     "Use helm to clock into a task"
     (interactive)
     (helm-other-buffer 'josh/helm-jump-org
                        "*Org Jump*"))
-  
+
   (global-set-key (kbd "<f9> j") 'josh/helm-org-jump)
 #+end_src
-** Error out on invisible edits
-   Sometimes I accidentally edit invisible parts of an org buffer.
-   Setting this variable prevents it.
-#+begin_src emacs-lisp
-  ;; (setq org-catch-invisible-edits 'nil)
-#+end_src
-** Refiling to other places
-   This is so we're able to refile to other files
-#+begin_src emacs-lisp
-  (setq org-refile-targets (quote ((nil :maxlevel . 1)
-                                   (org-agenda-files :maxlevel . 1))))
-#+end_src
-** Store links
-   Storing links in Emacs
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-c l") 'org-store-link)
-#+end_src
-** Setting a timer on the current task
+*** Setting a timer on the current task
    I use =<f9> z= to set the current task. When I want to set a timer,
    for instance in a pomodoro-type fashion, I'll use this function
    which I have bound to =<f9> p=. It's the same thing as
@@ -992,17 +977,75 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
           (goto-char org-clock-marker)
           (beginning-of-line 1)
           (org-timer-set-timer opt)))))
-  
+
   (global-set-key (kbd "<f9> p") 'josh/org-current-task-timer)
 #+end_src
+*** Quick key for clocking into current task
 
+#+begin_src emacs-lisp
+  (global-set-key (kbd "<f11>") 'org-clock-jump-to-current-clock)
+#+end_src
+
+** Refiling to other places
+   This is so we're able to refile to other files
+#+begin_src emacs-lisp
+  (setq org-refile-targets (quote ((nil :maxlevel . 9)
+                                   (org-agenda-files :maxlevel . 9))))
+#+end_src
+** Store links
+   Storing links in Emacs
+#+begin_src emacs-lisp
+  (global-set-key (kbd "C-c l") 'org-store-link)
+#+end_src
+** Better task states
+   From http://doc.norang.ca/org-mode.html
+#+begin_src emacs-lisp
+  (setq org-todo-keywords
+         (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+                 (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
+
+  (setq org-todo-keyword-faces
+        (quote (("TODO" :foreground "red" :weight bold)
+                ("NEXT" :foreground "blue" :weight bold)
+                ("DONE" :foreground "forest green" :weight bold)
+                ("WAITING" :foreground "orange" :weight bold)
+                ("HOLD" :foreground "magenta" :weight bold)
+                ("CANCELLED" :foreground "forest green" :weight bold)
+                ("DEFERRED" :foreground "forest green" :weight bold))))
+
+  (setq org-todo-state-tags-triggers
+        (quote (("CANCELLED" ("CANCELLED" . t))
+                ("WAITING" ("WAITING" . t))
+                ("HOLD" ("WAITING") ("HOLD" . t))
+                (done ("WAITING") ("HOLD"))
+                ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
+                ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
+                ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
+#+end_src
+** Babel
+*** Babel languages
+#+begin_src emacs-lisp
+  (org-babel-do-load-languages
+   (quote org-babel-load-languages)
+   (quote ((emacs-lisp . t)
+           (ditaa . t)
+           (R . t)
+           (python . t)
+           (ledger . t)
+           (org . t)
+           (latex . t))))
+#+end_src
+*** Ditaa
+#+begin_src emacs-lisp
+  (setq org-ditaa-jar-path "/usr/bin/ditaa")
+#+end_src
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
   (setq auto-mode-alist (cons '("\\.sawfishrc$"  . sawfish-mode) auto-mode-alist)
         auto-mode-alist (cons '("\\.jl$"         . sawfish-mode) auto-mode-alist)
         auto-mode-alist (cons '("\\.sawfish/rc$" . sawfish-mode) auto-mode-alist))
-  
+
 #+end_src
 * Helm
 #+begin_src emacs-lisp
@@ -1027,40 +1070,24 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
     (interactive)
     (when helm-alive-p
       (helm-quit-and-execute-action 'helm-point-file-in-dired)))
-  
+
   (define-key helm-map (kbd "C-c j") 'helm-ff-dired)
-  
+
   (defun helm-xterm-directory (file)
     "Open an xterm starting in FILE's directory."
     (start-xterm (if (file-directory-p file)
                      file
                    (file-name-directory file))))
-  
+
   (defun helm-ff-xterm-directory ()
     "Open xterm on file's directory"
     (interactive)
     (when helm-alive-p
       (helm-quit-and-execute-action 'helm-xterm-directory)))
-  
+
   (define-key helm-map (kbd "C-c J") 'helm-ff-xterm-directory)
 #+end_src
 
-* Elfeed
-  Elfeed is an RSS reader that I'm currently trying out.
-#+begin_src emacs-lisp
-  (require 'elfeed)
-  (global-set-key (kbd "C-x w") 'elfeed)
-  (setq elfeed-feeds
-        '(("http://nedroid.com/feed/" webcomic)
-          ("http://xkcd.com/rss.xml" webcomic)
-          ("http://pbfcomics.com/feed/feed.xml" webcomic)
-          ("http://feeds.feedburner.com/PoorlyDrawnLines?format=xml" webcomic)
-          ("http://feeds.feedburner.com/StatisticalModeling" statistics)
-          ))
-  (add-hook 'elfeed-new-entry-hook
-            (elfeed-make-tagger :before "2 weeks ago"
-                                :remove 'unread))
-#+end_src
 * Processing
   Define the location of processing.
   Will be different for you.
@@ -1150,7 +1177,7 @@ specifies the list of buffers to kill, asking for approval for each one."
       (interactive)
       (let ((path (if dirpath dirpath default-directory)))
         "Return the local portion of a path.
-    
+
     If PATH is local, return it unaltered.
     If PATH is remote, return the remote diretory portion of the path."
         (if (tramp-tramp-file-p path)
@@ -1223,7 +1250,7 @@ specifies the list of buffers to kill, asking for approval for each one."
    dictionary.  The main advantage to using it over the built-in
    =chinese-cns-tsangchi= or =chinese-b5-tsangchi= is that this method
    allows you to type simplified Chinese characters.
-   
+
 #+begin_src emacs-lisp
   (register-input-method
    "Cangjie5" "Chinese-BIG5" 'quail-use-package
@@ -1240,7 +1267,7 @@ specifies the list of buffers to kill, asking for approval for each one."
    everything as one huge paragraph, messing up the structure.
    This simple function acts like we temporarily turn on
    auto-fill-mode, wrap the line, and then turn it off.
-   
+
 #+begin_src emacs-lisp
   (defun josh/fill-line ()
     "Wrap the line"
@@ -1248,10 +1275,19 @@ specifies the list of buffers to kill, asking for approval for each one."
     (save-excursion
       (end-of-line)
       (funcall normal-auto-fill-function)))
-  
+
   (global-set-key (kbd "M-Q") 'josh/fill-line)
 #+end_src
-
+** Switch to scratch buffer
+   A quick hotkey for switching to the scratch buffer.
+#+begin_src emacs-lisp
+  (defun switch-to-scratch ()
+    "Switch to scratch"
+    (interactive)
+    (switch-to-buffer "*scratch*"))
+  
+  (global-set-key (kbd "C-h C-s") 'switch-to-scratch)
+#+end_src
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
@@ -1339,4 +1375,3 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (setq yas-triggers-in-field t)
 #+end_src
-
