@@ -794,7 +794,8 @@ Because dired-jump is pretty useful
                         (org-deadline-warning-days 0)))))
           ("U" "Unscheduled NoDeadline" alltodo ""
            ((org-agenda-skip-function
-            '(org-agenda-skip-entry-if 'scheduled 'deadline))))
+             '(org-agenda-skip-entry-if 'scheduled 'deadline))))
+          ("k" agenda "" ((org-agenda-span 7)) ("~/org/week-agenda.html"))
           ("X" agenda "" ((org-agenda-span 3)
                           ;; (org-agenda-start-with-log-mode t)
                           (org-agenda-start-with-clockreport-mode t)) ("~/org/newtab/agenda.html"))
