@@ -725,9 +725,12 @@ Because dired-jump is pretty useful
 ** Setup my agenda file
    Read from "org-agendas" where the agenda files are.
    Set the default span to a day view.
+   I also have a script periodically export agendas. So to keep from
+   destroying an agenda I'm currently viewing, I turn on sticky agendas.
 #+begin_src emacs-lisp
   (setq org-agenda-files (concat (file-name-as-directory org-directory) "org-agendas.txt"))
   (setq org-agenda-span 'day)
+  (setq org-agenda-sticky t)
 #+end_src
 ** Default notes file?
    Note to self, figure out what the difference between this and agenda is.
