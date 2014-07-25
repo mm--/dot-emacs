@@ -1024,7 +1024,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
                 (done ("WAITING") ("HOLD"))
                 ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
                 ("NEXT" ("WAITING") ("CANCELLED") ("HOLD"))
-                ("DONE" ("WAITING") ("CANCELLED") ("HOLD")))))
+                ("DONE" ("WAITING") ("CANCELLED") ("HOLD") ("IFBORED")))))
 #+end_src
 ** Babel
 *** Babel languages
@@ -1042,6 +1042,11 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 *** Ditaa
 #+begin_src emacs-lisp
   (setq org-ditaa-jar-path "/usr/bin/ditaa")
+#+end_src
+** Org Mobile Setup
+   In order to sync to MobileOrg, you need to set org-mobile-directory
+#+begin_src emacs-lisp
+  (setq org-mobile-directory "~/org-mobile/")
 #+end_src
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
