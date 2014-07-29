@@ -798,7 +798,8 @@ Because dired-jump is pretty useful
           ("U" "Unscheduled NoDeadline" alltodo ""
            ((org-agenda-skip-function
              '(org-agenda-skip-entry-if 'scheduled 'deadline))))
-          ("k" agenda "" ((org-agenda-span 7)) ("~/org/week-agenda.html"))
+          ("d" agenda "" ((org-agenda-span 1)) ("~/agendas-org/day-agenda.html"))
+          ("k" agenda "" ((org-agenda-span 7)) ("~/agendas-org/week-agenda.html"))
           ("X" agenda "" ((org-agenda-span 3)
                           ;; (org-agenda-start-with-log-mode t)
                           (org-agenda-start-with-clockreport-mode t)) ("~/org/newtab/agenda.html"))
@@ -901,7 +902,7 @@ Some habits occur quite frequently, and it's kind of a pain to have to
 find them in my GTD org file before clocking in. This simplifies
 clocking into frequent tasks. (Mostly helps me track bad habits.)
 #+begin_src emacs-lisp
-  (require 'helm-adaptative)
+  (require 'helm-adaptive)
   (defun josh/org-helm-candidates ()
     (interactive)
     (org-map-entries
