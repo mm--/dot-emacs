@@ -458,6 +458,23 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   (add-hook 'comint-output-filter-functions
             'comint-truncate-buffer)
 #+end_src
+** Continuation indentation
+   I like how ESS previously indented continuations as it makes ggplot
+   code easier to read.
+#+begin_src emacs-lisp
+  (add-to-list 'ess-style-alist
+               '(MY-STYLE
+                 (ess-indent-level . 4)
+                 (ess-first-continued-statement-offset . 4)
+                 (ess-continued-statement-offset . 0)
+                 (ess-brace-offset . 0)
+                 (ess-arg-function-offset . 4)
+                 (ess-arg-function-offset-new-line . '(4))
+                 (ess-expression-offset . 4)
+                 (ess-else-offset . 0)
+                 (ess-close-brace-offset . 0)))
+  (setq ess-default-style 'MY-STYLE)
+#+end_src
 * ERC
 #+begin_src emacs-lisp
   (require 'erc-services)
