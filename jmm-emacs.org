@@ -1235,7 +1235,7 @@ specifies the list of buffers to kill, asking for approval for each one."
   (defun start-xterm (&optional dirpath)
       "Start a new xterm in the current directory. SSH if necessary"
       (interactive)
-      (let ((path (if dirpath dirpath default-directory)))
+      (let ((path (if dirpath dirpath (expand-file-name default-directory))))
         "Return the local portion of a path.
 
     If PATH is local, return it unaltered.
