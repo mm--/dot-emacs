@@ -909,6 +909,18 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
   (setq org-drill-right-cloze-delimiter "]>")
   (setq org-drill-learn-fraction 0.3)
 #+end_src
+
+*** org-preview-latex-fragment
+    The function "org-preview-latex-fragment" was deprecated a while
+    back, but org-drill still depends on it. So here's a quick hack
+    that will display the LaTeX in org-drill.
+#+BEGIN_SRC emacs-lisp
+(defun org-preview-latex-fragment ()
+  (interactive)
+  (org-remove-latex-fragment-image-overlays)
+  (org-toggle-latex-fragment '(4)))
+#+END_SRC
+
 ** Org-habit
 #+begin_src emacs-lisp
   (add-to-list 'org-modules 'org-habit)
