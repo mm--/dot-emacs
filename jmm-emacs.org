@@ -613,6 +613,22 @@ of erc-modified-channels-alist"
 #+begin_src emacs-lisp
   (eval-after-load 'rcirc '(require 'rcirc-color))
 #+end_src
+
+** Display IRC activity in window manager
+   I have a toolbar in my window manager that lets me see things like
+   CPU usage, memory, etc. So I thought it'd be useful to also display
+   IRC activity. This just passes rcirc's activity string to a script
+   that updates the toolbar.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/rcirc-activity-report ()
+    "Report rcirc activity to the window manager, which displays it"
+    (start-process "LogTime"
+                     (get-buffer-create " *josh-rcirc-buffer*")
+                     "~/.sawfish/scripts/rcirc-update.sh"
+                     rcirc-activity-string))
+
+  (add-hook 'rcirc-update-activity-string-hook 'josh/rcirc-activity-report)
+#+END_SRC
 * Scheme
 #+begin_src emacs-lisp
 (setq scheme-program-name "csi")
