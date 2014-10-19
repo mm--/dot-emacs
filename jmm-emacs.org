@@ -804,6 +804,9 @@ Because dired-jump is pretty useful
           ("v" "Vocabulary" entry
            (file+headline "~/reading/words-i-learned.org" "Vocabulary")
            "* %^{The word} :drill:\n Added: %U\n %^{Extended word (may be empty)|%\\1}\n** Answer \n%^{The definition}")
+          ("V" "Two-sided Vocabulary" entry
+           (file+headline "~/reading/words-i-learned.org" "Vocabulary")
+           "* <[%^{The word}]> :drill:\n Added: %U\n    :PROPERTIES:\n    :DRILL_CARD_TYPE: twosided\n    :END:\n** Word\n%^{Extended word (may be empty)|%\\1}\n** Definition\n%^{Definition}\n** Examples\n%^{Examples}\n")
           ("R" "reading" plain
            (file "~/org/data/reading.csv")
            "%(format-time-string \"%s\"),\"%(format-time-string \"%Y-%m-%d\")\",\"%(josh/prompt-book)\",%^{Start},%^{End}")))
@@ -924,7 +927,7 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
   (setq org-drill-hint-separator "||")
   (setq org-drill-left-cloze-delimiter "<[")
   (setq org-drill-right-cloze-delimiter "]>")
-  (setq org-drill-learn-fraction 0.3)
+  (setq org-drill-learn-fraction 0.25)
 #+end_src
 
 *** org-preview-latex-fragment
@@ -1457,8 +1460,7 @@ specifies the list of buffers to kill, asking for approval for each one."
   (add-hook 'js-mode-hook
             (lambda ()
               (js2-minor-mode 1)
-              (auto-complete-mode 1)
-              (slime-js-minor-mode 1)))
+              (auto-complete-mode 1)))
 #+end_src
 ** js2-mode
    Use js2-mode by default
@@ -1469,6 +1471,19 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (setq-default js2-basic-offset 4)
 #+end_src
+
+** Tern.js for Javascript
+   [[http://ternjs.net/][Tern]] seems to be a pretty cool tool much like ctags.
+
+   It's able to find the definitions of functions and variables in
+   your javascript files as well as tell you the type of variable.
+
+#+begin_src emacs-lisp
+  (add-to-list 'load-path "~/Downloads/tern/emacs")
+  (require 'tern)
+  (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
+#+end_src
+
 
 ** Projectile
 #+begin_src emacs-lisp
