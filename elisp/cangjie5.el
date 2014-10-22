@@ -1,4 +1,4 @@
-;; Generated using libcangjie's dict
+;; Generated using libcangjie's dict by Josh Moller-Mara
 (require 'quail)
 (quail-define-package "Cangjie5" "Cangjie5" "倉C5" t
 "Cangjie version 5 with simplified characters.
