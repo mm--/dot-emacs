@@ -82,21 +82,25 @@
       (setq josh/chinese-words words)
       (format "%s [%s]" simplified traditional))))
 
-(defun josh/chinese-def-at-point ()
+(defun josh/chinese-def-at-point (&optional arg)
   "Get the definition of a character at the point and display in
-the minibuffer."
-  (interactive)
+the minibuffer. With an argument, insert the definition into the
+buffer."
+  (interactive "P")
   (let ((phrase (if (use-region-p)
 		    (buffer-substring-no-properties (region-beginning) (region-end))
-		    (string (char-after)))))
+		  (string (char-after))))
+	definitions)
     (with-temp-buffer
       (insert-file-contents josh/chinese-dictionary-path)
-      (let (definitions)
-	(while (re-search-forward (concat "^[^][]*\\b" phrase "\\b.*?$") nil t)
+      (while (re-search-forward (concat "^[^][]*\\b" phrase "\\b.*?$") nil t)
 	  (push (buffer-substring (match-beginning 0)
 				  (match-end 0))
-		definitions))
-	(message (mapconcat 'identity definitions "\n"))))))
+		definitions)))
+    (let ((defs (mapconcat 'identity definitions "\n")))
+	  (if arg
+	      (insert defs)
+	    (message defs)))))
 
 (global-set-key (kbd "<f9> C") 'josh/chinese-def-at-point)
 
@@ -181,8 +185,7 @@ the minibuffer."
 (split-string "(one,two,three)" "[,()]" t)
 
 (josh/chinese-decomposition-find "38391")
-(listtostr (josh/chinese-decomposition-find "㘌"))
 
 (provide 'josh/chinese)
 
-(string ma
+
