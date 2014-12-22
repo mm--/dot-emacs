@@ -1219,6 +1219,34 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 #+BEGIN_SRC emacs-lisp
   (setq helm-locate-command "locate %s -e -A --regex %s")
 #+END_SRC
+** Helm MPV
+   I like being able to play a bunch of files with mpv, and sometimes
+   I like to scrobble them to last.fm. I have a script called
+   "scrobblempv2" in my path that enables scrobbling of tracks.
+#+BEGIN_SRC emacs-lisp
+  (defun helm-mpv (_ignore)
+    "Play some files with mpv. Given a prefix, run scrobblempv2, a
+  script made to enable plugins for mpv scrobbling."
+    (let* ((files (helm-marked-candidates :with-wildcard t))
+           (len (length files))
+           (mpv (if helm-current-prefix-arg "scrobblempv2" "mpv")))
+      (with-helm-display-marked-candidates
+        helm-marked-buffer-name
+        (mapcar #'(lambda (f)
+                    (if (file-directory-p f)
+                        (concat (helm-basename f) "/")
+                      (helm-basename f)))
+                files)
+        (apply 'start-process "scrobblempv2" " mpv process" mpv files))))
+
+  (defun helm-ff-mpv ()
+    "Open a file with mpv."
+    (interactive)
+    (when helm-alive-p
+      (helm-quit-and-execute-action 'helm-mpv)))
+
+  (define-key helm-map (kbd "C-c C-m") 'helm-ff-mpv)
+#+END_SRC
 * Processing
   Define the location of processing.
   Will be different for you.
