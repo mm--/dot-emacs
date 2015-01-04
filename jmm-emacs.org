@@ -233,10 +233,11 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Spelling
 
 #+begin_src emacs-lisp
-(setq-default ispell-program-name "aspell")
+(setq-default ispell-program-name "hunspell")
 (setq-default ispell-grep-command "grep")
 (setq-default ispell-grep-options "-iE")
 (setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
+(require 'rw-hunspell)
 #+end_src
 
 #+begin_src emacs-lisp
@@ -825,7 +826,7 @@ Because dired-jump is pretty useful
            "* %i %?\n\tAdded: %U")
           ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
            "* %?\n%i\n\tAdded: %U")
-          ("m" "Someday/Maybe" entry (file+headline "gtd-test.org" "Someday/Maybe")
+          ("m" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
            "* %?\n\tAdded: %U")
           ("o" "thoughts" plain (file "thoughts-misc.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
