@@ -883,12 +883,15 @@ Because dired-jump is pretty useful
           )))
 #+end_src
 ** Define a stuck project
+   Stuck projects are projects that don't have a next action or a TODO.
+   Also, make sure the "PROJECT" tag isn't inherited.
 #+begin_src emacs-lisp
   (setq org-stuck-projects
              '("+PROJECT/-MAYBE-DONE" ("NEXT" "TODO") ("@SHOP")
-                                      "\\<IGNORE\\>"))
-#+end_src
+               "\\<IGNORE\\>"))
 
+  (add-to-list 'org-tags-exclude-from-inheritance "PROJECT")
+#+end_src
 ** If I didn't want it to interfere with windmove
 #+begin_src emacs-lisp
   ;; (setq org-replace-disputed-keys t)
