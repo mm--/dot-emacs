@@ -794,7 +794,7 @@ Because dired-jump is pretty useful
    destroying an agenda I'm currently viewing, I turn on sticky agendas.
 #+begin_src emacs-lisp
   (setq org-agenda-files (concat (file-name-as-directory org-directory) "org-agendas.txt"))
-  (setq org-agenda-span 'day)
+  (setq org-agenda-span 3)
   (setq org-agenda-sticky t)
 #+end_src
 ** Default notes file?
@@ -872,6 +872,14 @@ Because dired-jump is pretty useful
                         (org-agenda-sorting-strategy
                          (quote ((agenda time-up priority-down tag-up) )))
                         (org-deadline-warning-days 0)))))
+          ("z" "ZPM (hipster PDA)"
+           ((agenda "" ((org-agenda-span 33)
+                        (org-habit-show-habits nil)
+                        (org-agenda-show-log nil)
+                        (org-agenda-start-with-clockreport-mode nil)
+                        (org-agenda-sorting-strategy
+                         (quote ((agenda time-up priority-down tag-up) )))
+                        ))))
           ("U" "Unscheduled NoDeadline" alltodo ""
            ((org-agenda-skip-function
              '(org-agenda-skip-entry-if 'scheduled 'deadline))))
