@@ -820,8 +820,6 @@ Because dired-jump is pretty useful
            "* TODO %i %?\n\tSCHEDULED: <%<%Y-%m-%d %a>>\n\tAdded: %U")
           ("l" "Lookup" entry (file+headline "gtd-test.org" "Lookup")
            "* %?\n\tAdded: %U")
-          ("c" "Calendar" entry (file+headline "gtd-test.org" "Calendar")
-           "* %i %?\n\tAdded: %U")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
            "* %i %?\n\tAdded: %U")
           ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
@@ -838,7 +836,10 @@ Because dired-jump is pretty useful
           ("V" "Two-sided Vocabulary" entry
            (file+headline "~/reading/words-i-learned.org" "Vocabulary")
            "* <[%^{The word}]> :drill:\n Added: %U\n    :PROPERTIES:\n    :DRILL_CARD_TYPE: twosided\n    :END:\n** Word\n%^{Extended word (may be empty)|%\\1}\n** Definition\n%^{Definition}\n** Examples\n%^{Examples}\n")
-          ("C" "Chinese Word" entry
+          ("c" "Chinese Word" entry
+           (file+headline "~/reading/chinese.org" "Words")
+           "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\nDefinition:\n%(josh/chinese-get-definition (josh/chinese-dict-find josh/chinese-word))\n** Characters\n%(josh/chinese-get-word josh/chinese-word-dict)\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n")
+          ("C" "Chinese Word (Read)" entry
            (file+headline "~/reading/chinese.org" "Words")
            "* %(josh/chinese-prompt) :drill:\n Added: %U\n%(josh/chinese-get-word (josh/chinese-dict-find josh/chinese-word))\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n** Definition\n%(josh/chinese-get-definition josh/chinese-word-dict)\n")
           ("R" "reading" plain

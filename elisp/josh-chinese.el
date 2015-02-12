@@ -186,6 +186,4 @@ buffer."
 
 (josh/chinese-decomposition-find "38391")
 
-(provide 'josh/chinese)
-
-
+(provide 'josh-chinese)
