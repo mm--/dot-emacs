@@ -57,7 +57,7 @@ Enable all the disabled commands
 
   (transient-mark-mode 1)
   (column-number-mode 1)
-  (show-paren-mode 1)
+  ;; (show-paren-mode 1)
   (menu-bar-mode -1)
   (tool-bar-mode 0)
   (horizontal-scroll-bar-mode 0)
@@ -1260,6 +1260,19 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 
   (define-key helm-map (kbd "C-c C-m") 'helm-ff-mpv)
 #+END_SRC
+** helm-swoop
+Set up hotkeys and stuff for helm-swoop
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-i") 'helm-swoop)
+  (global-set-key (kbd "M-I") 'helm-swoop-back-to-last-point)
+  (global-set-key (kbd "C-c M-i") 'helm-multi-swoop)
+  (global-set-key (kbd "C-x M-i") 'helm-multi-swoop-all)
+
+  ;; When doing isearch, hand the word over to helm-swoop
+  (define-key isearch-mode-map (kbd "M-i") 'helm-swoop-from-isearch)
+  ;; From helm-swoop to helm-multi-swoop-all
+  (define-key helm-swoop-map (kbd "M-i") 'helm-multi-swoop-all-from-helm-swoop)
+#+END_SRC
 * Processing
   Define the location of processing.
   Will be different for you.
@@ -1570,3 +1583,54 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (setq yas-triggers-in-field t)
 #+end_src
+** Switch window
+   A visual way to switch windows. Kind of like ace-jump, but for windows.
+#+BEGIN_SRC emacs-lisp
+(global-set-key (kbd "C-x o") 'switch-window)
+#+END_SRC
+** Smartparens
+#+BEGIN_SRC emacs-lisp
+  (require 'smartparens-config)
+  (smartparens-global-mode t)
+
+  (show-smartparens-global-mode t)
+
+  (define-key sp-keymap (kbd "C-M-f") 'sp-forward-sexp)
+  (define-key sp-keymap (kbd "C-M-b") 'sp-backward-sexp)
+
+  (define-key sp-keymap (kbd "C-M-d") 'sp-down-sexp)
+  (define-key sp-keymap (kbd "C-M-a") 'sp-backward-down-sexp)
+  (define-key sp-keymap (kbd "C-S-a") 'sp-beginning-of-sexp)
+  (define-key sp-keymap (kbd "C-S-d") 'sp-end-of-sexp)
+
+  (define-key sp-keymap (kbd "C-M-e") 'sp-up-sexp)
+  (define-key emacs-lisp-mode-map (kbd ")") 'sp-up-sexp)
+  (define-key sp-keymap (kbd "C-M-u") 'sp-backward-up-sexp)
+  (define-key sp-keymap (kbd "C-M-t") 'sp-transpose-sexp)
+
+  (define-key sp-keymap (kbd "C-M-n") 'sp-next-sexp)
+  (define-key sp-keymap (kbd "C-M-p") 'sp-previous-sexp)
+
+  (define-key sp-keymap (kbd "C-M-k") 'sp-kill-sexp)
+  (define-key sp-keymap (kbd "C-M-w") 'sp-copy-sexp)
+
+  (define-key sp-keymap (kbd "M-<delete>") 'sp-unwrap-sexp)
+  (define-key sp-keymap (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
+
+  (define-key sp-keymap (kbd "C-<right>") 'sp-forward-slurp-sexp)
+  (define-key sp-keymap (kbd "C-<left>") 'sp-forward-barf-sexp)
+  (define-key sp-keymap (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
+  (define-key sp-keymap (kbd "C-M-<right>") 'sp-backward-barf-sexp)
+
+  (define-key sp-keymap (kbd "M-D") 'sp-splice-sexp)
+  (define-key sp-keymap (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
+  (define-key sp-keymap (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
+  (define-key sp-keymap (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
+
+  (define-key sp-keymap (kbd "C-]") 'sp-select-next-thing-exchange)
+  (define-key sp-keymap (kbd "C-<left_bracket>") 'sp-select-previous-thing)
+  (define-key sp-keymap (kbd "C-M-]") 'sp-select-next-thing)
+
+  (define-key sp-keymap (kbd "M-F") 'sp-forward-symbol)
+  (define-key sp-keymap (kbd "M-B") 'sp-backward-symbol)
+#+END_SRC
