@@ -23,17 +23,56 @@ The whole org-babel setup is shamelessly stolen from Sacha Chua.
   (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
 #+end_src
 
+  Install packages if they aren't already.
+
+#+BEGIN_SRC emacs-lisp
+  (package-initialize)
+  (when (not package-archive-contents)
+    (package-refresh-contents))
+  (defvar my-packages '(ess
+                        magit
+                        helm
+                        auctex
+                        zenburn-theme
+                        multiple-cursors
+                        phi-search
+                        ace-jump-mode
+                        expand-region
+                        async
+                        auto-complete
+                        projectile
+                        ledger-mode
+                        helm-projectile
+                        helm-swoop
+                        js2-mode
+                        flycheck
+                        use-package
+                        ))
+
+  (dolist (p my-packages)
+    (when (not(package-installed-p p))
+      (package-install p)))
+  (setq use-package-verbose t)
+  (require 'use-package)
+  (use-package auto-compile
+    :ensure t
+    :init (auto-compile-on-load-mode))
+  (setq load-prefer-newer t)
+#+END_SRC
+
+
   If I make any changes using Custom, I want them to be in a separate file.
 #+begin_src emacs-lisp
   (setq custom-file "~/.emacs.d/custom.el")
-  (load custom-file)
+  (if (file-exists-p custom-file)
+      (load custom-file))
 #+end_src
 
   Secret info. (Authentication info)
 #+begin_src emacs-lisp
-(load-file "~/.emacs.secrets")
+  (let ((secrets "~/.emacs.secrets"))
+    (if (file-exists-p secrets) (load-file secrets)))
 #+end_src
-
 
 ** Byte compile stuff?
 
@@ -237,7 +276,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 (setq-default ispell-grep-command "grep")
 (setq-default ispell-grep-options "-iE")
 (setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
-(require 'rw-hunspell)
+(use-package rw-hunspell)
 #+end_src
 
 #+begin_src emacs-lisp
@@ -607,12 +646,12 @@ of erc-modified-channels-alist"
 
 ** Load rcirc-notify
 #+begin_src emacs-lisp
-  (eval-after-load 'rcirc '(require 'rcirc-notify))
+  (eval-after-load 'rcirc '(use-package rcirc-notify))
 #+end_src
 
 ** Load rcirc color
 #+begin_src emacs-lisp
-  (eval-after-load 'rcirc '(require 'rcirc-color))
+  (eval-after-load 'rcirc '(use-package rcirc-color))
 #+end_src
 
 ** Display IRC activity in window manager
@@ -677,10 +716,11 @@ of erc-modified-channels-alist"
 #+end_src
 * BBDB
 #+begin_src emacs-lisp
-(require 'bbdb)
-(bbdb-initialize 'gnus 'message)
-(setq bbdb-use-pop-up nil)		;Don't pop up
-(setq bbdb-quiet-about-name-mismatches nil)
+  (use-package bbdb
+               :config (progn
+                         (bbdb-initialize 'gnus 'message)
+                         (setq bbdb-use-pop-up nil)              ;Don't pop up
+                         (setq bbdb-quiet-about-name-mismatches nil)))
 #+end_src
 * GNUS/Email
 #+begin_src emacs-lisp
@@ -967,13 +1007,14 @@ Add random noise to the due dates of cards, so they're not always clumped togeth
 Also, change the default cloze delimiters, as the defaults weren't working well for me.
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/elisp/org-mode/contrib/lisp/")
-  (add-to-list 'org-modules 'org-drill)
-  (require 'org-drill)
-  (setq org-drill-add-random-noise-to-intervals-p t)
-  (setq org-drill-hint-separator "||")
-  (setq org-drill-left-cloze-delimiter "<[")
-  (setq org-drill-right-cloze-delimiter "]>")
-  (setq org-drill-learn-fraction 0.25)
+  (use-package org-drill
+               :config (progn
+                         (add-to-list 'org-modules 'org-drill)
+                         (setq org-drill-add-random-noise-to-intervals-p t)
+                         (setq org-drill-hint-separator "||")
+                         (setq org-drill-left-cloze-delimiter "<[")
+                         (setq org-drill-right-cloze-delimiter "]>")
+                         (setq org-drill-learn-fraction 0.25)))
 #+end_src
 
 *** org-preview-latex-fragment
@@ -1175,7 +1216,10 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
         (cdr (split-string (buffer-string) "\n" t)))
        :test 'string=)))
 
-  (defvar josh/prompt-book-list (josh/prompt-book-build-list))
+  (defvar josh/book-csv "~/org/data/reading.csv")
+  (defvar josh/prompt-book-list
+    (if (file-exists-p josh/book-csv)
+        (josh/prompt-book-build-list)))
 #+END_SRC
 
 * Sawfish
@@ -1263,15 +1307,16 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 ** helm-swoop
 Set up hotkeys and stuff for helm-swoop
 #+BEGIN_SRC emacs-lisp
-  (global-set-key (kbd "M-i") 'helm-swoop)
-  (global-set-key (kbd "M-I") 'helm-swoop-back-to-last-point)
-  (global-set-key (kbd "C-c M-i") 'helm-multi-swoop)
-  (global-set-key (kbd "C-x M-i") 'helm-multi-swoop-all)
-
-  ;; When doing isearch, hand the word over to helm-swoop
-  (define-key isearch-mode-map (kbd "M-i") 'helm-swoop-from-isearch)
-  ;; From helm-swoop to helm-multi-swoop-all
-  (define-key helm-swoop-map (kbd "M-i") 'helm-multi-swoop-all-from-helm-swoop)
+  (use-package helm-swoop
+               :bind (("M-i" . helm-swoop)
+                      ("M-I" . helm-swoop-back-to-last-point)
+                      ("C-c M-i" . helm-multi-swoop)
+                      ("C-x M-i" . helm-multi-swoop-all))
+               :config (progn
+                         ;; When doing isearch, hand the word over to helm-swoop
+                         (define-key isearch-mode-map (kbd "M-i") 'helm-swoop-from-isearch)
+                         ;; From helm-swoop to helm-multi-swoop-all
+                         (define-key helm-swoop-map (kbd "M-i") 'helm-multi-swoop-all-from-helm-swoop)))
 #+END_SRC
 * Processing
   Define the location of processing.
@@ -1488,7 +1533,6 @@ specifies the list of buffers to kill, asking for approval for each one."
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/Downloads/multiple-cursors/")
   (require 'multiple-cursors)
   (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
   (global-set-key (kbd "C->") 'mc/mark-next-like-this)
@@ -1499,18 +1543,18 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 ** Expand Region
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/Downloads/expand-region.el/")
-  (require 'expand-region)
-  (global-set-key (kbd "C-=") 'er/expand-region)
+  (use-package expand-region
+               :bind ("C-=" . er/expand-region))
 #+end_src
 ** Ace Jump Mode
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/elisp/ace-jump-mode/")
-  (require 'ace-jump-mode)
-  (global-set-key (kbd "C-0") 'ace-jump-mode)
-  (setq ace-jump-mode-case-fold t)
-  (setq ace-jump-mode-scope 'frame)
-  ;; To set to only use lowercase
+  (use-package ace-jump-mode
+               :ensure t
+               :bind ("C-0" . ace-jump-mode)
+               :init (progn
+                       ;; To set to only use lowercase
+                       (setq ace-jump-mode-case-fold t)
+                       (setq ace-jump-mode-scope 'frame)))
   ;; (setq ace-jump-mode-move-keys (loop for i from ?a to ?z collect i))
 #+end_src
 
@@ -1532,8 +1576,8 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 ** Ledger
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/elisp/ledger/")
-  (require 'ledger)
+  (use-package ledger
+               :ensure ledger-mode)
 #+end_src
 ** Swank-js
 #+begin_src emacs-lisp
@@ -1567,8 +1611,8 @@ specifies the list of buffers to kill, asking for approval for each one."
 
 #+begin_src emacs-lisp
   (add-to-list 'load-path "~/Downloads/tern/emacs")
-  (require 'tern)
-  (add-hook 'js2-mode-hook (lambda () (tern-mode t)))
+  (use-package tern
+               :config (add-hook 'js2-mode-hook (lambda () (tern-mode t))))
 #+end_src
 
 
@@ -1581,56 +1625,62 @@ specifies the list of buffers to kill, asking for approval for each one."
 ** Yasnippet
    So I can have recursive snippets.
 #+begin_src emacs-lisp
-  (setq yas-triggers-in-field t)
+  (use-package yasnippet
+               :ensure t
+               :init (progn (setq yas-triggers-in-field t)))
 #+end_src
 ** Switch window
    A visual way to switch windows. Kind of like ace-jump, but for windows.
 #+BEGIN_SRC emacs-lisp
-(global-set-key (kbd "C-x o") 'switch-window)
+  (use-package switch-window
+               :bind ("C-x o" . switch-window))
 #+END_SRC
 ** Smartparens
 #+BEGIN_SRC emacs-lisp
-  (require 'smartparens-config)
-  (smartparens-global-mode t)
+  (use-package smartparens
+               :ensure t
+               :config
+               (progn (require 'smartparens-config)
+                      (smartparens-global-mode t)
 
-  (show-smartparens-global-mode t)
+                      (show-smartparens-global-mode t)
 
-  (define-key sp-keymap (kbd "C-M-f") 'sp-forward-sexp)
-  (define-key sp-keymap (kbd "C-M-b") 'sp-backward-sexp)
+                      (define-key sp-keymap (kbd "C-M-f") 'sp-forward-sexp)
+                      (define-key sp-keymap (kbd "C-M-b") 'sp-backward-sexp)
 
-  (define-key sp-keymap (kbd "C-M-d") 'sp-down-sexp)
-  (define-key sp-keymap (kbd "C-M-a") 'sp-backward-down-sexp)
-  (define-key sp-keymap (kbd "C-S-a") 'sp-beginning-of-sexp)
-  (define-key sp-keymap (kbd "C-S-d") 'sp-end-of-sexp)
+                      (define-key sp-keymap (kbd "C-M-d") 'sp-down-sexp)
+                      (define-key sp-keymap (kbd "C-M-a") 'sp-backward-down-sexp)
+                      (define-key sp-keymap (kbd "C-S-a") 'sp-beginning-of-sexp)
+                      (define-key sp-keymap (kbd "C-S-d") 'sp-end-of-sexp)
 
-  (define-key sp-keymap (kbd "C-M-e") 'sp-up-sexp)
-  (define-key emacs-lisp-mode-map (kbd ")") 'sp-up-sexp)
-  (define-key sp-keymap (kbd "C-M-u") 'sp-backward-up-sexp)
-  (define-key sp-keymap (kbd "C-M-t") 'sp-transpose-sexp)
+                      (define-key sp-keymap (kbd "C-M-e") 'sp-up-sexp)
+                      (define-key emacs-lisp-mode-map (kbd ")") 'sp-up-sexp)
+                      (define-key sp-keymap (kbd "C-M-u") 'sp-backward-up-sexp)
+                      (define-key sp-keymap (kbd "C-M-t") 'sp-transpose-sexp)
 
-  (define-key sp-keymap (kbd "C-M-n") 'sp-next-sexp)
-  (define-key sp-keymap (kbd "C-M-p") 'sp-previous-sexp)
+                      (define-key sp-keymap (kbd "C-M-n") 'sp-next-sexp)
+                      (define-key sp-keymap (kbd "C-M-p") 'sp-previous-sexp)
 
-  (define-key sp-keymap (kbd "C-M-k") 'sp-kill-sexp)
-  (define-key sp-keymap (kbd "C-M-w") 'sp-copy-sexp)
+                      (define-key sp-keymap (kbd "C-M-k") 'sp-kill-sexp)
+                      (define-key sp-keymap (kbd "C-M-w") 'sp-copy-sexp)
 
-  (define-key sp-keymap (kbd "M-<delete>") 'sp-unwrap-sexp)
-  (define-key sp-keymap (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
+                      (define-key sp-keymap (kbd "M-<delete>") 'sp-unwrap-sexp)
+                      (define-key sp-keymap (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
 
-  (define-key sp-keymap (kbd "C-<right>") 'sp-forward-slurp-sexp)
-  (define-key sp-keymap (kbd "C-<left>") 'sp-forward-barf-sexp)
-  (define-key sp-keymap (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
-  (define-key sp-keymap (kbd "C-M-<right>") 'sp-backward-barf-sexp)
+                      (define-key sp-keymap (kbd "C-<right>") 'sp-forward-slurp-sexp)
+                      (define-key sp-keymap (kbd "C-<left>") 'sp-forward-barf-sexp)
+                      (define-key sp-keymap (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
+                      (define-key sp-keymap (kbd "C-M-<right>") 'sp-backward-barf-sexp)
 
-  (define-key sp-keymap (kbd "M-D") 'sp-splice-sexp)
-  (define-key sp-keymap (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
-  (define-key sp-keymap (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
-  (define-key sp-keymap (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
+                      (define-key sp-keymap (kbd "M-D") 'sp-splice-sexp)
+                      (define-key sp-keymap (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
+                      (define-key sp-keymap (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
+                      (define-key sp-keymap (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
 
-  (define-key sp-keymap (kbd "C-]") 'sp-select-next-thing-exchange)
-  (define-key sp-keymap (kbd "C-<left_bracket>") 'sp-select-previous-thing)
-  (define-key sp-keymap (kbd "C-M-]") 'sp-select-next-thing)
+                      (define-key sp-keymap (kbd "C-]") 'sp-select-next-thing-exchange)
+                      (define-key sp-keymap (kbd "C-<left_bracket>") 'sp-select-previous-thing)
+                      (define-key sp-keymap (kbd "C-M-]") 'sp-select-next-thing)
 
-  (define-key sp-keymap (kbd "M-F") 'sp-forward-symbol)
-  (define-key sp-keymap (kbd "M-B") 'sp-backward-symbol)
+                      (define-key sp-keymap (kbd "M-F") 'sp-forward-symbol)
+                      (define-key sp-keymap (kbd "M-B") 'sp-backward-symbol)))
 #+END_SRC
