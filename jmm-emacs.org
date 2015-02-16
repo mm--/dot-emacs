@@ -36,7 +36,6 @@ The whole org-babel setup is shamelessly stolen from Sacha Chua.
                         zenburn-theme
                         multiple-cursors
                         phi-search
-                        ace-jump-mode
                         expand-region
                         async
                         auto-complete
@@ -1321,6 +1320,14 @@ Set up hotkeys and stuff for helm-swoop
                          ;; From helm-swoop to helm-multi-swoop-all
                          (define-key helm-swoop-map (kbd "M-i") 'helm-multi-swoop-all-from-helm-swoop)))
 #+END_SRC
+** helm-descbinds
+   Describe bindings.
+#+BEGIN_SRC emacs-lisp
+  (use-package helm-descbinds
+    :defer t
+    :bind (("C-h b" . helm-descbinds)
+           ("C-h w" . helm-descbinds)))
+#+END_SRC
 * Processing
   Define the location of processing.
   Will be different for you.
@@ -1557,10 +1564,17 @@ specifies the list of buffers to kill, asking for approval for each one."
                :init (progn
                        ;; To set to only use lowercase
                        (setq ace-jump-mode-case-fold t)
-                       (setq ace-jump-mode-scope 'frame)))
+                       (setq ace-jump-mode-scope 'visible)))
   ;; (setq ace-jump-mode-move-keys (loop for i from ?a to ?z collect i))
 #+end_src
-
+*** Ace Jump Zap
+#+BEGIN_SRC emacs-lisp
+(use-package ace-jump-zap
+  :ensure t :defer t
+  :bind
+  (("M-z" . ace-jump-zap-up-to-char-dwim)
+   ("M-Z" . ace-jump-zap-to-char-dwim)))
+#+END_SRC
 * Other modes
 ** Enriched Mode
 #+begin_src emacs-lisp
