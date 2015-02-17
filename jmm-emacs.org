@@ -1561,7 +1561,8 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (use-package ace-jump-mode
                :ensure t
-               :bind ("C-0" . ace-jump-mode)
+               :bind (("C-0" . ace-jump-mode)
+                      ("C-x C-SPC" . ace-jump-mode-pop-mark))
                :init (progn
                        ;; To set to only use lowercase
                        (setq ace-jump-mode-case-fold t)
