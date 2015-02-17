@@ -1286,9 +1286,10 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   Given two prefixes, append file to the current playlist."
       (let* ((files (helm-marked-candidates :with-wildcard t))
              (len (length files))
-             (mpv (cond ((equal helm-current-prefix-arg '(16)) "mpvappendscrobble")
-                    ((equal helm-current-prefix-arg '(4)) "scrobblempv2")
-                    (t "mpv"))))
+             (mpv (cond
+                   ((equal helm-current-prefix-arg '(16)) "scrobblempv2")
+                   ((equal helm-current-prefix-arg '(4)) "mpvappendscrobble")
+                   (t "mpv"))))
         (with-helm-display-marked-candidates
           helm-marked-buffer-name
           (mapcar #'(lambda (f)
