@@ -1,0 +1,9 @@
+# -*- mode: snippet -*-
+# name: card
+# key: card
+# --
+** Card								      :drill:
+   :PROPERTIES:
+   :DRILL_CARD_TYPE: hide1cloze
+   :END:
+   $0

@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: whatis
+# key: whatis
+# --
+** ${1:$(capitalize yas-text)}					      :drill:
+   What is ${1:name}?
+*** Answer
+    $0

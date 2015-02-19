@@ -1,0 +1,5 @@
+# -*- mode: snippet -*-
+# name: cloze
+# key: [
+# --
+<[$1]>$0

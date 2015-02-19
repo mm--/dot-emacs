@@ -1,0 +1,8 @@
+# -*- mode: snippet -*-
+# name: cardqa
+# key: cqa
+# --
+** Card								      :drill:
+   $1
+*** Answer:
+    $0
