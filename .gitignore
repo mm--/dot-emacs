@@ -6,3 +6,4 @@ image-dired/
 /jmm-emacs.el
 newsticker/*
 url/*
+*.elc
