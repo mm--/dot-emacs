@@ -1641,6 +1641,13 @@ specifies the list of buffers to kill, asking for approval for each one."
   (projectile-global-mode)
   (setq projectile-completion-system 'helm-comp-read)
 #+end_src
+*** Switching between web stuff
+    Easily switch between .html, .js, and .css
+#+BEGIN_SRC emacs-lisp
+  (add-to-list 'projectile-other-file-alist '("html" "css" "js"))
+  (add-to-list 'projectile-other-file-alist '("js" "css" "html"))
+#+END_SRC
+
 ** Yasnippet
    So I can have recursive snippets.
 #+begin_src emacs-lisp
@@ -1703,3 +1710,17 @@ specifies the list of buffers to kill, asking for approval for each one."
                       (define-key sp-keymap (kbd "M-F") 'sp-forward-symbol)
                       (define-key sp-keymap (kbd "M-B") 'sp-backward-symbol)))
 #+END_SRC
+** Ag
+#+BEGIN_SRC emacs-lisp
+  (use-package helm-ag
+    :bind ("<f9> a" . helm-ag))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+  (use-package ag
+    :bind ("<f9> A" . ag-project-at-point)
+    :init
+    (progn
+      (setq ag-highlight-search t)))
+#+END_SRC
+
