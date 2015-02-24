@@ -1667,6 +1667,7 @@ specifies the list of buffers to kill, asking for approval for each one."
   (use-package smartparens
                :ensure t
                :config
+               :disabled t
                (progn (require 'smartparens-config)
                       (smartparens-global-mode t)
 
