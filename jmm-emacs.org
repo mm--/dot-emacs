@@ -1725,4 +1725,14 @@ specifies the list of buffers to kill, asking for approval for each one."
     (progn
       (setq ag-highlight-search t)))
 #+END_SRC
+** Wgrep
+   Wgrep is pretty cool. It's like wdired, but for grep (duh),
+   allowing you to make changes directly in a \*grep\* buffer.
+#+BEGIN_SRC emacs-lisp
+  (use-package wgrep
+    :init
+    (progn
+      (setq wgrep-auto-save-buffer t)
+      (setq wgrep-enable-key "r")))
+#+END_SRC
 
