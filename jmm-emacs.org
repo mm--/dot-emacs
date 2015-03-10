@@ -876,10 +876,10 @@ Because dired-jump is pretty useful
            (file+headline "~/reading/words-i-learned.org" "Vocabulary")
            "* <[%^{The word}]> :drill:\n Added: %U\n    :PROPERTIES:\n    :DRILL_CARD_TYPE: twosided\n    :END:\n** Word\n%^{Extended word (may be empty)|%\\1}\n** Definition\n%^{Definition}\n** Examples\n%^{Examples}\n")
           ("c" "Chinese Word" entry
-           (file+headline "~/reading/chinese.org" "Words")
+           (file+headline "~/reading/skip/chinese.org" "Words")
            "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\nDefinition:\n%(josh/chinese-get-definition (josh/chinese-dict-find josh/chinese-word))\n** Characters\n%(josh/chinese-get-word josh/chinese-word-dict)\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n")
           ("C" "Chinese Word (Read)" entry
-           (file+headline "~/reading/chinese.org" "Words")
+           (file+headline "~/reading/skip/chinese.org" "Words")
            "* %(josh/chinese-prompt) :drill:\n Added: %U\n%(josh/chinese-get-word (josh/chinese-dict-find josh/chinese-word))\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n** Definition\n%(josh/chinese-get-definition josh/chinese-word-dict)\n")
           ("R" "reading" plain
            (file "~/org/data/reading.csv")
