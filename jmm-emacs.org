@@ -1735,4 +1735,32 @@ specifies the list of buffers to kill, asking for approval for each one."
       (setq wgrep-auto-save-buffer t)
       (setq wgrep-enable-key "r")))
 #+END_SRC
+** nxml mode
+   Turn off flyspell mode with nxml, as for whatever reason it hangs.
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'nxml-mode-hook  (lambda () (flyspell-mode -1)))
+#+END_SRC
+** skewer-mode
+   Some functions to evaluate either the region (if active) or the last expression.
+#+BEGIN_SRC emacs-lisp
+  (defun skewer-eval-last-expression-or-region (&optional prefix)
+    "Evaluate the JavaScript expression before the point in the
+  waiting browser. If invoked with a prefix argument, insert the
+  result into the current buffer."
+    (interactive "P")
+    (if (use-region-p)
+        (skewer-eval-region (region-beginning) (region-end))
+      (skewer-eval-last-expression prefix)))
+
+  (defun skewer-eval-region (beg end)
+    "Execute the region as JavaScript code in the attached browsers."
+    (interactive "r")
+    (deactivate-mark)
+    (skewer-flash-region beg end)
+    (skewer-eval (buffer-substring beg end) #'skewer-post-minibuffer))
+
+  (use-package skewer-mode
+    :config
+    (define-key skewer-mode-map (kbd "C-x C-e") 'skewer-eval-last-expression-or-region))
+#+END_SRC
 
