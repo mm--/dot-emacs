@@ -930,6 +930,16 @@ Because dired-jump is pretty useful
                           (org-agenda-start-with-clockreport-mode t)) ("~/org/newtab/agenda.html"))
           )))
 #+end_src
+
+Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
+#+BEGIN_SRC emacs-lisp
+  (org-add-agenda-custom-command
+   '("u" todo "TODO"
+     ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
+                                               (org-agenda-skip-entry-if 'scheduled 'deadline))))
+      (org-agenda-overriding-header "Unscheduled tasks: "))))
+#+END_SRC
+
 ** Define a stuck project
    Stuck projects are projects that don't have a next action or a TODO.
    Also, make sure the "PROJECT" tag isn't inherited.
@@ -1219,6 +1229,25 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (defvar josh/prompt-book-list
     (if (file-exists-p josh/book-csv)
         (josh/prompt-book-build-list)))
+#+END_SRC
+** Org agenda filtering functions
+   Here are a few org-agenda filtering functions for creating custom agendas. These do things like skip entries by tag, etc.
+#+BEGIN_SRC emacs-lisp
+  (defun zin/org-agenda-skip-tag (tag &optional others)
+    "Skip all entries that correspond to TAG.
+
+  If OTHERS is true, skip all entries that do not correspond to TAG."
+    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max))))
+          (current-headline (or (and (org-at-heading-p)
+                                     (point))
+                                (save-excursion (org-back-to-heading)))))
+      (if others
+          (if (not (member tag (org-get-tags-at current-headline)))
+              next-headline
+            nil)
+        (if (member tag (org-get-tags-at current-headline))
+            next-headline
+          nil))))
 #+END_SRC
 
 * Sawfish
