@@ -95,7 +95,7 @@ Enable all the disabled commands
 
   (transient-mark-mode 1)
   (column-number-mode 1)
-  ;; (show-paren-mode 1)
+  (show-paren-mode 1)
   (menu-bar-mode -1)
   (tool-bar-mode 0)
   (horizontal-scroll-bar-mode 0)
@@ -933,6 +933,7 @@ Because dired-jump is pretty useful
 
 Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
 #+BEGIN_SRC emacs-lisp
+  (require 'org-agenda)
   (org-add-agenda-custom-command
    '("u" todo "TODO"
      ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
@@ -1493,6 +1494,18 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
       (if (bh/is-subproject-p)
           nil
         next-headline)))
+
+  (defun bh/find-project-task ()
+    "Move point to the parent (project) task if any"
+    (save-restriction
+      (widen)
+      (let ((parent-task (save-excursion (org-back-to-heading 'invisible-ok) (point))))
+        (while (org-up-heading-safe)
+          (when (member (nth 2 (org-heading-components)) org-todo-keywords-1)
+            (setq parent-task (point))))
+        (goto-char parent-task)
+        parent-task)))
+
 #+END_SRC
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
