@@ -941,6 +941,21 @@ Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
       (org-agenda-overriding-header "Unscheduled tasks: "))))
 #+END_SRC
 
+A projects-related agenda. View next tasks, waiting, and stuck projects.
+#+BEGIN_SRC emacs-lisp
+  (org-add-agenda-custom-command
+   '("P" "Projects and Next Tasks"
+     ((tags-todo "-CANCELLED/!NEXT"
+                 ((org-agenda-overriding-header "Next tasks")
+                  (org-agenda-skip-function 'bh/skip-projects-and-habits-and-single-tasks)))
+      (tags-todo "-CANCELLED+WAITING|HOLD/!"
+                 ((org-agenda-overriding-header "Waiting tasks")
+                  (org-agenda-skip-function 'bh/skip-non-tasks)))
+      (tags-todo "-CANCELLED/!"
+                 ((org-agenda-overriding-header "Stuck Projects")
+                  (org-agenda-skip-function 'bh/skip-non-stuck-projects))))))
+#+END_SRC
+
 ** Define a stuck project
    Stuck projects are projects that don't have a next action or a TODO.
    Also, make sure the "PROJECT" tag isn't inherited.
