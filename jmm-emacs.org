@@ -1522,6 +1522,40 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
         parent-task)))
 
 #+END_SRC
+** Find old closed entries
+   My org files seem to now be accumulating a bunch of "DONE" entries
+   that have been closed a long time ago. These functions and agenda
+   help me find these old entries so I can archive them
+#+BEGIN_SRC emacs-lisp
+  (defun josh/org-closed-days-old ()
+    "Get how many days ago this entry was closed."
+    (josh/org-timestamp-days-old
+     (org-element-property :closed (org-element-at-point))))
+
+  (defun josh/org-timestamp-days-old (timestamp)
+    (- (calendar-absolute-from-gregorian (calendar-current-date))
+       (josh/org-timestamp-to-absolute-date timestamp)))
+
+  (defun josh/org-timestamp-to-absolute-date (timestamp)
+    "Get an integer date from timestamp. Used for date differences"
+    (calendar-absolute-from-gregorian
+     (if timestamp
+         (mapcar (lambda (x) (plist-get (cadr timestamp) x)) '(:month-start :day-start :year-start))
+       (calendar-current-date))))
+
+  (defun josh/org-skip-old (age)
+    "Skip all entries that were closed more than AGE days ago."
+    (let ((next-headline (save-excursion (or (outline-next-heading) (point-max)))))
+      (if (> (josh/org-closed-days-old) age)
+          nil
+        next-headline)))
+
+  (org-add-agenda-custom-command
+   '("o" todo "DONE|CANCELLED"
+     ((org-agenda-skip-function (lambda () (josh/org-skip-old 14)))
+      (org-agenda-overriding-header "Old DONE tasks: "))))
+#+END_SRC
+
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
