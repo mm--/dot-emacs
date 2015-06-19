@@ -2098,4 +2098,12 @@ specifies the list of buffers to kill, asking for approval for each one."
     :config
     (define-key skewer-mode-map (kbd "C-x C-e") 'skewer-eval-last-expression-or-region))
 #+END_SRC
+** diff-hl
+   Diff-hl seems to be a useful way to visualize uncommitted changes in a file.
+#+BEGIN_SRC emacs-lisp
+  (use-package diff-hl
+    :disabled t
+    :config
+    (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
+#+END_SRC
 
