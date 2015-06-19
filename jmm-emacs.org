@@ -856,7 +856,7 @@ Because dired-jump is pretty useful
           ("r" "Refile" entry (file "refile.org")
            "* %i%?\n\tAdded: %U")
           ("a" "Today" entry (file+headline "gtd-test.org" "Tasks")
-           "* TODO %i %?\n\tSCHEDULED: <%<%Y-%m-%d %a>>\n\tAdded: %U")
+           "* TODO %?\n\tSCHEDULED: <%<%Y-%m-%d %a>>\n\tAdded: %U")
           ("l" "Lookup" entry (file+headline "gtd-test.org" "Lookup")
            "* %?\n\tAdded: %U")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
