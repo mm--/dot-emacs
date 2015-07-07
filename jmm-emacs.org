@@ -1758,6 +1758,19 @@ specifies the list of buffers to kill, asking for approval for each one."
   (use-hard-newlines 1 'always))
 #+end_src
 
+#+BEGIN_SRC emacs-lisp
+  (defun journal-stuff ()
+    "A bunch of commands used when writing a daily journal."
+    (interactive)
+    (insert (replace-regexp-in-string "\.txt" "" (buffer-name))
+            "\n"
+            "(Written ")
+    (org-time-stamp '(16))
+    (insert ")\n\n")
+    (text-scale-set -2)
+    (txt-stuff))
+#+END_SRC
+
 ** Starting an Xterm in current directory
 #+begin_src emacs-lisp
   (defun start-xterm (&optional dirpath)
