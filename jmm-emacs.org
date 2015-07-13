@@ -891,6 +891,15 @@ Because dired-jump is pretty useful
   (setq-default cache-long-scans nil)
   (setq org-element-use-cache nil)
 #+end_src
+
+   A a function to make testing capture templates easier.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/add-to-capture (template)
+    (add-to-list 'org-capture-templates
+                 template
+                 nil
+                 (lambda (x y) (equal (car x) (car y)))))
+#+END_SRC
 ** Org agenda listings
 #+begin_src emacs-lisp
   (setq org-agenda-custom-commands
