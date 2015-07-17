@@ -770,6 +770,52 @@ Sometimes IMAP freezes, so I like to be able to kill it.
   (global-set-key (kbd "<f9> e") 'josh/espeak-article)
 #+end_src
 
+** Go to RSS link in browser
+   This code basically gives me a hotkey ("v") that allows me to
+   quickly open the link titled "link" in an external browser. This is
+   pretty useful for RSS feeds when I'm interested in an article and
+   want to read more.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/get-link-info-at-point ()
+    "Return a cons of the link's text and url"
+    (let* ((widget (widget-at (point)))
+           (start (widget-get widget :from))
+           (end (widget-get widget :to)))
+      (cons (if start
+                (buffer-substring-no-properties start end))
+            (widget-get widget :value))))
+
+  (defun josh/get-all-links ()
+    "Return a list of links in the buffer"
+    (let (links)
+      (save-excursion
+        (goto-char (point-min))
+        (while (progn
+                 (let ((skip (text-property-any (point) (point-max) 'help-echo nil)))
+                   (if (or (eobp)
+                           (not (setq skip (text-property-not-all skip (point-max)
+                                                                  'help-echo nil))))
+                       nil
+                     (progn
+                       (goto-char skip)
+                       (setq links (cons (josh/get-link-info-at-point) links)))))))
+      links)))
+
+  (defun josh/gnus-follow-link ()
+    "Find the link named \"link\" and follow it in the browser"
+    (interactive)
+    (save-excursion
+      (set-buffer gnus-article-buffer)
+      (let ((link
+             (-filter (lambda (x) (string-match "link" (car x)))
+                      (josh/get-all-links))))
+        (if link
+            (funcall shr-external-browser (cdar link))))))
+
+  (add-hook 'gnus-summary-mode-hook
+            (lambda ()
+              (local-set-key (kbd "v") 'josh/gnus-follow-link)))
+#+END_SRC
 * Dired
 ** Listing switches
 #+begin_src emacs-lisp
