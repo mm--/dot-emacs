@@ -914,7 +914,9 @@ Because dired-jump is pretty useful
            "* %?\n\tAdded: %U")
           ("o" "thoughts" plain (file "thoughts-misc.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
-          ("j" "Jokes" plain (file "jokes.txt")
+	   ("j" "Journal" entry (file+datetree "~/org/journal.org")
+	   "* %?\n%U\n" :clock-in t :clock-resume t)
+          ("J" "Jokes" plain (file "jokes.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
           ("v" "Vocabulary" entry
            (file+headline "~/reading/words-i-learned.org" "Vocabulary")
@@ -941,10 +943,10 @@ Because dired-jump is pretty useful
    A a function to make testing capture templates easier.
 #+BEGIN_SRC emacs-lisp
   (defun josh/add-to-capture (template)
+  (let ((key (car template)))
+    (delete-if (lambda (x) (equal (car x) key)) org-capture-templates)
     (add-to-list 'org-capture-templates
-                 template
-                 nil
-                 (lambda (x y) (equal (car x) (car y)))))
+                 template)))
 #+END_SRC
 ** Org agenda listings
 #+begin_src emacs-lisp
