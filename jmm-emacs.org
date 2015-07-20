@@ -1258,7 +1258,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 #+begin_src emacs-lisp
   (setq org-todo-keywords
          (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
-                 (sequence "WAITING(w@/!)" "HOLD(h@/!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
+                 (sequence "WAITING(w@/!)" "HOLD(h@/!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
 
   (setq org-todo-keyword-faces
         (quote (("TODO" :foreground "red" :weight bold)
@@ -1266,6 +1266,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
                 ("DONE" :foreground "forest green" :weight bold)
                 ("WAITING" :foreground "orange" :weight bold)
                 ("HOLD" :foreground "magenta" :weight bold)
+		("MAYBE" :foreground "yellow" :weight bold)
                 ("CANCELLED" :foreground "forest green" :weight bold)
                 ("DEFERRED" :foreground "forest green" :weight bold))))
 
@@ -1289,7 +1290,8 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
            (python . t)
            (ledger . t)
            (org . t)
-           (latex . t))))
+           (latex . t)
+	   (sh . t))))
 #+end_src
 *** Ditaa
 #+begin_src emacs-lisp
