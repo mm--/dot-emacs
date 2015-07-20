@@ -807,7 +807,7 @@ Sometimes IMAP freezes, so I like to be able to kill it.
     (save-excursion
       (set-buffer gnus-article-buffer)
       (let ((link
-             (-filter (lambda (x) (string-match "link" (car x)))
+             (-filter (lambda (x) (and (stringp (car x)) (string-match "link" (car x))))
                       (josh/get-all-links))))
         (if link
             (funcall shr-external-browser (cdar link))))))
