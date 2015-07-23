@@ -1020,8 +1020,10 @@ Same thing as above, but also include the next three days agenda.
    '(" " "Default agenda"
      ((agenda "" ((org-agenda-span 3)))
       (tags-todo "-CANCELLED/!NEXT"
-                 ((org-agenda-overriding-header "Next tasks")
-                  (org-agenda-skip-function 'bh/skip-projects-and-habits-and-single-tasks)))
+                 ((org-agenda-overriding-header "Unscheduled next tasks")
+                  (org-agenda-skip-function
+                   (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
+                                  (bh/skip-projects-and-habits-and-single-tasks))))))
       (tags-todo "-CANCELLED+WAITING|HOLD/!"
                  ((org-agenda-overriding-header "Waiting tasks")
                   (org-agenda-skip-function 'bh/skip-non-tasks)))
