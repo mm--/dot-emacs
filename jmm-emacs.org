@@ -2235,4 +2235,11 @@ specifies the list of buffers to kill, asking for approval for each one."
     :config
     (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
 #+END_SRC
+** Octave mode
+   Open ".m" files with ~octave-mode~ by default
+#+BEGIN_SRC emacs-lisp
+  (autoload 'octave-mode "octave" nil t)
+  (setq auto-mode-alist
+        (cons '("\\.m$" . octave-mode) auto-mode-alist))
+#+END_SRC
 
