@@ -1019,7 +1019,7 @@ Same thing as above, but also include the next three days agenda.
   (org-add-agenda-custom-command
    '(" " "Default agenda"
      ((agenda "" ((org-agenda-span 3)))
-      (tags-todo "-CANCELLED/!NEXT"
+      (todo "NEXT"
                  ((org-agenda-overriding-header "Unscheduled next tasks")
                   (org-agenda-skip-function
                    (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
