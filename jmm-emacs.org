@@ -1643,7 +1643,35 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
      ((org-agenda-skip-function (lambda () (josh/org-skip-old 14)))
       (org-agenda-overriding-header "Old DONE tasks: "))))
 #+END_SRC
+** Show effort and clocked time
+   If you modify ~org-agenda-prefix-format~, you can get some extra
+   details in your agenda view. Here's how I view effort and clocked time.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/minutes-to-hhmm (min)
+      (let* ((h (floor (/ min 60)))
+             (m (- min (* 60 h))))
+        (format "%01d:%02d" h m)))
 
+  (defun josh/org-show-effort-and-clocked ()
+    "Show how much effort or clocked time there is.
+  If no effort is set, show \"+\" clocked
+  If there's no effort and no clocked time, show nothing
+  If there's effort but no clocked time, show effort
+  If there effort and clocked time, show \"-\" remaining effort
+  If done, show clocked time"
+    (format "[%s]"
+            (let ((effort (org-get-at-eol 'effort-minutes 1))
+                  (clocked (org-clock-sum-current-item (org-clock-get-sum-start))))
+              (if (org-entry-is-todo-p)
+                  (if effort
+                      (if (> clocked 0)
+                          (format "-% 3d" (- effort clocked))
+                        (josh/minutes-to-hhmm effort))
+                    (if (> clocked 0)
+                        (format "+% 3d" clocked)
+                      "    "))
+                (format "+% 3d" clocked)))))
+#+END_SRC
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
