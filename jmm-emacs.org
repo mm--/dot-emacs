@@ -2109,10 +2109,24 @@ specifies the list of buffers to kill, asking for approval for each one."
 
 
 ** Projectile
+   Projectile is a neat library that makes it easy to deal with
+   various tasks in a project. For example, it makes it easy to switch
+   to project-related buffers or to search all buffers.
+
+   This configuration also turns on ~helm-projectile~ bindings by default.
 #+begin_src emacs-lisp
-  (require 'projectile)
-  (projectile-global-mode)
-  (setq projectile-completion-system 'helm-comp-read)
+  (use-package projectile
+    :ensure t
+    :diminish projectile-mode
+    :config
+    (progn
+      (projectile-global-mode)
+      (setq projectile-completion-system 'helm-comp-read)))
+
+  (use-package helm-projectile
+    :ensure t
+    :config
+    (helm-projectile-toggle 1))
 #+end_src
 *** Switching between web stuff
     Easily switch between .html, .js, and .css
