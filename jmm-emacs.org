@@ -1661,19 +1661,23 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   If there's no effort and no clocked time, show nothing
   If there's effort but no clocked time, show effort
   If there effort and clocked time, show \"-\" remaining effort
-  If done, show clocked time"
-    (format "[%s]"
-            (let ((effort (org-get-at-eol 'effort-minutes 1))
-                  (clocked (org-clock-sum-current-item (org-clock-get-sum-start))))
-              (if (org-entry-is-todo-p)
-                  (if effort
+  If done, show clocked time.
+
+  Weirdly doesn't work when clock `org-agenda-show-log' is on."
+    (if org-agenda-show-log
+        ""
+      (format "[%s]"
+              (let ((effort (org-get-at-eol 'effort-minutes 1))
+                    (clocked (org-clock-sum-current-item (org-clock-get-sum-start))))
+                (if (org-entry-is-todo-p)
+                    (if effort
+                        (if (> clocked 0)
+                            (format "-% 3d" (- effort clocked))
+                          (josh/minutes-to-hhmm effort))
                       (if (> clocked 0)
-                          (format "-% 3d" (- effort clocked))
-                        (josh/minutes-to-hhmm effort))
-                    (if (> clocked 0)
-                        (format "+% 3d" clocked)
-                      "    "))
-                (format "+% 3d" clocked)))))
+                          (format "+% 3d" clocked)
+                        "    "))
+                  (format "+% 3d" clocked))))))
 #+END_SRC
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
