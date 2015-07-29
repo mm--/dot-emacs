@@ -104,46 +104,6 @@ buffer."
 
 (global-set-key (kbd "<f9> C") 'josh/chinese-def-at-point)
 
-;; Find best definition?
-
-(let* ((phrase "吾生也有涯，而知也無涯")
-       (i 1)
-       (doing t)
-       (bestdef nil))
-  (with-temp-buffer
-    (insert-file-contents josh/chinese-dictionary-path)
-    (while doing
-      (setq doing nil)
-      (goto-char (point-min))
-      (let ((subphrase (substring phrase 0 i))
-	    definitions)
-	(message (format "Subphrase is %s" subphrase))
-	(while (re-search-forward (concat "^[^][]*\\b" subphrase ".*?$") nil t)
-	  (setq doing t)
-	  (push (buffer-substring (match-beginning 0)
-				  (match-end 0))
-		definitions))
-	(setq bestdef (mapconcat 'identity definitions "\n")))
-      (if (> (setq i (1+ i)) (length phrase))
-	  (setq doing nil)))
-    (message bestdef)))
-
-(let* ((phrase "吾生也有涯，而知也無涯")
-       (i 1)
-       (subphrase (substring phrase 0 i))
-       (bestphrase nil)
-       (bestdef nil))
-  (with-temp-buffer
-    (insert-file-contents josh/chinese-dictionary-path)
-    (while (when (re-search-forward (concat "^[^][]*\\b" subphrase ".*?$") nil t)
-	     (goto-char (match-beginning 0))
-	     (message (format "Subphrase is %s" subphrase))
-	     (setq bestphrase subphrase)
-	     (setq bestdef (buffer-substring (match-beginning 0) (match-end 0)))
-      	     (unless (> (setq i (1+ i)) (length phrase))
-	       (setq subphrase (substring phrase 0 i)))))
-    bestdef))
-
 (defvar josh/chinese-decomposition-path
   (concat (file-name-directory load-file-name) "cjk-decomp-0.4.0.txt")
   "Where we store the Chinese character decomposition data")
@@ -177,13 +137,5 @@ buffer."
     (insert (listtostr (josh/chinese-decomposition-find phrase)))))
 
 (global-set-key (kbd "<f9> E") 'josh/chinese-decomposition-at-point)
-
-(josh/chinese-decomposition-find "癮")
-(josh/chinese-decomposition-find "隱")
-(= (string-to-number "癮") 0)
-
-(split-string "(one,two,three)" "[,()]" t)
-
-(josh/chinese-decomposition-find "38391")
 
 (provide 'josh-chinese)

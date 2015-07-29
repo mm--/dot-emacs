@@ -1981,6 +1981,12 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (global-set-key (kbd "<f9> s") 'quail-show-key)
 #+end_src
+** Chinese word definition library
+   Require the library that gets Chinese word definitions. I use this
+   to make ~org-drill~ flashcards fairly quickly with a capture template.
+#+BEGIN_SRC emacs-lisp
+  (require 'josh-chinese)
+#+END_SRC
 ** Auto fill line
    Sometimes I want to wrap a line, but pressing =M-q= will treat
    everything as one huge paragraph, messing up the structure.
