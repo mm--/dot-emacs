@@ -916,8 +916,13 @@ Because dired-jump is pretty useful
            "* %?\n\tAdded: %U")
           ("o" "thoughts" plain (file "thoughts-misc.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
-          ("j" "Journal" entry (file+datetree "~/org/journal.org")
+          ("j" "Journal Stuff")
+          ("jr" "Journal Resume" entry (file+datetree "~/org/journal.org")
            "* %?\n%U\n" :clock-in t :clock-resume t)
+          ("jc" "Journal Clock-In" entry (file+datetree "~/org/journal.org")
+           "* %?\n%U\n" :clock-in t :clock-keep t)
+          ("ji" "Journal Clock-In Immediate" entry (file+datetree "~/org/journal.org")
+           "* %c\n%U\n" :clock-in t :clock-keep t :immediate-finish t)
           ("J" "Jokes" plain (file "jokes.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
           ("v" "Vocabulary" entry
@@ -1191,8 +1196,6 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
     (helm-other-buffer 'josh/helm-source-org-clock
                        "*Helm Clock-in*"))
 
-  (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in)
-
   (defun josh/helm-org-jump-candidate (candidate)
     "Jump to a candidate with org"
     (interactive)
@@ -1219,6 +1222,33 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
 
   (global-set-key (kbd "<f9> j") 'josh/helm-org-jump)
 #+end_src
+
+These functions clock into a task if it exists and creates it using
+~org-capture~ if it doesn't.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/org-clock-in2 (candidate)
+    "Clock into taskname, creating it if it doesn't exist."
+    (interactive)
+    (if (stringp candidate)
+        (progn
+          (kill-new candidate)
+          (org-capture nil "ji"))         ;Creates a task in datetree from kill ring
+      (save-excursion
+        (let* ((taskname (car candidate))
+               (taskbuffer (cdr candidate))
+               (place (org-find-exact-headline-in-buffer taskname taskbuffer)))
+          (with-current-buffer (marker-buffer place)
+            (goto-char place)
+            (org-clock-in))))))
+
+  (defun josh/helm-org-clock-in2 ()
+    "Use helm to clock into a task, creating it if it doesn't exist."
+    (interactive)
+    (josh/org-clock-in2 (helm-comp-read "Clock in to: " (josh/org-helm-candidates))))
+
+  (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in2)
+#+END_SRC
+
 *** Setting a timer on the current task
    I use =<f9> z= to set the current task. When I want to set a timer,
    for instance in a pomodoro-type fashion, I'll use this function
