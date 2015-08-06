@@ -872,6 +872,29 @@ Because dired-jump is pretty useful
 #+begin_src emacs-lisp
   (setq tramp-password-prompt-regexp "^.*\\(Yubikey\\|[pP]assword\\|[pP]assphrase\\).*: ? *")
 #+end_src
+
+** Kill Tramp buffers
+   Sometimes, having Tramp buffers open will weirdly cause other Emacs
+   functions to fail or load slowly. For example, if you've got a
+   bunch of remote Tramp buffers open, using helm sometimes slows
+   down, or sometimes using magit fails. I'm not sure why. Often I'd
+   just like to kill all remote buffers so I don't have to wait for
+   connections to be brought back up again. This function does that.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/kill-tramp-buffers ()
+    "Kill TRAMP buffers. This is useful if, for whatever reason, remote buffers are either slowing down emacs or making some commands act strangely."
+    (interactive)
+    (let ((i 0))
+      (mapc (lambda (buff)
+              (with-current-buffer buff
+                (when (tramp-tramp-file-p default-directory)
+                  (kill-buffer buff)
+                  (setq i (1+ i)))))
+            (buffer-list))
+      (message (format "Killed %d buffer%s" i (if (eq i 1) "" "s")))))
+
+  (global-set-key (kbd "<f9> t") 'josh/kill-tramp-buffers)
+#+END_SRC
 * Org Mode
 ** Setup my agenda file
    Read from "org-agendas" where the agenda files are.
