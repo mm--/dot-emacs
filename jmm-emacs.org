@@ -1710,14 +1710,12 @@ These functions clock into a task if it exists and creates it using
 
   (defun josh/org-show-effort-and-clocked ()
     "Show how much effort or clocked time there is.
-  If no effort is set, show \"+\" clocked
-  If there's no effort and no clocked time, show nothing
-  If there's effort but no clocked time, show effort
-  If there effort and clocked time, show \"-\" remaining effort
-  If done, show clocked time.
-
-  Weirdly doesn't work when clock `org-agenda-show-log' is on."
-    (if org-agenda-show-log
+    If no effort is set, show \"+\" clocked
+    If there's no effort and no clocked time, show nothing
+    If there's effort but no clocked time, show effort
+    If there effort and clocked time, show \"-\" remaining effort
+    If done, show clocked time."
+    (if (not (outline-on-heading-p t))
         ""
       (format "[%s]"
               (let ((effort (org-get-at-eol 'effort-minutes 1))
