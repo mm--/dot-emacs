@@ -1742,7 +1742,11 @@ These functions clock into a task if it exists and creates it using
 #+begin_src emacs-lisp
   (require 'helm-config)
   (global-set-key (kbd "C-c h") 'helm-mini)
-  ;; (helm-mode 1)
+  (use-package helm-mode
+    :config
+    (progn (add-to-list 'helm-completing-read-handlers-alist
+                        (cons 'find-file nil))
+           (helm-mode 1)))
   (global-set-key (kbd "C-x b") 'helm-buffers-list)
   ;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
   (global-set-key (kbd "C-x f") 'helm-for-files)
