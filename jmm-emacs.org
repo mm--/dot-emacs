@@ -2182,6 +2182,7 @@ specifies the list of buffers to kill, asking for approval for each one."
     :config
     (progn
       (projectile-global-mode)
+      (setq projectile-svn-command "find . -type f -not -iwholename '*.svn/*' -print0")
       (setq projectile-completion-system 'helm-comp-read)))
 
   (use-package helm-projectile
