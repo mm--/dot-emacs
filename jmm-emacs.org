@@ -1756,6 +1756,7 @@ These functions clock into a task if it exists and creates it using
   (global-set-key (kbd "M-g s") 'helm-do-grep)
   (global-set-key (kbd "M-g b") 'helm-resume)
   (global-set-key (kbd "C-c SPC") 'helm-all-mark-rings)
+  (global-set-key (kbd "C-c b") 'helm-bookmarks)
 #+end_src
 ** Other Helm actions I find useful
    I like being able to open an xterm or quickly jump to dired with helm.
