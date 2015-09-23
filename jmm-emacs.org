@@ -1744,8 +1744,14 @@ These functions clock into a task if it exists and creates it using
   (global-set-key (kbd "C-c h") 'helm-mini)
   (use-package helm-mode
     :config
-    (progn (add-to-list 'helm-completing-read-handlers-alist
-                        (cons 'find-file nil))
+    (progn (mapc (lambda (x) (add-to-list 'helm-completing-read-handlers-alist
+                                 (list x)))
+        (list 'dired-do-rename
+              'dired-do-copy
+              'dired-do-delete
+              'dired-do-symlink
+              'dired-create-directory
+              'find-file))
            (helm-mode 1)))
   (global-set-key (kbd "C-x b") 'helm-buffers-list)
   ;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
