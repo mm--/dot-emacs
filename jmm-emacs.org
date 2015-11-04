@@ -161,7 +161,7 @@ Make scripts executable
 
 #+begin_src emacs-lisp
   (global-set-key (kbd "C-x g") 'gnus)
-  (global-set-key (kbd "C-x C-a") 'artist-mode)
+  ;; (global-set-key (kbd "C-x C-a") 'artist-mode)
   (global-set-key (kbd "C-x C-b") 'ibuffer)
   (global-set-key (kbd "<f9> m") 'magit-status)
   (define-key (current-global-map) [remap imenu] 'helm-imenu)
