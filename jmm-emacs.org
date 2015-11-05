@@ -858,6 +858,42 @@ Because dired-jump is pretty useful
                        '(define-key dired-mode-map (kbd "W") 'josh/dired-copy-remote-filename))
 #+END_SRC
 
+** Opening files with xdg-open
+
+#+BEGIN_SRC emacs-lisp
+    (defun xah-open-in-external-app ()
+    "Open the current file or dired marked files in external app.
+  The app is chosen from your OS's preference.
+
+  URL `http://ergoemacs.org/emacs/emacs_dired_open_file_in_ext_apps.html'
+  Version 2015-01-26"
+    (interactive)
+    (let* (
+           (xah-file-list
+            (if (string-equal major-mode "dired-mode")
+                (dired-get-marked-files)
+              (list (buffer-file-name))))
+           (xah-do-it-p (if (<= (length xah-file-list) 5)
+                         t
+                       (y-or-n-p "Open more than 5 files? "))))
+
+      (when xah-do-it-p
+        (cond
+         ((string-equal system-type "windows-nt")
+          (mapc
+           (lambda (fPath)
+             (w32-shell-execute "open" (replace-regexp-in-string "/" "\\" fPath t t))) xah-file-list))
+         ((string-equal system-type "darwin")
+          (mapc
+           (lambda (fPath) (shell-command (format "open \"%s\"" fPath)))  xah-file-list))
+         ((string-equal system-type "gnu/linux")
+          (mapc
+           (lambda (fPath) (let ((process-connection-type nil)) (start-process "" nil "xdg-open" fPath))) xah-file-list))))))
+
+    (add-hook 'dired-mode-hook '(lambda () 
+                                  (local-set-key (kbd "E") 'xah-open-in-external-app)))
+#+END_SRC
+
 * Tramp
 #+begin_src emacs-lisp
 (require 'tramp)
