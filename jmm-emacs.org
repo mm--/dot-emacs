@@ -1766,6 +1766,43 @@ These functions clock into a task if it exists and creates it using
                         "    "))
                   (format "+% 3d" clocked))))))
 #+END_SRC
+** Helm Org Buffer
+   This command makes it easy to quickly switch to an org-mode buffer.
+#+BEGIN_SRC emacs-lisp
+  (require 'helm-types)
+  (require 'helm-buffers)
+  (defvar helm-org-buffers-list-cache nil)
+
+  (defclass helm-source-org-buffer (helm-source-sync helm-type-buffer)
+    ((init :initform (lambda ()
+                       (setq helm-org-buffers-list-cache
+                             (mapcar (lambda (b)
+                                       (with-current-buffer b (buffer-name)))
+                                     (-filter (lambda (b)
+                                                (with-current-buffer b
+                                                  (and (eq major-mode 'org-mode)
+                                                       (buffer-name))))
+                                              (buffer-list))))))
+     (candidates :initform helm-org-buffers-list-cache)
+     (matchplugin :initform nil)
+     (match :initform 'helm-buffers-match-function)
+     (persistent-action :initform 'helm-buffers-list-persistent-action)
+     (keymap :initform helm-buffer-map)
+     (volatile :initform t)
+     (persistent-help
+      :initform
+      "Show this buffer / C-u \\[helm-execute-persistent-action]: Kill this buffer")))
+
+  (defvar helm-source-org-buffers-list (helm-make-source "Org-mode buffers" 'helm-source-org-buffer))
+
+  (defun helm-org-buffer ()
+    (interactive)
+    (helm :sources helm-source-org-buffers-list
+          :buffer "*helm projectile*"
+          :prompt "Switch to Org buffer:"))
+
+  (global-set-key (kbd "C-c o") 'helm-org-buffer)
+#+END_SRC
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
