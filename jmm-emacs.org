@@ -2129,6 +2129,26 @@ specifies the list of buffers to kill, asking for approval for each one."
   (global-unset-key (kbd "C-<down-mouse-1>"))
   (global-set-key (kbd "C-<mouse-1>") 'mc/add-cursor-on-click)
 #+end_src
+*** Inserting letters for each cursor
+    Basically exactly like ~mc/insert-numbers~ but for letters.
+#+BEGIN_SRC emacs-lisp
+  (require 'multiple-cursors-core)
+
+  (defun mc/insert-letters (arg)
+    "Insert increasing letters for each cursor, starting at 0 or ARG."
+    (interactive "cStart at character: ")
+    (setq mc--insert-letters-letter (or arg ?a))
+    (mc/for-each-cursor-ordered
+     (mc/execute-command-for-fake-cursor 'mc--insert-letter-and-increase cursor)))
+
+  (defvar mc--insert-letters-letter 0)
+
+  (defun mc--insert-letter-and-increase ()
+    (interactive)
+    (insert (char-to-string mc--insert-letters-letter))
+    (setq mc--insert-letters-letter (1+ mc--insert-letters-letter)))
+#+END_SRC
+
 ** Expand Region
 #+begin_src emacs-lisp
   (use-package expand-region
