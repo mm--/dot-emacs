@@ -7,3 +7,5 @@ image-dired/
 newsticker/*
 url/*
 *.elc
+/recentf
+/newsrc.eld
