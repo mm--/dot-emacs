@@ -2294,8 +2294,6 @@ specifies the list of buffers to kill, asking for approval for each one."
   (use-package tern
                :config (add-hook 'js2-mode-hook (lambda () (tern-mode t))))
 #+end_src
-
-
 ** Projectile
    Projectile is a neat library that makes it easy to deal with
    various tasks in a project. For example, it makes it easy to switch
