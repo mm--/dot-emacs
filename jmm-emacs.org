@@ -18,9 +18,9 @@ The whole org-babel setup is shamelessly stolen from Sacha Chua.
   (require 'package)
   (package-initialize)
   (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
-  (add-to-list 'package-archives '("ELPA" . "http://tromey.com/elpa/") t)
+  (add-to-list 'package-archives '("ELPA" . "https://elpa.gnu.org/packages/") t)
   (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
-  (add-to-list 'package-archives '("melpa" . "http://melpa.milkbox.net/packages/") t)
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
 #+end_src
 
   Install packages if they aren't already.
@@ -1107,7 +1107,20 @@ Same thing as above, but also include the next three days agenda.
                     (interactive)
                     (org-agenda nil " ")))
 #+END_SRC
-
+** Org persistent tags
+   Some tags that I might use a lot. (Or maybe I don't, but I just
+   don't want to have the hotkeys for each of these tags repeatedly in
+   each file.)
+#+BEGIN_SRC emacs-lisp
+  (setq org-tag-persistent-alist '(("task" . ?t) ("drill" . ?d)
+                                   ("IFBORED" . ?b)
+                                   ("work" . ?w) ("home" . ?h)
+                                   ("REWARD" . ?R) ("SHOPPING" . ?s)
+                                   ("PESARAN" . ?p) ("ERLICH" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
+                                   ("vague" . ?v) ("LOOKUP" . ?l)
+                                   ("CODING" . ?c)
+                                   ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("LIFEGOAL" . ?G)))
+#+END_SRC
 ** Define a stuck project
    Stuck projects are projects that don't have a next action or a TODO.
    Also, make sure the "PROJECT" tag isn't inherited.
@@ -1361,7 +1374,7 @@ These functions clock into a task if it exists and creates it using
                 ("HOLD" :foreground "magenta" :weight bold)
 		("MAYBE" :foreground "yellow" :weight bold)
                 ("CANCELLED" :foreground "forest green" :weight bold)
-                ("DEFERRED" :foreground "forest green" :weight bold))))
+                ("DEFERRED" :foreground "tomato" :weight bold))))
 
   (setq org-todo-state-tags-triggers
         (quote (("CANCELLED" ("CANCELLED" . t))
