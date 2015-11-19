@@ -821,7 +821,11 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 #+begin_src emacs-lisp
 (setq dired-listing-switches "-alh")
 #+end_src
-
+** Other settings
+   I usually want to copy recursively. Don't ask me each time.
+#+BEGIN_SRC emacs-lisp
+  (setq dired-recursive-copies 'always)
+#+END_SRC
 ** Dired-X
 Because dired-jump is pretty useful
 #+begin_src emacs-lisp
