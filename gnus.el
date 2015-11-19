@@ -17,3 +17,6 @@
 (ad-activate 'mm-url-insert)
 
 (add-hook 'gnus-group-mode-hook 'gnus-topic-mode)
+
+(setq gnus-thread-sort-functions
+      '(gnus-thread-sort-by-most-recent-number))
