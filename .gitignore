@@ -9,3 +9,4 @@ url/*
 *.elc
 /recentf
 /newsrc.eld
+/secrets.el

@@ -69,7 +69,7 @@ The whole org-babel setup is shamelessly stolen from Sacha Chua.
 
   Secret info. (Authentication info)
 #+begin_src emacs-lisp
-  (let ((secrets "~/.emacs.secrets"))
+  (let ((secrets "~/.emacs.d/secrets.el"))
     (if (file-exists-p secrets) (load-file secrets)))
 #+end_src
 
