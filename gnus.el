@@ -1,5 +1,14 @@
 (setq gnus-select-method '(nnnil))
 
+(setq gnus-secondary-select-methods '((nnmbox "")
+				      ;; TOO SLOW!
+				      ;; Probably should set up Dovecot
+				      ;; (nnmaildir "nyu"
+				      ;; 		 (directory "~/Mail/nyu/")
+				      ;; 		 (directory-files nnheader-directory-files-safe)
+				      ;; 		 (get-new-mail nil))
+				      ))
+
 (require 'mm-url)
 (defadvice mm-url-insert (after DE-convert-atom-to-rss () )
   "Converts atom to RSS by calling xsltproc."
