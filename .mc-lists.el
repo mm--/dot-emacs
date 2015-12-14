@@ -3,7 +3,9 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+	LaTeX-insert-left-brace
 	TeX-insert-backslash
+	TeX-insert-sub-or-superscript
 	delete-horizontal-space
 	dired-next-line
 	dired-unmark-backward
@@ -11,11 +13,15 @@
 	ess-smart-comma
 	forward-sexp
 	indent-for-tab-command
+	indent-region
 	insert-register
 	kill-region
 	kill-sexp
+	matlab-electric-comment
+	matlab-forward-sexp
 	org-beginning-of-line
 	org-cycle
+	org-delete-char
 	org-end-of-line
 	org-open-line
 	org-self-insert-command
