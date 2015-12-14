@@ -2260,7 +2260,7 @@ specifies the list of buffers to kill, asking for approval for each one."
                :init (progn
                        ;; To set to only use lowercase
                        (setq ace-jump-mode-case-fold t)
-                       (setq ace-jump-mode-scope 'visible)))
+                       (setq ace-jump-mode-scope 'frame)))
   ;; (setq ace-jump-mode-move-keys (loop for i from ?a to ?z collect i))
 #+end_src
 *** Ace Jump Zap
