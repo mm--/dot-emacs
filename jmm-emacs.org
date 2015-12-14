@@ -1088,12 +1088,14 @@ Same thing as above, but also include the next three days agenda.
 #+BEGIN_SRC emacs-lisp
   (org-add-agenda-custom-command
    '(" " "Default agenda"
-     ((agenda "" ((org-agenda-span 3)))
+     ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
+                  (org-agenda-span 3)))
       (todo "NEXT"
-                 ((org-agenda-overriding-header "Unscheduled next tasks")
-                  (org-agenda-skip-function
-                   (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
-                                  (bh/skip-projects-and-habits-and-single-tasks))))))
+            ((org-agenda-overriding-header "Unscheduled next tasks")
+             (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) ")
+             (org-agenda-skip-function
+              (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
+                             (bh/skip-projects-and-habits-and-single-tasks))))))
       (tags-todo "-CANCELLED+WAITING|HOLD/!"
                  ((org-agenda-overriding-header "Waiting tasks")
                   (org-agenda-skip-function 'bh/skip-non-tasks)))
@@ -1103,9 +1105,10 @@ Same thing as above, but also include the next three days agenda.
       (tags "REFILE"
             ((org-agenda-overriding-header "Refile:")))
       (todo "TODO"
-       ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
-                                                 (org-agenda-skip-entry-if 'scheduled 'deadline))))
-        (org-agenda-overriding-header "Unscheduled tasks: "))))))
+            ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
+                                                      (org-agenda-skip-entry-if 'scheduled 'deadline))))
+             (org-agenda-overriding-header "Unscheduled tasks: ")
+             (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
   (global-set-key (kbd "<f12>")
                   (lambda ()
                     (interactive)
@@ -1820,6 +1823,32 @@ These functions clock into a task if it exists and creates it using
 
   (global-set-key (kbd "C-c o") 'helm-org-buffer)
 #+END_SRC
+** Show how old an entry is
+   I usually have "Added: [inactive timestamp]" added to most of my
+   entries when captured with org-capture. Sometimes, I have
+   unscheduled tasks around for a while, so these functions let me see
+   how old they are. You could also use something like ~org-expiry~
+   for something this.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/org-get-added-time ()
+    "Get the time an entry was added"
+    (save-excursion
+      (org-back-to-heading t)
+      (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
+        (if (re-search-forward "Added: \\(\\[.*\\]\\)" subtree-end t)
+            (match-string 1)))))
+
+
+  (defun josh/org-format-age-from-added ()
+    "Get age from the added date"
+    (format "[%s]"
+            (let ((josh-added-time (josh/org-get-added-time)))
+              (if josh-added-time
+                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                    (org-time-string-to-absolute josh-added-time)))
+                "??"))))
+#+END_SRC
+
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
