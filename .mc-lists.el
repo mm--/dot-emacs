@@ -3,13 +3,17 @@
 
 (setq mc/cmds-to-run-for-all
       '(
+	LaTeX-babel-insert-hyphen
 	LaTeX-insert-left-brace
 	TeX-insert-backslash
 	TeX-insert-sub-or-superscript
+	comment-dwim
+	dabbrev-expand
 	delete-horizontal-space
 	dired-next-line
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
+	ess-indent-or-complete
 	ess-smart-comma
 	forward-sexp
 	indent-for-tab-command
@@ -17,21 +21,30 @@
 	insert-register
 	kill-region
 	kill-sexp
+	markdown-exdent-or-delete
 	matlab-electric-comment
 	matlab-forward-sexp
 	org-beginning-of-line
+	org-ctrl-c-ctrl-c
 	org-cycle
 	org-delete-char
 	org-end-of-line
+	org-kill-line
 	org-open-line
 	org-self-insert-command
+	org-yank
+	reindent-then-newline-and-indent
 	sgml-close-tag
 	sgml-slash
+	transpose-words
 	))
 
 (setq mc/cmds-to-run-once
       '(
+	ace-jump-move
+	describe-key
 	find-file
+	handle-switch-frame
 	helm-M-x
 	wdired-finish-edit
 	))
