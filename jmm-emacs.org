@@ -1098,7 +1098,8 @@ Same thing as above, but also include the next three days agenda.
                              (bh/skip-projects-and-habits-and-single-tasks))))))
       (tags-todo "-CANCELLED+WAITING|HOLD/!"
                  ((org-agenda-overriding-header "Waiting tasks")
-                  (org-agenda-skip-function 'bh/skip-non-tasks)))
+                  (org-agenda-skip-function 'bh/skip-non-tasks)
+                  (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
       (tags-todo "-CANCELLED/!"
                  ((org-agenda-overriding-header "Stuck Projects")
                   (org-agenda-skip-function 'bh/skip-non-stuck-projects)))
@@ -1848,7 +1849,28 @@ These functions clock into a task if it exists and creates it using
                                     (org-time-string-to-absolute josh-added-time)))
                 "??"))))
 #+END_SRC
+** Show how long I've been waiting for something
+   I have a section for "Waiting" tasks in my org agenda. I'd also
+   like to see how long I've been waiting for them, to remind me if I
+   should follow up.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/org-get-waiting-time ()
+    "Get the time we started waiting for a task"
+    (save-excursion
+      (org-back-to-heading t)
+      (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
+        (if (re-search-forward "State \"WAITING\".*\\(\\[.*\\]\\)" subtree-end t)
+            (match-string 1)))))
 
+  (defun josh/org-format-waiting-time ()
+    "Get age from the added date"
+    (format "[%s]"
+            (let ((josh-waiting-time (josh/org-get-waiting-time)))
+              (if josh-waiting-time
+                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                    (org-time-string-to-absolute josh-waiting-time)))
+                "??"))))
+#+END_SRC
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
