@@ -152,11 +152,22 @@ Make scripts executable
 (windmove-default-keybindings 'control)
 #+end_src
 
-* Theme
+* Theme/Appearance
 #+begin_src emacs-lisp
 (add-to-list 'custom-theme-load-path "~/elisp/zenburn-emacs/")
 (load-theme 'zenburn)
 #+end_src
+** Font
+Set my font
+#+BEGIN_SRC emacs-lisp
+  (defun josh/set-my-font (myfont)
+    (when (x-list-fonts myfont)
+      (set-frame-font myfont)
+      (add-to-list 'default-frame-alist
+                   (cons 'font myfont))))
+
+  (josh/set-my-font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
+#+END_SRC
 * Keybindings
 
 #+begin_src emacs-lisp
