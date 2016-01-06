@@ -1114,7 +1114,8 @@ Same thing as above, but also include the next three days agenda.
                   (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
       (tags-todo "-CANCELLED/!"
                  ((org-agenda-overriding-header "Stuck Projects")
-                  (org-agenda-skip-function 'bh/skip-non-stuck-projects)))
+                  (org-agenda-skip-function 'bh/skip-non-stuck-projects)
+                  (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-max-clock-time) ")))
       (tags "REFILE"
             ((org-agenda-overriding-header "Refile:")))
       (todo "TODO"
@@ -1882,6 +1883,36 @@ These functions clock into a task if it exists and creates it using
               (if josh-waiting-time
                   (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
                                     (org-time-string-to-absolute josh-waiting-time)))
+                "??"))))
+#+END_SRC
+** Show when the last time I've made progress on a project
+   I've got a list of stuck projects on my agenda. I'd like to know
+   how long they've been stuck for. These functions show how many days
+   it's been since I've clocked into a task in the project.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/org-get-end-clock-times ()
+    "Get the last times we clocked out of a task. Return as a list."
+    (save-excursion
+      (org-back-to-heading t)
+      (let* ((subtree-end (save-excursion (org-end-of-subtree t)))
+             (matches nil))
+        (while (re-search-forward "CLOCK: .*--\\(\\[.*\\]\\)" subtree-end t)
+          (setq matches (cons (match-string-no-properties 1) matches)))
+        matches)))
+
+  (defun josh/org-get-max-clock-times ()
+    "Get the day of the last time we clocked out of a task."
+    (let ((times (mapcar #'org-time-string-to-absolute (josh/org-get-end-clock-times))))
+      (when times
+        (apply 'max times))))
+
+  (defun josh/org-format-max-clock-time ()
+    "Format how many days ago we clocked out of a task. Used for projects."
+    (format "[%s]"
+            (let ((josh-last-clock-time (josh/org-get-max-clock-times)))
+              (if josh-last-clock-time
+                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                    josh-last-clock-time))
                 "??"))))
 #+END_SRC
 * Sawfish
