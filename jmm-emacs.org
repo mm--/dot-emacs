@@ -1108,8 +1108,9 @@ Same thing as above, but also include the next three days agenda.
               (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
                              (bh/skip-projects-and-habits-and-single-tasks))))))
       (tags-todo "-CANCELLED+WAITING|HOLD/!"
-                 ((org-agenda-overriding-header "Waiting tasks")
-                  (org-agenda-skip-function 'bh/skip-non-tasks)
+                 ((org-agenda-overriding-header "Unscheduled waiting tasks")
+                  (org-agenda-skip-function
+                   (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))
                   (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
       (tags-todo "-CANCELLED/!"
                  ((org-agenda-overriding-header "Stuck Projects")
