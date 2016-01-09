@@ -909,6 +909,18 @@ Because dired-jump is pretty useful
                                   (local-set-key (kbd "E") 'xah-open-in-external-app)))
 #+END_SRC
 
+** Playing files with mpv
+#+BEGIN_SRC emacs-lisp
+  (defun josh/open-with-mpv ()
+    (interactive)
+    (let ((thefiles (dired-get-marked-files))
+          (process-connection-type nil))
+      (apply 'start-process "" nil "mpvappendscrobble" thefiles)
+      (message (format "Played %i files" (length thefiles)))))
+
+  (add-hook 'dired-mode-hook '(lambda ()
+                                (local-set-key (kbd "J") 'josh/open-with-mpv)))
+#+END_SRC
 * Tramp
 #+begin_src emacs-lisp
 (require 'tramp)
