@@ -283,11 +283,12 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Spelling
 
 #+begin_src emacs-lisp
-(setq-default ispell-program-name "hunspell")
-(setq-default ispell-grep-command "grep")
-(setq-default ispell-grep-options "-iE")
-(setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
-(use-package rw-hunspell)
+  (setq-default ispell-program-name "hunspell")
+  (setq-default ispell-grep-command "grep")
+  (setq-default ispell-grep-options "-iE")
+  (setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
+  (setq-default ispell-silently-savep t)
+  (use-package rw-hunspell)
 #+end_src
 
 #+begin_src emacs-lisp
