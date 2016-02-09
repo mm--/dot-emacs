@@ -1116,7 +1116,7 @@ Same thing as above, but also include the next three days agenda.
                   (org-agenda-span 3)))
       (todo "NEXT"
             ((org-agenda-overriding-header "Unscheduled next tasks")
-             (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) ")
+             (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
              (org-agenda-skip-function
               (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
                              (bh/skip-projects-and-habits-and-single-tasks))))))
@@ -1397,7 +1397,7 @@ These functions clock into a task if it exists and creates it using
    From http://doc.norang.ca/org-mode.html
 #+begin_src emacs-lisp
   (setq org-todo-keywords
-         (quote ((sequence "TODO(t)" "NEXT(n)" "|" "DONE(d)")
+         (quote ((sequence "TODO(t)" "NEXT(n!)" "|" "DONE(d)")
                  (sequence "WAITING(w@/!)" "HOLD(h@/!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
 
   (setq org-todo-keyword-faces
@@ -1908,6 +1908,36 @@ These functions clock into a task if it exists and creates it using
                                     (org-time-string-to-absolute josh-waiting-time)))
                 "??"))))
 #+END_SRC
+** Show how long a task has been in the "Next" state
+   How old is this task from when it was changed to a "next" task? Or
+   when was it added? Take the more recent of the two.
+#+BEGIN_SRC emacs-lisp
+  (defun josh/org-get-next-time ()
+    "Get the time we turned this task into a 'next' task"
+    (save-excursion
+      (org-back-to-heading t)
+      (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
+        (if (re-search-forward "State \"NEXT\".*\\(\\[.*\\]\\)" subtree-end t)
+            (match-string 1)))))
+
+  (defun josh/absolute-time-or-0 (x)
+    (if x (org-time-string-to-absolute x) 0))
+
+  (defun josh/org-format-next-time ()
+    "How long has an unscheduled 'next' task been waiting? Take the more recent of the added or changed-to-next date."
+    (format "[%s]"
+            (let* ((josh-added-time (josh/org-get-added-time))
+                   (josh-next-time  (josh/org-get-next-time))
+                   (josh-waiting-time (when (or josh-added-time josh-next-time)
+                                        (max (josh/absolute-time-or-0 josh-added-time)
+                                             (josh/absolute-time-or-0 josh-next-time)))))
+              (if josh-waiting-time
+                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                    josh-waiting-time))
+                "??"))))
+
+#+END_SRC
+
 ** Show when the last time I've made progress on a project
    I've got a list of stuck projects on my agenda. I'd like to know
    how long they've been stuck for. These functions show how many days
@@ -1923,20 +1953,35 @@ These functions clock into a task if it exists and creates it using
           (setq matches (cons (match-string-no-properties 1) matches)))
         matches)))
 
-  (defun josh/org-get-max-clock-times ()
-    "Get the day of the last time we clocked out of a task."
-    (let ((times (mapcar #'org-time-string-to-absolute (josh/org-get-end-clock-times))))
+  (defun josh/org-get-closed-times ()
+    "Get the times we closed a task. Return as a list."
+    (save-excursion
+      (org-back-to-heading t)
+      (let* ((subtree-end (save-excursion (org-end-of-subtree t)))
+             (matches nil))
+        (while (re-search-forward "CLOSED: \\(\\[.*\\]\\)" subtree-end t)
+          (setq matches (cons (match-string-no-properties 1) matches)))
+        matches)))
+
+  (defun josh/org-get-max-time (mytimes)
+    "Get the largest day of a list of times.."
+    (let ((times (mapcar #'org-time-string-to-absolute mytimes)))
       (when times
         (apply 'max times))))
 
   (defun josh/org-format-max-clock-time ()
     "Format how many days ago we clocked out of a task. Used for projects."
-    (format "[%s]"
-            (let ((josh-last-clock-time (josh/org-get-max-clock-times)))
+    (format "[%s/%s]"
+            (let ((josh-last-clock-time (josh/org-get-max-time (josh/org-get-end-clock-times))))
               (if josh-last-clock-time
                   (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
                                     josh-last-clock-time))
-                "??"))))
+                "  ??"))
+            (let ((josh-last-closed-time (josh/org-get-max-time (josh/org-get-closed-times))))
+              (if josh-last-closed-time
+                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                    josh-last-closed-time))
+                "  ??"))))
 #+END_SRC
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
