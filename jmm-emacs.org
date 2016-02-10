@@ -2656,6 +2656,19 @@ specifies the list of buffers to kill, asking for approval for each one."
   ;; (setq auto-mode-alist
   ;;       (cons '("\\.m$" . octave-mode) auto-mode-alist))
 #+END_SRC
+** Matlab mode
+   For a lot of neural science stuff, I have to use Matlab instead of Octave.
+
+   I use a remote session, which means I usually set
+   ~matlab-shell-command~ to a shell script that runs matlab over ssh.
+#+BEGIN_SRC emacs-lisp
+  (use-package matlab
+    :init
+    (setq matlab-shell-echoes nil)
+    :config
+    (define-key matlab-mode-map (kbd "C-c C-j") 'matlab-shell-run-region-or-line)) 
+#+END_SRC
+
 ** Pdf-tools
    [[https://github.com/politza/pdf-tools][pdf-tools]] is a great package that makes viewing PDFs in Emacs much
    easier. Basically it's a replacement to DocView, but it allows you
