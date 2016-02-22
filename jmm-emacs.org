@@ -1829,16 +1829,18 @@ These functions clock into a task if it exists and creates it using
              (m (- min (* 60 h))))
         (format "%01d:%02d" h m)))
 
-  (defun josh/org-show-effort-and-clocked ()
+  (defun josh/org-show-effort-and-clocked (&optional noparens)
     "Show how much effort or clocked time there is.
     If no effort is set, show \"+\" clocked
     If there's no effort and no clocked time, show nothing
     If there's effort but no clocked time, show effort
     If there effort and clocked time, show \"-\" remaining effort
-    If done, show clocked time."
+    If done, show clocked time.
+
+    With optional parameter NOPARENS, don't include square brackets in output"
     (if (not (outline-on-heading-p t))
         ""
-      (format "[%s]"
+      (format (if noparens "%s" "[%s]")
               (let ((effort (org-get-at-eol 'effort-minutes 1))
                     (clocked (org-clock-sum-current-item (org-clock-get-sum-start))))
                 (if (org-entry-is-todo-p)
@@ -1916,12 +1918,13 @@ These functions clock into a task if it exists and creates it using
 
   (defun josh/org-format-age-from-added ()
     "Get age from the added date"
-    (format "[%s]"
+    (format "[%s|%s]"
             (let ((josh-added-time (josh/org-get-added-time)))
               (if josh-added-time
                   (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
                                     (org-time-string-to-absolute josh-added-time)))
-                "??"))))
+                "????"))
+            (josh/org-show-effort-and-clocked t)))
 #+END_SRC
 ** Show how long I've been waiting for something
    I have a section for "Waiting" tasks in my org agenda. I'd also
