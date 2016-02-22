@@ -7,14 +7,18 @@
 	LaTeX-insert-left-brace
 	TeX-insert-backslash
 	TeX-insert-sub-or-superscript
+	ace-jump-mode
+	ace-jump-move
 	comment-dwim
 	dabbrev-expand
 	delete-horizontal-space
+	dired-maybe-insert-subdir
 	dired-next-line
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
 	ess-indent-or-complete
 	ess-smart-comma
+	ess-yank
 	forward-sexp
 	indent-for-tab-command
 	indent-region
@@ -32,6 +36,7 @@
 	org-kill-line
 	org-open-line
 	org-self-insert-command
+	org-time-stamp-inactive
 	org-yank
 	reindent-then-newline-and-indent
 	sgml-close-tag
@@ -41,10 +46,17 @@
 
 (setq mc/cmds-to-run-once
       '(
+	ace-jump-add-multiple-cursor
 	ace-jump-move
+	ajmc/add-char
+	ajmc/add-multiple-cursors
+	ajmc/add-single-cursor
+	ajmc/keyboard-reset
 	describe-key
+	eval-expression
 	find-file
 	handle-switch-frame
 	helm-M-x
+	wdired-exit
 	wdired-finish-edit
 	))
