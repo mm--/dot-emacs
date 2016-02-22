@@ -1150,7 +1150,7 @@ Same thing as above, but also include the next three days agenda.
   (org-add-agenda-custom-command
    '(" " "Default agenda"
      ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
-                  (org-agenda-span 3)))
+                  (org-agenda-span 5)))
       (todo "NEXT"
             ((org-agenda-overriding-header "Unscheduled next tasks")
              (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
