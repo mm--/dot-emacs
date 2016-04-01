@@ -2388,6 +2388,27 @@ specifies the list of buffers to kill, asking for approval for each one."
   
   (global-set-key (kbd "C-h C-s") 'switch-to-scratch)
 #+end_src
+** Comment a copy
+   Sometimes when I'm debugging something, I'll want to make
+   modifications to the line I'm working on, but keep a copy of it
+   right above. This function allows me to automate that.
+#+BEGIN_SRC emacs-lisp
+  (defun jmm/comment-a-copy ()
+      "Add a commented-out line above the current one.
+
+  If the region is active, add a commented-out version of the region above the region"
+      (interactive)
+      (save-excursion
+          (let* ((beg (if (use-region-p) (min (mark) (point)) (line-beginning-position)))
+                 (end (if (use-region-p) (max (mark) (point)) (line-end-position)))
+                 (selection (buffer-substring beg end)))
+            (goto-char beg)
+            (push-mark)
+            (insert selection)
+            (comment-region (mark) (point)))))
+
+  (global-set-key (kbd "C-c C") 'jmm/comment-a-copy)
+#+END_SRC
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
