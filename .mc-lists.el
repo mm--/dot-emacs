@@ -4,11 +4,13 @@
 (setq mc/cmds-to-run-for-all
       '(
 	LaTeX-babel-insert-hyphen
+	LaTeX-close-environment
 	LaTeX-insert-left-brace
 	TeX-insert-backslash
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
 	ace-jump-move
+	avy-goto-char
 	comment-dwim
 	dabbrev-expand
 	delete-horizontal-space
@@ -41,6 +43,7 @@
 	reindent-then-newline-and-indent
 	sgml-close-tag
 	sgml-slash
+	transpose-sexps
 	transpose-words
 	))
 
@@ -48,11 +51,17 @@
       '(
 	ace-jump-add-multiple-cursor
 	ace-jump-move
+	ace-mc-add-char
+	ace-mc-add-multiple-cursors
+	ace-mc-add-single-cursor
+	ace-mc-do-keyboard-reset
 	ajmc/add-char
 	ajmc/add-multiple-cursors
 	ajmc/add-single-cursor
 	ajmc/keyboard-reset
+	avy-goto-char-2
 	describe-key
+	end-of-buffer
 	eval-expression
 	find-file
 	handle-switch-frame
