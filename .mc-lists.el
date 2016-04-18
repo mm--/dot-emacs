@@ -6,6 +6,7 @@
 	LaTeX-babel-insert-hyphen
 	LaTeX-close-environment
 	LaTeX-insert-left-brace
+	TeX-font
 	TeX-insert-backslash
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
@@ -19,14 +20,17 @@
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
 	ess-indent-or-complete
+	ess-smart-S-assign
 	ess-smart-comma
 	ess-yank
+	fill-paragraph
 	forward-sexp
 	indent-for-tab-command
 	indent-region
 	insert-register
 	kill-region
 	kill-sexp
+	ledger-post-align-xact
 	markdown-exdent-or-delete
 	matlab-electric-comment
 	matlab-forward-sexp
@@ -66,6 +70,7 @@
 	find-file
 	handle-switch-frame
 	helm-M-x
+	menu-bar-open
 	wdired-exit
 	wdired-finish-edit
 	))
