@@ -1030,7 +1030,7 @@ Because dired-jump is pretty useful
            "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
           ("d" "Date" entry (file+datetree+prompt "~/org/journal.org")
            "* %?\n%t\n")
-          ("l" "Lookup" entry (file+headline "gtd-test.org" "Lookup")
+          ("l" "Lookup" entry (file+headline "lookup.org" "Lookup")
            "* %?\n  Added: %U")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
            "* %i %?\n  Added: %U")
