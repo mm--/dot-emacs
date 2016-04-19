@@ -1002,10 +1002,14 @@ Because dired-jump is pretty useful
    Set the default span to a day view.
    I also have a script periodically export agendas. So to keep from
    destroying an agenda I'm currently viewing, I turn on sticky agendas.
+
+   I find that time grids can get in my way if there are too many of
+   them, so we'll just show a few times instead of the default of every two hours.
 #+begin_src emacs-lisp
   (setq org-agenda-files (concat (file-name-as-directory org-directory) "org-agendas.txt"))
   (setq org-agenda-span 3)
   (setq org-agenda-sticky t)
+  (setcar (nthcdr 2 org-agenda-time-grid) '(900 1200 1700))
 #+end_src
 ** Default notes file?
    Note to self, figure out what the difference between this and agenda is.
