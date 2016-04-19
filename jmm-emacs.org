@@ -1899,6 +1899,8 @@ These functions clock into a task if it exists and creates it using
           :prompt "Switch to Org buffer:"))
 
   (global-set-key (kbd "C-c o") 'helm-org-buffer)
+  ;; This is also a good key just for swooping
+  (global-set-key (kbd "C-c O") 'helm-multi-swoop-org)
 #+END_SRC
 ** Show how old an entry is
    I usually have "Added: [inactive timestamp]" added to most of my
