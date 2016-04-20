@@ -125,6 +125,7 @@ Enable all the disabled commands
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program "chromium")
   (setq shr-external-browser 'browse-url-generic) ;For eww
+  (setq epg-gpg-program "gpg2")
 #+end_src
 
 Make scripts executable
