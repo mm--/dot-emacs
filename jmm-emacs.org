@@ -143,10 +143,12 @@ Make scripts executable
 
 ** Dealing with the clipboard
 #+begin_src emacs-lisp
-(setq x-select-enable-clipboard t) ; as above
-(setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
-;; I think I need this now for my clipboard
-(setq x-select-enable-primary t)
+  (setq x-select-enable-clipboard t) ; as above
+  (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+  ;; Setting "x-select-enable-primary" allows me to paste into emacs from an xterm selection using "C-y" (yank)
+  ;; A problem, though, is that it breaks kill-ring-save yanking with multiple-cursors
+  ;; You can still from the X primary selection using middle click
+  ;; (setq x-select-enable-primary t)
 #+end_src
 ** Windmove
 #+begin_src emacs-lisp
