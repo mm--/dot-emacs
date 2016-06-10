@@ -1430,7 +1430,8 @@ These functions clock into a task if it exists and creates it using
    This is so we're able to refile to other files
 #+begin_src emacs-lisp
   (setq org-refile-targets (quote ((nil :maxlevel . 9)
-                                   (org-agenda-files :maxlevel . 9))))
+                                   (org-agenda-files :maxlevel . 9)
+                                   (("~/org/lookup.org") :maxlevel . 1))))
 #+end_src
 ** Store links
    Storing links in Emacs
