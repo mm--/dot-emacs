@@ -871,7 +871,7 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 * Dired
 ** Listing switches
 #+begin_src emacs-lisp
-(setq dired-listing-switches "-alh")
+(setq dired-listing-switches "-alhv")
 #+end_src
 ** Other settings
    I usually want to copy recursively. Don't ask me each time.
