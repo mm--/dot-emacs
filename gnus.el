@@ -1,6 +1,6 @@
 (setq gnus-select-method '(nnnil))
 
-(setq gnus-secondary-select-methods '((nnmbox "")
+(setq gnus-secondary-select-methods '(;; (nnmbox "")
 				      ;; TOO SLOW!
 				      ;; Probably should set up Dovecot
 				      ;; (nnmaildir "nyu"
