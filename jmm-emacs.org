@@ -1053,7 +1053,7 @@ Because dired-jump is pretty useful
           ("jc" "Journal Clock-In" entry (file+datetree "~/org/journal.org")
            "* %?\n%U\n" :clock-in t :clock-keep t)
           ("ji" "Journal Clock-In Immediate" entry (file+datetree "~/org/journal.org")
-           "* %c\n%U\n" :clock-in t :clock-keep t :immediate-finish t)
+           "* %c %u\n%U\n" :clock-in t :clock-keep t :immediate-finish t)
           ("J" "Jokes" plain (file "jokes.txt")
            "\n\n%U -\n\n %?\n" :empty-lines 1)
           ("v" "Vocabulary" entry
