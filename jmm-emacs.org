@@ -2450,7 +2450,30 @@ specifies the list of buffers to kill, asking for approval for each one."
     (insert (char-to-string mc--insert-letters-letter))
     (setq mc--insert-letters-letter (1+ mc--insert-letters-letter)))
 #+END_SRC
+*** Keymap for multiple-cursor commands
+    Taken from http://endlessparentheses.com/multiple-cursors-keybinds.html
+#+BEGIN_SRC emacs-lisp
+  (define-prefix-command 'endless/mc-map)
+  ;; C-x m is usually `compose-mail'. Bind it to something
+  ;; else if you use this command.
+  (define-key ctl-x-map "m" 'endless/mc-map)
 
+  ;;; Really really nice!
+  (define-key endless/mc-map "i" #'mc/insert-numbers)
+  (define-key endless/mc-map "h" #'mc-hide-unmatched-lines-mode)
+  (define-key endless/mc-map "a" #'mc/mark-all-like-this)
+
+  ;;; Occasionally useful
+  (define-key endless/mc-map "d"
+    #'mc/mark-all-symbols-like-this-in-defun)
+  (define-key endless/mc-map "r" #'mc/reverse-regions)
+  (define-key endless/mc-map "s" #'mc/sort-regions)
+  (define-key endless/mc-map "l" #'mc/edit-lines)
+  (define-key endless/mc-map "\C-a"
+    #'mc/edit-beginnings-of-lines)
+  (define-key endless/mc-map "\C-e"
+    #'mc/edit-ends-of-lines)
+#+END_SRC
 ** Expand Region
 #+begin_src emacs-lisp
   (use-package expand-region
