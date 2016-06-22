@@ -17,6 +17,7 @@
 	delete-horizontal-space
 	dired-maybe-insert-subdir
 	dired-next-line
+	dired-previous-line
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
 	ess-indent-or-complete
