@@ -1182,6 +1182,7 @@ Same thing as above, but also include the next three days agenda.
             ((org-agenda-overriding-header "Refile:")))
       (todo "TODO"
             ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
+                                                      (bh/skip-projects-and-habits)
                                                       (org-agenda-skip-entry-if 'scheduled 'deadline))))
              (org-agenda-overriding-header "Unscheduled tasks: ")
              (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
