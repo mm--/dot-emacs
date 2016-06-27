@@ -1182,7 +1182,8 @@ Same thing as above, but also include the next three days agenda.
             ((org-agenda-overriding-header "Refile:")))
       (todo "TODO"
             ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
-                                                      (bh/skip-projects-and-habits)
+                                                      ;; (bh/skip-projects-and-habits)
+                                                      (josh/skip-project-to-next-heading)
                                                       (org-agenda-skip-entry-if 'scheduled 'deadline))))
              (org-agenda-overriding-header "Unscheduled tasks: ")
              (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
@@ -1799,6 +1800,17 @@ These functions clock into a task if it exists and creates it using
         (goto-char parent-task)
         parent-task)))
 
+  (defun josh/skip-project-to-next-heading ()
+    "Skip project tasks, but instead of going to the end of the
+  subtree, just go to the next headline"
+    (save-restriction
+      (widen)
+      (let* ((next-headline (save-excursion (or (outline-next-heading) (point-max)))))
+        (cond
+         ((bh/is-project-p)
+          next-headline)
+         (t
+          nil)))))
 #+END_SRC
 ** Find old closed entries
    My org files seem to now be accumulating a bunch of "DONE" entries
