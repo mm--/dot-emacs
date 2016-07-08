@@ -2549,10 +2549,10 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 #+begin_src emacs-lisp
   (global-set-key [f5] 'slime-js-reload)
-  (add-hook 'js-mode-hook
-            (lambda ()
-              (js2-minor-mode 1)
-              (auto-complete-mode 1)))
+  ;; (add-hook 'js-mode-hook
+  ;;           (lambda ()
+  ;;             (js2-minor-mode 1)
+  ;;             (auto-complete-mode 1)))
 #+end_src
 ** js2-mode
    Use js2-mode by default
