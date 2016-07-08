@@ -15,6 +15,7 @@
 	comment-dwim
 	dabbrev-expand
 	delete-horizontal-space
+	delete-indentation
 	dired-maybe-insert-subdir
 	dired-next-line
 	dired-previous-line
