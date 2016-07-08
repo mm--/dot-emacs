@@ -2056,9 +2056,10 @@ These functions clock into a task if it exists and creates it using
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
-  (setq auto-mode-alist (cons '("\\.sawfishrc$"  . sawfish-mode) auto-mode-alist)
-        auto-mode-alist (cons '("\\.jl$"         . sawfish-mode) auto-mode-alist)
-        auto-mode-alist (cons '("\\.sawfish/rc$" . sawfish-mode) auto-mode-alist))
+  (when (require 'sawfish nil 'noerror)
+    (setq auto-mode-alist (cons '("\\.sawfishrc$"  . sawfish-mode) auto-mode-alist)
+          auto-mode-alist (cons '("\\.jl$"         . sawfish-mode) auto-mode-alist)
+          auto-mode-alist (cons '("\\.sawfish/rc$" . sawfish-mode) auto-mode-alist)))
 
 #+end_src
 * Helm
