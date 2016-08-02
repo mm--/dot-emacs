@@ -908,6 +908,7 @@ Because dired-jump is pretty useful
                               (dired-get-marked-files))
                       " ")))
       (kill-new string)
+      (x-set-selection 'PRIMARY string)   ;So I can middle click paste it into xterm
       (message "%s" string)))
 
   (eval-after-load 'dired
