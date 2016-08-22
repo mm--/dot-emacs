@@ -967,7 +967,12 @@ Because dired-jump is pretty useful
    I'm messing around with git-annex, and it's nice to be able to view
    locked files by their name and not as a giant symlink in dired.
 #+BEGIN_SRC emacs-lisp
-  (use-package git-annex)
+  (use-package git-annex
+    :config
+    (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
+    (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
+    (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
+    (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files))
 #+END_SRC
 * Tramp
 #+begin_src emacs-lisp
