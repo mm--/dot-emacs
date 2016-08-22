@@ -963,6 +963,12 @@ Because dired-jump is pretty useful
   (add-hook 'dired-mode-hook '(lambda ()
                                 (local-set-key (kbd "J") 'josh/open-with-mpv)))
 #+END_SRC
+** git-annex
+   I'm messing around with git-annex, and it's nice to be able to view
+   locked files by their name and not as a giant symlink in dired.
+#+BEGIN_SRC emacs-lisp
+  (use-package git-annex)
+#+END_SRC
 * Tramp
 #+begin_src emacs-lisp
 (require 'tramp)
