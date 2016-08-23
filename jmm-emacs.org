@@ -1051,6 +1051,8 @@ Because dired-jump is pretty useful
            "* %?\n%t\n")
           ("l" "Lookup" entry (file+headline "lookup.org" "Lookup")
            "* %?\n  Added: %U")
+          ("L" "Lookup link" entry (file+headline "lookup.org" "Lookup")
+           "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
            "* %i %?\n  Added: %U")
           ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
@@ -1104,6 +1106,20 @@ Because dired-jump is pretty useful
     (delete-if (lambda (x) (equal (car x) key)) org-capture-templates)
     (add-to-list 'org-capture-templates
                  template)))
+#+END_SRC
+*** Get the title of a URL
+    Used for a capture template. I want my links to also have a sort of description
+#+BEGIN_SRC emacs-lisp
+  (defun www-get-page-title (url)
+    "From https://lists.gnu.org/archive/html/help-gnu-emacs/2010-07/msg00291.html"
+    (let ((title))
+      (with-current-buffer (url-retrieve-synchronously url)
+        (goto-char (point-min))
+        (re-search-forward "<title>\\([^<]*\\)</title>" nil t 1)
+        (setq title (match-string 1))
+        (goto-char (point-min))
+        (re-search-forward "charset=\\([-0-9a-zA-Z]*\\)" nil t 1)
+        (decode-coding-string title (intern (downcase (match-string 1)))))))
 #+END_SRC
 ** Org agenda listings
 #+begin_src emacs-lisp
