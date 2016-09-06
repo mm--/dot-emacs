@@ -1361,6 +1361,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (setq josh/helm-source-org-clock
     '((name . "Clock in to what")
       (candidates . josh/org-helm-candidates)
+      (case-fold-search . t)
       (filtered-candidate-transformer
        helm-adaptive-sort)
       (action . (("Clock in"
@@ -1396,6 +1397,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
   (setq josh/helm-jump-org
     '((name . "Jump to org")
       (candidates . josh/org-helm-candidates)
+      (case-fold-search . t)
       (filtered-candidate-transformer
        helm-adaptive-sort)
       (action . (("Jump to"
