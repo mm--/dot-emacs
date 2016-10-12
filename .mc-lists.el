@@ -25,6 +25,7 @@
 	ess-smart-S-assign
 	ess-smart-comma
 	ess-yank
+	eval-last-sexp
 	fill-paragraph
 	forward-sexp
 	indent-for-tab-command
@@ -44,13 +45,19 @@
 	org-kill-line
 	org-open-line
 	org-self-insert-command
+	org-set-tags-command
 	org-time-stamp-inactive
 	org-yank
+	phi-search-backward
 	reindent-then-newline-and-indent
 	sgml-close-tag
 	sgml-slash
 	transpose-sexps
 	transpose-words
+	wdired-capitalize-word
+	wdired-downcase-word
+	wdired-upcase-word
+	yaml-electric-backspace
 	))
 
 (setq mc/cmds-to-run-once
@@ -73,6 +80,7 @@
 	handle-switch-frame
 	helm-M-x
 	menu-bar-open
+	undefined
 	wdired-exit
 	wdired-finish-edit
 	))
