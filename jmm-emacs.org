@@ -1054,7 +1054,7 @@ Because dired-jump is pretty useful
           ("L" "Lookup link" entry (file+headline "lookup.org" "Lookup")
            "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
-           "* %i %?\n  Added: %U")
+           "* %?\n  Added: %U")
           ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
            "* %?\n%i\n  Added: %U")
           ("m" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
