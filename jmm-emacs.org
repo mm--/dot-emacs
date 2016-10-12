@@ -1068,6 +1068,8 @@ Because dired-jump is pretty useful
            "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
           ("eo" "Erlich thoughts" entry (file+headline "erlich.org" "Erlich thoughts")
            "* %i%?\n  Added: %U")
+          ("em" "Erlich maybe" entry (file+headline "erlich.org" "Erlich maybe")
+           "* %?\n  Added: %U")
           ("j" "Journal Stuff")
           ("jr" "Journal Resume" entry (file+datetree "~/org/journal.org")
            "* %?\n%U\n" :clock-in t :clock-resume t)
