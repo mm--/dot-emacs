@@ -2615,7 +2615,10 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+begin_src emacs-lisp
   (setq-default js2-basic-offset 4)
 #+end_src
-
+   I'm checking style/semicolons/whatever with eslint, so I don't want js2-mode to tell me about it.
+#+BEGIN_SRC emacs-lisp
+  (setq-default js2-strict-missing-semi-warning nil)
+#+END_SRC
 ** Tern.js for Javascript
    [[http://ternjs.net/][Tern]] seems to be a pretty cool tool much like ctags.
 
