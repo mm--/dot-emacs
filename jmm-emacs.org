@@ -2224,6 +2224,13 @@ Set up hotkeys and stuff for helm-swoop
     :bind (("C-h b" . helm-descbinds)
            ("C-h w" . helm-descbinds)))
 #+END_SRC
+** helm-org-rifle
+   Helm-org-rifle is a really nice way to swoop through org-mode
+#+BEGIN_SRC emacs-lisp
+  (use-package helm-org-rifle
+                 :bind (("C-c r" . helm-org-rifle-org-directory)
+                        ("C-c R" . helm-org-rifle)))
+#+END_SRC
 * Processing
   Define the location of processing.
   Will be different for you.
