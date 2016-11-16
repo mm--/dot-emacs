@@ -2104,6 +2104,35 @@ These functions clock into a task if it exists and creates it using
                                     josh-last-closed-time))
                 "  ??"))))
 #+END_SRC
+* Elfeed
+  [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
+  to use Gnus to read RSS, but elfeed is nice in that it doesn't block
+  emacs when loading feeds. Also, after learning how to use notmuch,
+  the elfeed interface started making a lot of sense.
+
+  Pro tip: Use bookmarks (especially Helm bookmarks) to save elfeed
+  searches. This gives you similar functionality to notmuch saved searches.
+
+#+BEGIN_SRC emacs-lisp
+  (defun elfeed-toggle-images ()
+    "Toggle the display of images"
+    (interactive)
+    (setq shr-inhibit-images (not shr-inhibit-images))
+    (elfeed-show-refresh))
+
+  (defun elfeed-temporarily-inhibit-images ()
+      "Inhibit the display of images, but don't set `shr-inhibit-images'"
+      (interactive)
+      (let ((shr-inhibit-images t))
+        (elfeed-show-refresh)))
+
+  (use-package elfeed
+                 :bind (("C-x w" . elfeed))
+                 :config
+                 (define-key elfeed-show-mode-map "I" 'elfeed-toggle-images)
+                 (define-key elfeed-show-mode-map "i" 'elfeed-temporarily-inhibit-images))
+#+END_SRC
+
 * Sawfish
   Automatically load .jl files as sawfish (not Julia)
 #+begin_src emacs-lisp
