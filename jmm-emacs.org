@@ -1049,8 +1049,11 @@ Because dired-jump is pretty useful
            "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
           ("d" "Date" entry (file+datetree+prompt "~/org/journal.org")
            "* %?\n%t\n")
-          ("l" "Lookup" entry (file+headline "lookup.org" "Lookup")
+          ("l" "Lookup stuff")
+          ("ll" "Lookup" entry (file+headline "lookup.org" "Lookup")
            "* %?\n  Added: %U")
+          ("lp" "Lookup paper (link)" entry (file+headline "lookup.org" "Paper lookup")
+           "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
           ("L" "Lookup link" entry (file+headline "lookup.org" "Lookup")
            "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
           ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
@@ -2103,6 +2106,11 @@ These functions clock into a task if it exists and creates it using
                   (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
                                     josh-last-closed-time))
                 "  ??"))))
+#+END_SRC
+** Use speed keys
+   [[http://orgmode.org/manual/Speed-keys.html][Speed keys]] make it really quick to do things like sorting headlines.
+#+BEGIN_SRC emacs-lisp
+  (setq org-use-speed-commands t)
 #+END_SRC
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
