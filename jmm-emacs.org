@@ -974,6 +974,22 @@ Because dired-jump is pretty useful
     (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
     (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files))
 #+END_SRC
+** Dired ranger
+   dired-ranger (see [[https://github.com/Fuco1/dired-hacks][dired-hacks]]) adds some really convenient ways to
+   copy and paste files between buffers. It's a lot easier than
+   hitting ~C~ and scrolling through your find-file history looking
+   for the right path to copy to.
+
+#+BEGIN_SRC emacs-lisp
+  (use-package dired-ranger
+    :ensure t
+    :bind (:map dired-mode-map
+		("[" . dired-ranger-copy)
+		("]" . dired-ranger-paste)
+		("}" . dired-ranger-move)
+		))
+#+END_SRC
+
 * Tramp
 #+begin_src emacs-lisp
 (require 'tramp)
