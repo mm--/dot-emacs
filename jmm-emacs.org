@@ -2268,6 +2268,14 @@ Set up hotkeys and stuff for helm-swoop
                  :bind (("C-c r" . helm-org-rifle-org-directory)
                         ("C-c R" . helm-org-rifle)))
 #+END_SRC
+* Magit
+  [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
+#+BEGIN_SRC emacs-lisp
+  (use-package magit
+    :bind (("C-x g" . magit-status)
+	   ("C-x M-g" . magit-dispatch-popup)))
+#+END_SRC
+
 * Processing
   Define the location of processing.
   Will be different for you.
