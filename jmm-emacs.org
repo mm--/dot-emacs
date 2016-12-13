@@ -1211,6 +1211,14 @@ Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
       (org-agenda-overriding-header "Unscheduled tasks: "))))
 #+END_SRC
 
+An agenda which shows which papers I should read.
+#+BEGIN_SRC emacs-lisp
+(org-add-agenda-custom-command
+   '("j" "Journal" tags "+LEVEL=2+paper/-DONE-CANCELLED"
+     ((org-agenda-files '("~/org/lookup.org"))
+      (org-agenda-overriding-header "Journal articles: "))))
+#+END_SRC
+
 A projects-related agenda. View next tasks, waiting, and stuck projects.
 #+BEGIN_SRC emacs-lisp
   (org-add-agenda-custom-command
