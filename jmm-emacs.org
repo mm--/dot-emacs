@@ -2156,6 +2156,21 @@ These functions clock into a task if it exists and creates it using
   :bind (:map org-mode-map
 	      ("M-N" . org-expiry-insert-created)))
 #+END_SRC
+* Notmuch
+  Notmuch is an email interface I started using to replace Gnus. It's
+  got a couple of main selling points. First is that things are
+  organized into tags instead of folders, so messages can have more
+  than one category. The second is that it uses Xapian for searching,
+  making full text search really, really fast.
+
+#+BEGIN_SRC emacs-lisp
+(use-package notmuch
+    :bind (("C-c n" . notmuch-hello)
+	   ("C-c N" . notmuch-search)
+	   :map notmuch-common-keymap
+	   ("g" . notmuch-refresh-this-buffer)))
+#+END_SRC
+
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
   to use Gnus to read RSS, but elfeed is nice in that it doesn't block
