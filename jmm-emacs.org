@@ -2655,6 +2655,23 @@ specifies the list of buffers to kill, asking for approval for each one."
   (("M-z" . ace-jump-zap-up-to-char-dwim)
    ("M-Z" . ace-jump-zap-to-char-dwim)))
 #+END_SRC
+** Avy
+   [[https://github.com/abo-abo/avy/][Avy]] is like ace-jump-mode, but apparently better updated and with
+   some newer features. I haven't really gotten around to using it
+   instead of ace-jump-mode yet, but I'm trying to see what it has to offer.
+#+BEGIN_SRC emacs-lisp
+  (use-package avy
+    :bind (("C-'" . avy-goto-char-timer)
+	   ("C-:" . avy-goto-char-2)
+	   ("M-g w" . avy-goto-word-1)
+	   :map isearch-mode-map
+	   ("C-'" . avy-isearch))
+    :init (setq avy-keys (number-sequence ?a ?z)
+		avy-style 'at-full
+		avy-background t
+		avy-timeout-seconds 0.3))
+#+END_SRC
+
 * Other modes
 ** Enriched Mode
 #+begin_src emacs-lisp
