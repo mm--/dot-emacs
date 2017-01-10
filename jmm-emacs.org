@@ -2144,6 +2144,18 @@ These functions clock into a task if it exists and creates it using
 #+BEGIN_SRC emacs-lisp
   (setq org-use-speed-commands t)
 #+END_SRC
+** Org expiry
+   Use org-expiry to make a "created" property
+#+BEGIN_SRC emacs-lisp
+(use-package org-expiry
+  :init
+  (setq org-expiry-created-property-name "CREATED")
+  (setq org-expiry-inactive-timestamps t))
+
+(use-package org
+  :bind (:map org-mode-map
+	      ("M-N" . org-expiry-insert-created)))
+#+END_SRC
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
   to use Gnus to read RSS, but elfeed is nice in that it doesn't block
