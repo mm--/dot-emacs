@@ -2156,6 +2156,29 @@ These functions clock into a task if it exists and creates it using
   :bind (:map org-mode-map
 	      ("M-N" . org-expiry-insert-created)))
 #+END_SRC
+** Marking headings with a tag
+   Sometimes I want to perform an action in bulk on a bunch of
+   entries. For example, I might want to refile a bunch of headings or
+   add a lot of tags for similar headings. This can be pretty tedious
+   to do manually, especially since there's a ~org-agenda-bulk-action~
+   command (usually bound to ~B~ in ~org-agenda~) that helps us out.
+
+   In order to get a bunch of "marked" entries in an agenda, though,
+   we want a quick way to add something like a "MARKED" tag. The code
+   below does that.
+#+BEGIN_SRC emacs-lisp
+(use-package org
+  :bind (:map org-mode-map
+	      ("M-M" . josh/org-toggle-marked-tag))
+  :init
+  (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
+  (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold)))
+
+(defun josh/org-toggle-marked-tag ()
+  "Add a \"MARKED\" tag to a headline"
+  (interactive)
+  (org-toggle-tag "MARKED"))
+#+END_SRC
 * Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
   got a couple of main selling points. First is that things are
