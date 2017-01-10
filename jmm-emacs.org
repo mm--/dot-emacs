@@ -1056,78 +1056,80 @@ Because dired-jump is pretty useful
 ** Capture templates
    Need to make this more portable across different systems. I think it defaults to org-directory.
 #+begin_src emacs-lisp
-  (setq org-capture-templates
-        '(("t" "Todo" entry (file+headline "gtd-test.org" "Tasks")
-           "* TODO %i%?\n  Added: %U")
-          ("r" "Refile" entry (file "refile.org")
-           "* %i%?\n  Added: %U")
-          ("a" "Today" entry (file+headline "gtd-test.org" "Tasks")
-           "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
-          ("d" "Date" entry (file+datetree+prompt "~/org/journal.org")
-           "* %?\n%t\n")
-          ("l" "Lookup stuff")
-          ("ll" "Lookup" entry (file+headline "lookup.org" "Lookup")
-           "* %?\n  Added: %U")
-          ("lp" "Lookup paper (link)" entry (file+headline "lookup.org" "Paper lookup")
-           "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
-          ("L" "Lookup link" entry (file+headline "lookup.org" "Lookup")
-           "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
-          ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
-           "* %?\n  Added: %U")
-          ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
-           "* %?\n%i\n  Added: %U")
-          ("M" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
-           "* %?\n  Added: %U")
-          ("m" "Someday/Maybe lists")
-          ("mm" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
-           "* %?\n  Added: %U")
-          ("mc" "Computer maybe" entry (file+headline "someday-maybe.org" "Computer Maybe")
-           "* %?\n  Added: %U")
-          ("ml" "Learn" entry (file+headline "someday-maybe.org" "Learn")
-           "* %?\n  Added: %U")
-          ("mb" "Books/Reading" entry (file+headline "movies-books-media.org" "Books/Reading")
-           "* %?\n  Added: %U")
-          ("mv" "Movies" entry (file+headline "movies-books-media.org" "Movies")
-           "* %?\n  Added: %U")
-          ("ma" "Audio/Music" entry (file+headline "movies-books-media.org" "Music/Audio")
-           "* %?\n  Added: %U")
-          ("ms" "Shanghai goals" entry (file+headline "someday-maybe.org" "Shanghai Goals")
-           "* %?\n  Added: %U")
-          ("o" "thoughts" plain (file "thoughts-misc.txt")
-           "\n\n%U -\n\n %?\n" :empty-lines 1)
-          ("e" "Erlich stuff")
-          ("et" "Erlich tasks" entry (file+headline "erlich.org" "Erlich tasks")
-           "* TODO %i%?\n  Added: %U")
-          ("ea" "Erlich today" entry (file+headline "erlich.org" "Erlich tasks")
-           "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
-          ("eo" "Erlich thoughts" entry (file+headline "erlich.org" "Erlich thoughts")
-           "* %i%?\n  Added: %U")
-          ("em" "Erlich maybe" entry (file+headline "erlich.org" "Erlich maybe")
-           "* %?\n  Added: %U")
-          ("j" "Journal Stuff")
-          ("jr" "Journal Resume" entry (file+datetree "~/org/journal.org")
-           "* %?\n%U\n" :clock-in t :clock-resume t)
-          ("jc" "Journal Clock-In" entry (file+datetree "~/org/journal.org")
-           "* %?\n%U\n" :clock-in t :clock-keep t)
-          ("ji" "Journal Clock-In Immediate" entry (file+datetree "~/org/journal.org")
-           "* %c %u\n%U\n" :clock-in t :clock-keep t :immediate-finish t)
-          ("J" "Jokes" plain (file "jokes.txt")
-           "\n\n%U -\n\n %?\n" :empty-lines 1)
-          ("v" "Vocabulary" entry
-           (file+headline "~/reading/words-i-learned.org" "Vocabulary")
-           "* %^{The word} :drill:\n Added: %U\n %^{Extended word (may be empty)|%\\1}\n** Answer \n%^{The definition}")
-          ("V" "Two-sided Vocabulary" entry
-           (file+headline "~/reading/words-i-learned.org" "Vocabulary")
-           "* <[%^{The word}]> :drill:\n Added: %U\n    :PROPERTIES:\n    :DRILL_CARD_TYPE: twosided\n    :END:\n** Word\n%^{Extended word (may be empty)|%\\1}\n** Definition\n%^{Definition}\n** Examples\n%^{Examples}\n")
-          ("c" "Chinese Word" entry
-           (file+headline "~/reading/skip/chinese.org" "Words")
-           "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\nDefinition:\n%(josh/chinese-get-definition (josh/chinese-dict-find josh/chinese-word))\n** Characters\n%(josh/chinese-get-word josh/chinese-word-dict)\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n")
-          ("C" "Chinese Word (Read)" entry
-           (file+headline "~/reading/skip/chinese.org" "Words")
-           "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\n%(josh/chinese-get-word (josh/chinese-dict-find josh/chinese-word))\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n** Definition\n%(josh/chinese-get-definition josh/chinese-word-dict)\n")
-          ("R" "reading" plain
-           (file "~/org/data/reading.csv")
-           "%(format-time-string \"%s\"),\"%(format-time-string \"%Y-%m-%d\")\",\"%(josh/prompt-book)\",%^{Start},%^{End}")))
+(setq org-capture-templates
+      '(("t" "Todo" entry (file+headline "gtd-test.org" "Tasks")
+         "* TODO %i%?\n  Added: %U")
+        ("r" "Refile" entry (file "refile.org")
+         "* %i%?\n  Added: %U")
+        ("a" "Today" entry (file+headline "gtd-test.org" "Tasks")
+         "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
+        ("d" "Date" entry (file+datetree+prompt "~/org/journal.org")
+         "* %?\n%t\n")
+        ("l" "Lookup stuff")
+        ("ll" "Lookup" entry (file+headline "lookup.org" "Lookup")
+         "* %?\n  Added: %U")
+        ("lp" "Lookup paper" entry (file+headline "lookup.org" "Paper lookup")
+         "* TODO %?")
+	("lP" "Lookup paper (link)" entry (file+headline "lookup.org" "Paper lookup")
+	 "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
+        ("L" "Lookup link" entry (file+headline "lookup.org" "Lookup")
+         "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
+        ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
+         "* %?\n  Added: %U")
+        ("n" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
+         "* %?\n%i\n  Added: %U")
+        ("M" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
+         "* %?\n  Added: %U")
+        ("m" "Someday/Maybe lists")
+        ("mm" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
+         "* %?\n  Added: %U")
+        ("mc" "Computer maybe" entry (file+headline "someday-maybe.org" "Computer Maybe")
+         "* %?\n  Added: %U")
+        ("ml" "Learn" entry (file+headline "someday-maybe.org" "Learn")
+         "* %?\n  Added: %U")
+        ("mb" "Books/Reading" entry (file+headline "movies-books-media.org" "Books/Reading")
+         "* %?\n  Added: %U")
+        ("mv" "Movies" entry (file+headline "movies-books-media.org" "Movies")
+         "* %?\n  Added: %U")
+        ("ma" "Audio/Music" entry (file+headline "movies-books-media.org" "Music/Audio")
+         "* %?\n  Added: %U")
+        ("ms" "Shanghai goals" entry (file+headline "someday-maybe.org" "Shanghai Goals")
+         "* %?\n  Added: %U")
+        ("o" "thoughts" plain (file "thoughts-misc.txt")
+         "\n\n%U -\n\n %?\n" :empty-lines 1)
+        ("e" "Erlich stuff")
+        ("et" "Erlich tasks" entry (file+headline "erlich.org" "Erlich tasks")
+         "* TODO %i%?\n  Added: %U")
+        ("ea" "Erlich today" entry (file+headline "erlich.org" "Erlich tasks")
+         "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
+        ("eo" "Erlich thoughts" entry (file+headline "erlich.org" "Erlich thoughts")
+         "* %i%?\n  Added: %U")
+        ("em" "Erlich maybe" entry (file+headline "erlich.org" "Erlich maybe")
+         "* %?\n  Added: %U")
+        ("j" "Journal Stuff")
+        ("jr" "Journal Resume" entry (file+datetree "~/org/journal.org")
+         "* %?\n%U\n" :clock-in t :clock-resume t)
+        ("jc" "Journal Clock-In" entry (file+datetree "~/org/journal.org")
+         "* %?\n%U\n" :clock-in t :clock-keep t)
+        ("ji" "Journal Clock-In Immediate" entry (file+datetree "~/org/journal.org")
+         "* %c %u\n%U\n" :clock-in t :clock-keep t :immediate-finish t)
+        ("J" "Jokes" plain (file "jokes.txt")
+         "\n\n%U -\n\n %?\n" :empty-lines 1)
+        ("v" "Vocabulary" entry
+         (file+headline "~/reading/words-i-learned.org" "Vocabulary")
+         "* %^{The word} :drill:\n Added: %U\n %^{Extended word (may be empty)|%\\1}\n** Answer \n%^{The definition}")
+        ("V" "Two-sided Vocabulary" entry
+         (file+headline "~/reading/words-i-learned.org" "Vocabulary")
+         "* <[%^{The word}]> :drill:\n Added: %U\n    :PROPERTIES:\n    :DRILL_CARD_TYPE: twosided\n    :END:\n** Word\n%^{Extended word (may be empty)|%\\1}\n** Definition\n%^{Definition}\n** Examples\n%^{Examples}\n")
+        ("c" "Chinese Word" entry
+         (file+headline "~/reading/skip/chinese.org" "Words")
+         "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\nDefinition:\n%(josh/chinese-get-definition (josh/chinese-dict-find josh/chinese-word))\n** Characters\n%(josh/chinese-get-word josh/chinese-word-dict)\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n")
+        ("C" "Chinese Word (Read)" entry
+         (file+headline "~/reading/skip/chinese.org" "Words")
+         "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\n%(josh/chinese-get-word (josh/chinese-dict-find josh/chinese-word))\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n** Definition\n%(josh/chinese-get-definition josh/chinese-word-dict)\n")
+        ("R" "reading" plain
+         (file "~/org/data/reading.csv")
+         "%(format-time-string \"%s\"),\"%(format-time-string \"%Y-%m-%d\")\",\"%(josh/prompt-book)\",%^{Start},%^{End}")))
 #+end_src
    Fix a bug causing org-capture to mess up line numbers
 #+begin_src emacs-lisp
@@ -1552,19 +1554,25 @@ These functions clock into a task if it exists and creates it using
                 ("DONE" ("WAITING") ("CANCELLED") ("HOLD") ("IFBORED")))))
 #+end_src
 ** Babel
-*** Babel languages
+*** Babel languages and settings
 #+begin_src emacs-lisp
-  (org-babel-do-load-languages
-   (quote org-babel-load-languages)
-   (quote ((emacs-lisp . t)
-           (ditaa . t)
-           (R . t)
-           (python . t)
-           (ledger . t)
-           (org . t)
-           (latex . t)
-           (sh . t)
-           (dot . t))))
+(org-babel-do-load-languages
+ (quote org-babel-load-languages)
+ (quote ((emacs-lisp . t)
+	 (ditaa . t)
+	 (R . t)
+	 (python . t)
+	 (ipython .t)
+	 (ledger . t)
+	 (org . t)
+	 (latex . t)
+	 (sh . t)
+	 (dot . t)
+	 (sql . t))))
+
+(setq org-edit-src-content-indentation 0
+      org-src-tab-acts-natively t
+      org-src-window-setup 'current-window)
 #+end_src
 *** Ditaa
 #+begin_src emacs-lisp
@@ -2156,13 +2164,13 @@ These functions clock into a task if it exists and creates it using
       "Inhibit the display of images, but don't set `shr-inhibit-images'"
       (interactive)
       (let ((shr-inhibit-images t))
-        (elfeed-show-refresh)))
+	(elfeed-show-refresh)))
 
   (use-package elfeed
-                 :bind (("C-x w" . elfeed))
-                 :config
-                 (define-key elfeed-show-mode-map "I" 'elfeed-toggle-images)
-                 (define-key elfeed-show-mode-map "i" 'elfeed-temporarily-inhibit-images))
+		 :bind (("C-x w" . elfeed))
+		 :config
+		 (define-key elfeed-show-mode-map "I" 'elfeed-toggle-images)
+		 (define-key elfeed-show-mode-map "i" 'elfeed-temporarily-inhibit-images))
 #+END_SRC
 
 * Sawfish
