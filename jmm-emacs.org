@@ -1281,7 +1281,7 @@ Same thing as above, but also include the next three days agenda.
                                    ("IFBORED" . ?b)
                                    ("work" . ?w) ("home" . ?h)
                                    ("REWARD" . ?R) ("SHOPPING" . ?s)
-                                   ("PESARAN" . ?p) ("ERLICH" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
+                                   ("PESARAN" . ?p) ("erlich" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
                                    ("vague" . ?v) ("LOOKUP" . ?l)
                                    ("CODING" . ?c)
                                    ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("LIFEGOAL" . ?G)))
