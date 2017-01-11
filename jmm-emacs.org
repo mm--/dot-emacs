@@ -1065,6 +1065,8 @@ Because dired-jump is pretty useful
          "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
         ("d" "Date" entry (file+datetree+prompt "~/org/journal.org")
          "* %?\n%t\n")
+	("w" "Calendar" entry (file+headline "gtd-test.org" "Calendar")
+         "* %?\n%^t\n")
         ("l" "Lookup stuff")
         ("ll" "Lookup" entry (file+headline "lookup.org" "Lookup")
          "* %?\n  Added: %U")
