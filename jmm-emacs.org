@@ -2024,25 +2024,29 @@ These functions clock into a task if it exists and creates it using
    unscheduled tasks around for a while, so these functions let me see
    how old they are. You could also use something like ~org-expiry~
    for something this.
+
+   (Lately I've moved to using the "CREATED" property from ~org-expiry~)
 #+BEGIN_SRC emacs-lisp
-  (defun josh/org-get-added-time ()
-    "Get the time an entry was added"
-    (save-excursion
-      (org-back-to-heading t)
-      (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
-        (if (re-search-forward "Added: \\(\\[.*\\]\\)" subtree-end t)
-            (match-string 1)))))
+(defun josh/org-get-added-time ()
+  "Get the time an entry was added"
+  (or
+   (cdr (assoc "CREATED" (org-entry-properties))) ;The "CREATED" property
+   (save-excursion
+     (org-back-to-heading t)
+     (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
+       (if (re-search-forward "Added: \\(\\[.*\\]\\)" subtree-end t)
+	   (match-string 1))))))
 
 
-  (defun josh/org-format-age-from-added ()
-    "Get age from the added date"
-    (format "[%s|%s]"
-            (let ((josh-added-time (josh/org-get-added-time)))
-              (if josh-added-time
-                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
-                                    (org-time-string-to-absolute josh-added-time)))
-                "????"))
-            (josh/org-show-effort-and-clocked t)))
+(defun josh/org-format-age-from-added ()
+  "Get age from the added date"
+  (format "[%s|%s]"
+          (let ((josh-added-time (josh/org-get-added-time)))
+            (if josh-added-time
+                (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                  (org-time-string-to-absolute josh-added-time)))
+              "????"))
+          (josh/org-show-effort-and-clocked t)))
 #+END_SRC
 ** Show how long I've been waiting for something
    I have a section for "Waiting" tasks in my org agenda. I'd also
