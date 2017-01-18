@@ -1274,6 +1274,20 @@ Same thing as above, but also include the next three days agenda.
                     (interactive)
                     (org-agenda nil " ")))
 #+END_SRC
+
+Other agendas. Like movies to see, things I need to buy, and so on.
+#+BEGIN_SRC emacs-lisp
+(org-add-agenda-custom-command
+   '("1" "Shopping" tags "+SHOPPING-TODO=\"DONE\"-TODO=\"CANCELLED\""
+     ((org-agenda-hide-tags-regexp "SHOPPING")
+      (org-agenda-overriding-header "Shopping stuff: "))))
+
+(org-add-agenda-custom-command
+   '("v" "Movies" tags "+movie-TODO=\"DONE\"-TODO=\"CANCELLED\""
+     ((org-agenda-hide-tags-regexp "movie")
+      (org-agenda-overriding-header "Movies to see: "))))
+#+END_SRC
+
 ** Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
    don't want to have the hotkeys for each of these tags repeatedly in
