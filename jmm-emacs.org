@@ -2214,8 +2214,18 @@ These functions clock into a task if it exists and creates it using
     :bind (("C-c n" . notmuch-hello)
 	   ("C-c N" . notmuch-search)
 	   :map notmuch-common-keymap
-	   ("g" . notmuch-refresh-this-buffer)))
+	   ("g" . notmuch-refresh-this-buffer))
+    :config (use-package org-notmuch))
 #+END_SRC
+
+  Here's some stuff related to sending email (although not directly related to notmuch).
+#+BEGIN_SRC emacs-lisp
+(require 'smtpmail)
+(setq message-send-mail-function 'message-smtpmail-send-it)
+
+(require 'starttls)
+#+END_SRC
+
 
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
