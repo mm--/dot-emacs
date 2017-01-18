@@ -2711,6 +2711,16 @@ specifies the list of buffers to kill, asking for approval for each one."
   (("M-z" . ace-jump-zap-up-to-char-dwim)
    ("M-Z" . ace-jump-zap-to-char-dwim)))
 #+END_SRC
+*** ace-mc
+    My own package! Check it out [[https://github.com/mm--/ace-mc][here]].
+    It basically makes adding multiple cursors easier.
+#+BEGIN_SRC emacs-lisp
+(use-package ace-mc
+  :ensure t
+  :bind
+  (("C-)" . ace-mc-add-multiple-cursors)
+   ("C-M-)" . ace-mc-add-single-cursor)))
+#+END_SRC
 ** Avy
    [[https://github.com/abo-abo/avy/][Avy]] is like ace-jump-mode, but apparently better updated and with
    some newer features. I haven't really gotten around to using it
