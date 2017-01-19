@@ -164,7 +164,7 @@ Make scripts executable
 Set my font
 #+BEGIN_SRC emacs-lisp
   (defun josh/set-my-font (myfont)
-    (when (x-list-fonts myfont)
+    (when (and window-system (x-list-fonts myfont))
       (set-frame-font myfont)
       (add-to-list 'default-frame-alist
                    (cons 'font myfont))))
