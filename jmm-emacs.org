@@ -1028,6 +1028,24 @@ Because dired-jump is pretty useful
   (global-set-key (kbd "<f9> t") 'josh/kill-tramp-buffers)
 #+END_SRC
 * Org Mode
+  I make heavy use of [[http://orgmode.org/][Org-mode]], for organizing my TODOs, keeping track
+  of ideas, references, and links, as well as for literate programming.
+
+  Since I use a lot of the contributed modules, we make sure we've
+  loaded ~org-plus-contrib~
+
+#+BEGIN_SRC emacs-lisp
+(use-package org
+  :ensure org-plus-contrib
+  :bind (("C-c c" . org-capture)
+	 ("C-c a" . org-agenda)
+	 ("C-c l" . org-store-link))
+  :init
+  (setq org-indirect-buffer-display 'current-window)
+  (unbind-key "C-'" org-mode-map)
+  :config
+  (use-package org-screenshot))
+#+END_SRC
 ** Setup my agenda file
    Read from "org-agendas" where the agenda files are.
    Set the default span to a day view.
@@ -1047,11 +1065,6 @@ Because dired-jump is pretty useful
 
 #+begin_src emacs-lisp
   (setq org-default-notes-file (concat (file-name-as-directory org-directory) "gtd-test.org"))
-#+end_src
-** Capturing and agenda keybindings
-#+begin_src emacs-lisp
-  (define-key global-map (kbd "C-c c") 'org-capture)
-  (global-set-key (kbd "C-c a") 'org-agenda)
 #+end_src
 ** Capture templates
    Need to make this more portable across different systems. I think it defaults to org-directory.
@@ -1133,7 +1146,8 @@ Because dired-jump is pretty useful
          (file "~/org/data/reading.csv")
          "%(format-time-string \"%s\"),\"%(format-time-string \"%Y-%m-%d\")\",\"%(josh/prompt-book)\",%^{Start},%^{End}")))
 #+end_src
-   Fix a bug causing org-capture to mess up line numbers
+   Fix a bug causing org-capture to mess up line numbers. This can
+   make loading things with long lines slow, though.
 #+begin_src emacs-lisp
   (setq-default cache-long-scans nil)
   (setq org-element-use-cache nil)
@@ -1240,39 +1254,40 @@ A projects-related agenda. View next tasks, waiting, and stuck projects.
 
 Same thing as above, but also include the next three days agenda.
 #+BEGIN_SRC emacs-lisp
-  (org-add-agenda-custom-command
-   '(" " "Default agenda"
-     ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
-                  (org-agenda-skip-scheduled-if-done t)
-                  (org-agenda-span 8)))
-      (todo "NEXT"
-            ((org-agenda-overriding-header "Unscheduled next tasks")
-             (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
-             (org-agenda-skip-function
-              (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
-                             (bh/skip-projects-and-habits-and-single-tasks))))))
-      (tags-todo "-CANCELLED+WAITING|HOLD/!"
-                 ((org-agenda-overriding-header "Unscheduled waiting tasks")
-                  (org-agenda-skip-function
-                   (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))
-                  (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
-      (tags-todo "-CANCELLED/!"
-                 ((org-agenda-overriding-header "Stuck Projects")
-                  (org-agenda-skip-function 'bh/skip-non-stuck-projects)
-                  (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-max-clock-time) ")))
-      (tags "REFILE"
-            ((org-agenda-overriding-header "Refile:")))
-      (todo "TODO"
-            ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
-                                                      ;; (bh/skip-projects-and-habits)
-                                                      (josh/skip-project-to-next-heading)
-                                                      (org-agenda-skip-entry-if 'scheduled 'deadline))))
-             (org-agenda-overriding-header "Unscheduled tasks: ")
-             (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
-  (global-set-key (kbd "<f12>")
-                  (lambda ()
-                    (interactive)
-                    (org-agenda nil " ")))
+(org-add-agenda-custom-command
+ '(" " "Default agenda"
+   ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
+                (org-agenda-skip-scheduled-if-done t)
+                (org-agenda-span 8)))
+    (todo "NEXT"
+          ((org-agenda-overriding-header "Unscheduled next tasks")
+           (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
+           (org-agenda-skip-function
+            (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
+                           (bh/skip-projects-and-habits-and-single-tasks))))))
+    (tags-todo "-CANCELLED+WAITING|HOLD/!"
+               ((org-agenda-overriding-header "Unscheduled waiting tasks")
+                (org-agenda-skip-function
+                 (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))
+                (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
+    (tags-todo "-CANCELLED/!"
+               ((org-agenda-overriding-header "Stuck Projects")
+                (org-agenda-skip-function 'bh/skip-non-stuck-projects)
+                (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-max-clock-time) ")))
+    (tags "REFILE"
+          ((org-agenda-hide-tags-regexp "REFILE")
+	   (org-agenda-overriding-header "Refile:")))
+    (todo "TODO"
+          ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
+                                                    ;; (bh/skip-projects-and-habits)
+                                                    (josh/skip-project-to-next-heading)
+                                                    (org-agenda-skip-entry-if 'scheduled 'deadline))))
+           (org-agenda-overriding-header "Unscheduled tasks: ")
+           (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
+(global-set-key (kbd "<f12>")
+                (lambda ()
+                  (interactive)
+                  (org-agenda nil " ")))
 #+END_SRC
 
 Other agendas. Like movies to see, things I need to buy, and so on.
@@ -1407,11 +1422,20 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
   (add-to-list 'org-modules 'org-habit)
   (require 'org-habit)
 #+end_src
-** For exporting latex
-http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
-#+begin_src emacs-lisp
-  (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
-#+end_src
+
+** Exporting
+   Org-mode has a bunch of great tools for exporting into HTML, pdf,
+   icalendar, and so forth.
+*** Twitter bootstrap HTML
+    The base HTML can look a little plain. This package uses bootstrap to theme HTML exports.
+#+BEGIN_SRC emacs-lisp
+(use-package ox-twbs)
+#+END_SRC
+*** For exporting latex
+ http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
+ #+begin_src emacs-lisp
+   (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
+ #+end_src
 ** Clocking
 *** Easier method to clock into some frequent habits
 Some habits occur quite frequently, and it's kind of a pain to have to
@@ -1540,11 +1564,6 @@ These functions clock into a task if it exists and creates it using
   (setq org-refile-targets (quote ((nil :maxlevel . 9)
                                    (org-agenda-files :maxlevel . 9)
                                    (("~/org/lookup.org") :maxlevel . 1))))
-#+end_src
-** Store links
-   Storing links in Emacs
-#+begin_src emacs-lisp
-  (global-set-key (kbd "C-c l") 'org-store-link)
 #+end_src
 ** Better task states
    From http://doc.norang.ca/org-mode.html
@@ -2168,17 +2187,51 @@ These functions clock into a task if it exists and creates it using
   (setq org-use-speed-commands t)
 #+END_SRC
 ** Org expiry
-   Use org-expiry to make a "created" property
+   Use org-expiry to make a "created" property.
 #+BEGIN_SRC emacs-lisp
 (use-package org-expiry
   :init
   (setq org-expiry-created-property-name "CREATED")
   (setq org-expiry-inactive-timestamps t))
 
+;; (use-package org
+;;   :bind (:map org-mode-map
+;; 	      ("M-N" . org-expiry-insert-created)))
+#+END_SRC
+
+  Actually I'm gonna shadow that with a function that will either
+  convert the "Added: " field I usually have, or insert a timestamp
+#+BEGIN_SRC emacs-lisp
+(defun josh/org-convert-added-to-created-property ()
+  "Convert the \"Added: [timestamp]\" I've used in the past to using
+  the CREATED property set by org-expiry.
+
+  Return t if we found and deleted it."
+  (interactive)
+  (save-excursion
+    (org-back-to-heading t)
+    (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
+      (when (re-search-forward "Added: \\(\\[.*\\]\\)" subtree-end t)
+	(org-entry-put (point) org-expiry-created-property-name (match-string 1))
+	(delete-region (progn (forward-line 0) (point)) ;Delete the line
+		       (progn (forward-line 1) (point)))
+	t))))
+
+(defun josh/org-convert-added-or-add-created ()
+  "Convert the \"Added:\" style lines I have in capture
+  templates, otherwise add the CREATED property (or whichever
+  property is defined by `org-expiry-created-property-name') to
+  the heading using `org-expiry-insert-created'"
+  (interactive)
+  (unless (josh/org-convert-added-to-created-property)
+    (org-expiry-insert-created)))
+
 (use-package org
   :bind (:map org-mode-map
-	      ("M-N" . org-expiry-insert-created)))
+	      ("M-T" . josh/org-convert-added-to-created-property)
+	      ("M-N" . josh/org-convert-added-or-add-created)))
 #+END_SRC
+
 ** Marking headings with a tag
    Sometimes I want to perform an action in bulk on a bunch of
    entries. For example, I might want to refile a bunch of headings or
