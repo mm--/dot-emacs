@@ -6,7 +6,7 @@ The whole org-babel setup is shamelessly stolen from Sacha Chua.
   Here I set up my name and email, which is used for things like Gnus.
 #+begin_src emacs-lisp
   (setq user-full-name "Joshua Moller-Mara"
-        user-mail-address "j.moller-mara@berkeley.edu")
+        user-mail-address "jmm@cns.nyu.edu")
 #+end_src
 
 * Emacs initialization and package management
@@ -774,7 +774,10 @@ of erc-modified-channels-alist"
                          (setq bbdb-use-pop-up nil)              ;Don't pop up
                          (setq bbdb-quiet-about-name-mismatches nil)))
 #+end_src
-* GNUS/Email
+* GNUS
+  I don't really use GNUS much anymore. I used to use it for email,
+  news groups (when CS classes at Berkeley had them before Piazza),
+  and reading RSS feeds.
 #+begin_src emacs-lisp
 (setq mail-user-agent 'gnus-user-agent)	;Uses Message mode instead of mail mode
 #+end_src
@@ -2267,8 +2270,8 @@ These functions clock into a task if it exists and creates it using
     :bind (("C-c n" . notmuch-hello)
 	   ("C-c N" . notmuch-search)
 	   :map notmuch-common-keymap
-	   ("g" . notmuch-refresh-this-buffer))
-    :config (use-package org-notmuch))
+	   ("g" . notmuch-refresh-this-buffer)))
+(use-package org-notmuch)
 #+END_SRC
 
   Here's some stuff related to sending email (although not directly related to notmuch).
@@ -2277,8 +2280,11 @@ These functions clock into a task if it exists and creates it using
 (setq message-send-mail-function 'message-smtpmail-send-it)
 
 (require 'starttls)
+;; use org structures and tables in message mode
+;; Thanks, pragmaticemacs!
+(add-hook 'message-mode-hook 'turn-on-orgtbl)
+(add-hook 'message-mode-hook 'turn-on-orgstruct++)
 #+END_SRC
-
 
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
