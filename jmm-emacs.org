@@ -3065,3 +3065,22 @@ specifies the list of buffers to kill, asking for approval for each one."
     (pdf-tools-install))
 #+END_SRC
 
+** Ace-window
+[[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
+It also provides functions for swapping and moving windows, which is super helpful.
+#+BEGIN_SRC emacs-lisp
+(use-package ace-window
+  :bind (("C-9" . ace-window)
+	 ("C-(" . ace-swap-window))
+  :init
+  (setq aw-scope 'visible))
+#+END_SRC
+
+** Web-mode
+   Web-mode is a pretty good mode for editing HTML and JSX files.
+#+BEGIN_SRC emacs-lisp
+(use-package web-mode
+  :ensure t
+  :init
+  (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+#+END_SRC
