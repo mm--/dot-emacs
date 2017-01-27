@@ -1047,7 +1047,8 @@ Because dired-jump is pretty useful
   (setq org-indirect-buffer-display 'current-window)
   (unbind-key "C-'" org-mode-map)
   :config
-  (use-package org-screenshot))
+  (use-package org-screenshot)
+  (use-package org-depend))
 #+END_SRC
 ** Setup my agenda file
    Read from "org-agendas" where the agenda files are.
