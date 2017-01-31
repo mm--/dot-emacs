@@ -2259,6 +2259,24 @@ These functions clock into a task if it exists and creates it using
   (interactive)
   (org-toggle-tag "MARKED"))
 #+END_SRC
+
+** Org-ref
+   I'm starting to learn to use [[https://github.com/jkitchin/org-ref][org-ref]].
+#+BEGIN_SRC emacs-lisp
+(use-package org-ref
+  :init
+  (setq reftex-default-bibliography '("~/org-ref/references.bib"))
+  ;; see org-ref for use of these variables
+  (setq org-ref-bibliography-notes "~/org-ref/notes.org"
+	org-ref-default-bibliography '("~/org-ref/references.bib")
+	org-ref-pdf-directory "~/org-ref/bibtex-pdfs/")
+  (setq bibtex-completion-bibliography "~/org-ref/references.bib"
+	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
+	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
+  :bind
+  ("C-c f" . org-ref-cite-hydra/body))
+#+END_SRC
+
 * Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
   got a couple of main selling points. First is that things are
