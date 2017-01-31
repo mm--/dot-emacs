@@ -117,6 +117,8 @@ Enable all the disabled commands
   (require 'uniquify)
   (setq uniquify-buffer-name-style 'forward)
   (winner-mode 1)
+  (setq focus-follows-mouse t)
+  (setq mouse-autoselect-window t) ;Sloppy focus
   (setq inhibit-splash-screen t)
   (setq Man-notify-method 'pushy)
   (set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
