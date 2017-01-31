@@ -3063,7 +3063,9 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+BEGIN_SRC emacs-lisp
   (use-package pdf-tools
     :config
-    (pdf-tools-install))
+    (pdf-tools-install)
+    :bind (:map pdf-view-mode-map
+		("x" . xah-open-in-external-app)))
 #+END_SRC
 
 ** Ace-window
