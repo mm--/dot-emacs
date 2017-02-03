@@ -2278,8 +2278,38 @@ These functions clock into a task if it exists and creates it using
   (setq bibtex-completion-bibliography "~/org-ref/references.bib"
 	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
 	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
-  :bind
-  ("C-c f" . org-ref-cite-hydra/body))
+  ;; Use helm-bibtex-notes file for notes
+  (setq org-ref-notes-function
+	(lambda (thekey)
+	  (let ((bibtex-completion-bibliography (org-ref-find-bibliography)))
+	    (bibtex-completion-edit-notes
+	     (list (car (org-ref-get-bibtex-key-and-file thekey))))))))
+
+(use-package org-ref-bibtex
+  :init
+  (setq org-ref-bibtex-hydra-key-binding (kbd "C-c C-j")))
+#+END_SRC
+
+Here's a function for associating the most recently downloaded PDF with a bibtex entry
+#+BEGIN_SRC emacs-lisp
+(defun josh/org-ref-bibtex-assoc-most-recent-pdf-with-entry (&optional prefix)
+  "Associate the most recent PDF file in ~/Downloads with the current bibtex entry.
+This is basically a copy of `org-ref-bibtex-assoc-pdf-with-entry'. Optional PREFIX argument
+toggles between `rename-file' and `copy-file'"
+  (interactive "P")
+  (save-excursion
+    (bibtex-beginning-of-entry)
+    (let* ((file (josh/latest-file "~/Downloads" ".*\.[pP][dD][fF]$"))
+	   (bibtex-expand-strings t)
+           (entry (bibtex-parse-entry t))
+           (key (reftex-get-bib-field "=key=" entry))
+           (pdf (concat org-ref-pdf-directory (concat key ".pdf")))
+	   (file-move-func (org-ref-bibtex-get-file-move-func prefix)))
+      (if (file-exists-p pdf)
+	  (message (format "A file named %s already exists" pdf))
+	(progn
+	  (funcall file-move-func file pdf)
+	  (message (format "Created file %s from %s" pdf file)))))))
 #+END_SRC
 
 * Notmuch
@@ -2741,6 +2771,38 @@ specifies the list of buffers to kill, asking for approval for each one."
 
   (global-set-key (kbd "C-c C") 'jmm/comment-a-copy)
 #+END_SRC
+** Find the latest file in a directory
+   Decent function for finding the most recent file in a
+   directory. For example, if I wanted to get the most recently
+   downloaded PDF in "~/Downloads"
+#+BEGIN_SRC emacs-lisp
+(defun josh/latest-file (path glob)
+  "Get the latest file in PATH matching the regex GLOB"
+  (caar
+   (sort (mapcar (lambda (file)
+		  (cons (car file) (float-time (file-attribute-modification-time file))))
+		(directory-files-and-attributes path 'full glob 'nosort))
+	(lambda (file1 file2) (> (cdr file1) (cdr file2))))))
+#+END_SRC
+** Unfill Paragraph
+   From https://www.emacswiki.org/emacs/UnfillParagraph
+#+BEGIN_SRC emacs-lisp
+;;; Stefan Monnier <foo at acm.org>. It is the opposite of fill-paragraph
+(defun unfill-paragraph (&optional region)
+  "Takes a multi-line paragraph and makes it into a single line of text."
+  (interactive (progn (barf-if-buffer-read-only) '(t)))
+  (let ((fill-column (point-max))
+        ;; This would override `fill-column' if it's an integer.
+        (emacs-lisp-docstring-fill-column t))
+    ;; Unhyphenate --Josh
+    (when region
+      (save-excursion
+	(while (re-search-forward "-\n" (region-end) t)
+	  (replace-match ""))))
+    (fill-paragraph nil region)))
+(define-key global-map (kbd "C-M-q") 'unfill-paragraph)
+#+END_SRC
+
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
