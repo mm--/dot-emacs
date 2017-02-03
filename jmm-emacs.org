@@ -3084,11 +3084,13 @@ specifies the list of buffers to kill, asking for approval for each one."
    to do things such as incremental search, highlighting, and clicking
    on links.
 #+BEGIN_SRC emacs-lisp
-  (use-package pdf-tools
-    :config
-    (pdf-tools-install)
-    :bind (:map pdf-view-mode-map
-		("x" . xah-open-in-external-app)))
+(use-package pdf-tools
+  :init
+  (setq pdf-view-continuous nil)
+  :config
+  (pdf-tools-install)
+  :bind (:map pdf-view-mode-map
+	      ("x" . xah-open-in-external-app)))
 #+END_SRC
 
 ** Ace-window
