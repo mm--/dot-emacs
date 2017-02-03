@@ -1976,7 +1976,7 @@ These functions clock into a task if it exists and creates it using
         next-headline)))
 
   (org-add-agenda-custom-command
-   '("o" todo "DONE|CANCELLED"
+   '("o" "Old done tasks" todo "DONE|CANCELLED"
      ((org-agenda-skip-function (lambda () (josh/org-skip-old 14)))
       (org-agenda-overriding-header "Old DONE tasks: "))))
 #+END_SRC
