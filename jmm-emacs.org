@@ -1150,7 +1150,10 @@ Because dired-jump is pretty useful
          "* <[%(josh/chinese-prompt)]> :drill:\n Added: %U\n%(josh/chinese-get-word (josh/chinese-dict-find josh/chinese-word))\n** Pronunciation\n%(josh/chinese-get-pronunciation josh/chinese-word-dict)\n** Cangjie\n%(josh/chinese-cangjie-codes josh/chinese-words)\n** Definition\n%(josh/chinese-get-definition josh/chinese-word-dict)\n")
         ("R" "reading" plain
          (file "~/org/data/reading.csv")
-         "%(format-time-string \"%s\"),\"%(format-time-string \"%Y-%m-%d\")\",\"%(josh/prompt-book)\",%^{Start},%^{End}")))
+         "%(format-time-string \"%s\"),\"%(format-time-string \"%Y-%m-%d\")\",\"%(josh/prompt-book)\",%^{Start},%^{End}")
+	("x" "Miscellaneous")
+	("xt" "Tweet" entry (file+headline "ideas.org" "Tweets")
+         "* %i%?\n  Added: %U")))
 #+end_src
    Fix a bug causing org-capture to mess up line numbers. This can
    make loading things with long lines slow, though.
