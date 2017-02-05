@@ -1233,7 +1233,7 @@ Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
 #+BEGIN_SRC emacs-lisp
   (require 'org-agenda)
   (org-add-agenda-custom-command
-   '("u" todo "TODO"
+   '("u" "Unscheduled" todo "TODO"
      ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
                                                (org-agenda-skip-entry-if 'scheduled 'deadline))))
       (org-agenda-overriding-header "Unscheduled tasks: "))))
