@@ -1047,6 +1047,7 @@ Because dired-jump is pretty useful
 	 ("C-c l" . org-store-link))
   :init
   (setq org-indirect-buffer-display 'current-window)
+  (setq org-catch-invisible-edits 'smart)
   (unbind-key "C-'" org-mode-map)
   :config
   (use-package org-screenshot)
