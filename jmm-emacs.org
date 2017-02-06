@@ -810,21 +810,21 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 ** Espeak article
    Read an article out loud
 #+begin_src emacs-lisp
-  (defun josh/espeak-article (&optional arg)
-    "Select the gnus article and read it"
-    (interactive "P")
-    (with-current-buffer gnus-article-buffer
-      (save-excursion
-        (save-restriction
-          (widen)
-          (when (article-goto-body)
-            (let* ((wpm (number-to-string (* (if arg arg 5) 100)))
-                   (process (start-process "espeak-process" " *espeak-gnus*" "espeak" "-a" "200" "-v" "english-us" "-s" wpm)))
-              (process-send-region process (point) (point-max))
-              (process-send-string process "\n")
-              (process-send-eof process)))))))
+(defun josh/espeak-article (&optional arg)
+  "Select the gnus article and read it"
+  (interactive "P")
+  (with-current-buffer gnus-article-buffer
+    (save-excursion
+      (save-restriction
+        (widen)
+        (when (article-goto-body)
+          (let* ((wpm (number-to-string (* (if arg arg 5) 100)))
+                 (process (start-process "espeak-process" " *espeak-gnus*" "espeak" "-a" "200" "-v" "english-us" "-s" wpm)))
+            (process-send-region process (point) (point-max))
+            (process-send-string process "\n")
+            (process-send-eof process)))))))
 
-  (global-set-key (kbd "<f9> e") 'josh/espeak-article)
+;; (global-set-key (kbd "<f9> e") 'josh/espeak-article)
 #+end_src
 
 ** Go to RSS link in browser
