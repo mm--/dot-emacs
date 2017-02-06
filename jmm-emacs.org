@@ -3175,3 +3175,15 @@ It also provides functions for swapping and moving windows, which is super helpf
   :init
   (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
 #+END_SRC
+
+** Emojify
+   Emoji are very important.
+#+BEGIN_SRC emacs-lisp
+(use-package emojify
+  :ensure t
+  :init
+  (setq emojify-emoji-styles 'unicode)
+  (bind-key "<f9> e" 'emojify-insert-emoji)
+  :config
+  (global-emojify-mode 1))
+#+END_SRC
