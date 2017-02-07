@@ -3182,7 +3182,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 (use-package emojify
   :ensure t
   :init
-  (setq emojify-emoji-styles 'unicode)
+  (setq emojify-emoji-styles '(unicode))
   (bind-key "<f9> e" 'emojify-insert-emoji)
   :config
   (global-emojify-mode 1))
