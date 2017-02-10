@@ -1321,12 +1321,13 @@ Other agendas. Like movies to see, things I need to buy, and so on.
 (setq org-tag-persistent-alist '(("task" . ?t) ("drill" . ?d)
 				 ("IGNORE" . ?i)
                                  ("IFBORED" . ?b)
+				 ("CANCELLED" . ?C)
                                  ("work" . ?w) ("home" . ?h)
                                  ("REWARD" . ?R) ("SHOPPING" . ?s)
                                  ("PESARAN" . ?p) ("erlich" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
                                  ("vague" . ?v) ("LOOKUP" . ?l)
                                  ("CODING" . ?c)
-                                 ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("LIFEGOAL" . ?G)))
+                                 ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("goal" . ?g) ("LIFEGOAL" . ?G)))
 
 (add-to-list 'org-tags-exclude-from-inheritance "IGNORE")
 #+END_SRC
