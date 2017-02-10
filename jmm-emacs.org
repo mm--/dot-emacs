@@ -2276,14 +2276,16 @@ These functions clock into a task if it exists and creates it using
 #+BEGIN_SRC emacs-lisp
 (use-package org-ref
   :init
+  (setq org-ref-bibtex-hydra-key-binding (kbd "C-c C-j"))
   (setq reftex-default-bibliography '("~/org-ref/references.bib"))
   ;; see org-ref for use of these variables
   (setq org-ref-bibliography-notes "~/org-ref/notes.org"
-	org-ref-default-bibliography '("~/org-ref/references.bib")
+	org-ref-default-bibliography '("~/org-ref/references.bib" "~/org-ref/erlich.bib")
 	org-ref-pdf-directory "~/org-ref/bibtex-pdfs/")
-  (setq bibtex-completion-bibliography "~/org-ref/references.bib"
+  (setq bibtex-completion-bibliography org-ref-default-bibliography
 	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
 	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
+  (bind-key "C-c B" 'helm-bibtex)
   ;; Use helm-bibtex-notes file for notes
   (setq org-ref-notes-function
 	(lambda (thekey)
