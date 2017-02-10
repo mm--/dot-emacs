@@ -3153,8 +3153,39 @@ specifies the list of buffers to kill, asking for approval for each one."
   :config
   (pdf-tools-install)
   :bind (:map pdf-view-mode-map
-	      ("x" . xah-open-in-external-app)))
+	      ("x" . xah-open-in-external-app)
+	      ("e" . jmm/pdf-view-espeak-page)))
 #+END_SRC
+
+*** Espeak a PDF page
+
+    Have Espeak read a PDF page for you.
+
+#+BEGIN_SRC emacs-lisp
+(defvar josh/espeak-speed
+  300
+  "Default espeak WPM")
+
+(defvar jmm/espeak-script
+  "~/code/sh/espeak-emacs.sh"
+  "Location of a shell script to run espeak. This script should
+  take one argument, the initial words-per-minute (WPM) speed.")
+
+(defun jmm/pdf-view-espeak-page (&optional arg)
+  "Espeak current PDF page (or current selection) in PDF view.
+   Optional ARG takes an WPM speed (i.e. \"4\" becomes 400 WPM)"
+  (interactive "P")
+  (let* ((wpm (number-to-string (if arg (* arg 100) josh/espeak-speed)))
+	 (pdf-text (car (prog2
+			    (unless pdf-view-active-region (pdf-view-mark-whole-page))
+			    (pdf-view-active-region-text)
+			  (pdf-view-deactivate-region))))
+	 (fixed-pdf-text (replace-regexp-in-string "-\n" "" pdf-text))
+	 (process (start-process "espeak-process" " *espeak-pdf-view*" jmm/espeak-script wpm)))
+    (process-send-string process (concat fixed-pdf-text "\n"))
+    (process-send-eof process)))
+#+END_SRC
+
 
 ** Ace-window
 [[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
