@@ -3161,6 +3161,7 @@ specifies the list of buffers to kill, asking for approval for each one."
 (use-package pdf-tools
   :init
   (setq pdf-view-continuous nil)
+  (add-hook 'pdf-view-before-change-page-hook 'josh/pdf-view-store-page-register)
   :config
   (pdf-tools-install)
   :bind (:map pdf-view-mode-map
@@ -3195,6 +3196,20 @@ specifies the list of buffers to kill, asking for approval for each one."
 	 (process (start-process "espeak-process" " *espeak-pdf-view*" jmm/espeak-script wpm)))
     (process-send-string process (concat fixed-pdf-text "\n"))
     (process-send-eof process)))
+#+END_SRC
+
+*** Store the current PDF page before jumping
+
+When clicking on links (like to references), I'd like to be able to
+quickly jump back to where I was. Basically we just add this function
+to ~pdf-view-before-change-page-hook~
+
+#+BEGIN_SRC emacs-lisp
+(defun josh/pdf-view-store-page-register ()
+  "Store the current page in register \"p\""
+  (pdf-view-position-to-register ?p))
+
+(add-hook 'pdf-view-before-change-page-hook 'josh/pdf-view-store-page-register)
 #+END_SRC
 
 
