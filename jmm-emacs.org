@@ -1645,29 +1645,30 @@ These functions clock into a task if it exists and creates it using
    functions make it easier for me to enter in the book name without
    having to type it all out every time.
 #+BEGIN_SRC emacs-lisp
-  (defun josh/prompt-book ()
-    "Prompt for a book when tracking pages."
-    (let ((book-out (helm-comp-read "Book: "
-                                    josh/prompt-book-list
-                                    :nomark t)))
-      (add-to-list 'josh/prompt-book-list book-out)
-      book-out))
+(defun josh/prompt-book ()
+  "Prompt for a book when tracking pages."
+  (let ((book-out (helm-comp-read "Book: "
+                                  josh/prompt-book-list
+                                  :nomark t)))
+    (add-to-list 'josh/prompt-book-list book-out)
+    book-out))
 
-  (defun josh/prompt-book-build-list ()
-    "Build a list of books I'm reading for completion in `josh/prompt-book'."
-    (with-temp-buffer
-      (insert-file-contents "~/org/data/reading.csv")
-      (remove-duplicates
-       (mapcar
-        (lambda (x)
-          (replace-regexp-in-string "\"" "" (nth 2 (split-string x "," t))))
-        (cdr (split-string (buffer-string) "\n" t)))
-       :test 'string=)))
+(require 'cl)
+(defun josh/prompt-book-build-list ()
+  "Build a list of books I'm reading for completion in `josh/prompt-book'."
+  (with-temp-buffer
+    (insert-file-contents "~/org/data/reading.csv")
+    (remove-duplicates
+     (mapcar
+      (lambda (x)
+        (replace-regexp-in-string "\"" "" (nth 2 (split-string x "," t))))
+      (cdr (split-string (buffer-string) "\n" t)))
+     :test 'string=)))
 
-  (defvar josh/book-csv "~/org/data/reading.csv")
-  (defvar josh/prompt-book-list
-    (if (file-exists-p josh/book-csv)
-        (josh/prompt-book-build-list)))
+(defvar josh/book-csv "~/org/data/reading.csv")
+(defvar josh/prompt-book-list
+  (if (file-exists-p josh/book-csv)
+      (josh/prompt-book-build-list)))
 #+END_SRC
 ** Org agenda filtering functions
    Here are a few org-agenda filtering functions for creating custom agendas. These do things like skip entries by tag, etc.
