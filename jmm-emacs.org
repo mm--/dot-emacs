@@ -1169,11 +1169,12 @@ Because dired-jump is pretty useful
 
    A a function to make testing capture templates easier.
 #+BEGIN_SRC emacs-lisp
-  (defun josh/add-to-capture (template)
+(defun josh/add-to-capture (template)
   (let ((key (car template)))
-    (delete-if (lambda (x) (equal (car x) key)) org-capture-templates)
+    (setq org-capture-templates
+	  (delete-if (lambda (x) (equal (car x) key)) org-capture-templates))
     (add-to-list 'org-capture-templates
-                 template)))
+		 template)))
 #+END_SRC
 *** Get the title of a URL
     Used for a capture template. I want my links to also have a sort of description
