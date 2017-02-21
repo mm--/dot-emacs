@@ -1087,6 +1087,8 @@ Because dired-jump is pretty useful
          "* %?\n%t\n")
 	("w" "Calendar" entry (file+headline "gtd-test.org" "Calendar")
          "* %?\n%^t\n")
+	("E" "Event (from email)" entry (file+headline "gtd-test.org" "Calendar")
+	 "* %:subject%?\n%^T\n%i\n%a%^{LOCATION}p")
         ("l" "Lookup stuff")
         ("ll" "Lookup" entry (file+headline "lookup.org" "Lookup")
          "* %?\n  Added: %U")
