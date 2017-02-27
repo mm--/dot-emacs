@@ -2288,6 +2288,7 @@ These functions clock into a task if it exists and creates it using
 	org-ref-pdf-directory "~/org-ref/bibtex-pdfs/")
   (setq bibtex-completion-bibliography org-ref-default-bibliography
 	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
+	bibtex-completion-pdf-field "file"
 	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
   (bind-key "C-c B" 'helm-bibtex)
   ;; Use helm-bibtex-notes file for notes
