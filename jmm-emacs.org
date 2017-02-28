@@ -883,6 +883,11 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 #+BEGIN_SRC emacs-lisp
   (setq dired-recursive-copies 'always)
 #+END_SRC
+
+  Apparently you can change permissions in ~wdired~
+#+BEGIN_SRC emacs-lisp
+(setq wdired-allow-to-change-permissions t)
+#+END_SRC
 ** Dired-X
 Because dired-jump is pretty useful
 #+begin_src emacs-lisp
