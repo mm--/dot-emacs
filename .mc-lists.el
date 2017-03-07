@@ -40,6 +40,7 @@
 	matlab-forward-sexp
 	org-beginning-of-line
 	org-ctrl-c-ctrl-c
+	org-cut-special
 	org-cycle
 	org-delete-char
 	org-delete-indentation
@@ -48,11 +49,17 @@
 	org-kill-line
 	org-metaright
 	org-open-line
+	org-previous-visible-heading
 	org-self-insert-command
 	org-set-tags-command
 	org-time-stamp-inactive
 	org-transpose-words
 	org-yank
+	orgtbl-hijacker-command-109
+	orgtbl-self-insert-command
+	paredit-join-sexps
+	paredit-open-round
+	paredit-wrap-round
 	phi-search-backward
 	reindent-then-newline-and-indent
 	scroll-left
@@ -65,6 +72,7 @@
 	unfill-paragraph
 	wdired-capitalize-word
 	wdired-downcase-word
+	wdired-toggle-bit
 	wdired-upcase-word
 	yaml-electric-backspace
 	))
@@ -89,6 +97,7 @@
 	handle-switch-frame
 	helm-M-x
 	helm-swoop
+	isearch-forward-regexp
 	js2-mode-show-node
 	magit-status
 	menu-bar-open
