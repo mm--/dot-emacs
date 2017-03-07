@@ -1189,19 +1189,19 @@ Because dired-jump is pretty useful
 *** Get the title of a URL
     Used for a capture template. I want my links to also have a sort of description
 #+BEGIN_SRC emacs-lisp
-  (defun www-get-page-title (url)
-      "Modified from https://lists.gnu.org/archive/html/help-gnu-emacs/2010-07/msg00291.html"
-      (let ((title))
-        (with-current-buffer (url-retrieve-synchronously url)
-          (let* ((title (progn (goto-char (point-min))
-                               (when (re-search-forward "<title>\\([^<]*\\)</title>" nil t 1)
-                                 (match-string 1))))
-                 (coding (progn (goto-char (point-min))
-                                (when (re-search-forward "charset=\\([-0-9a-zA-Z]*\\)" nil t 1)
-                                  (match-string 1)))))
-            (if coding
-                (decode-coding-string title (intern (downcase coding)))
-              title)))))
+(defun www-get-page-title (url)
+  "Modified from https://lists.gnu.org/archive/html/help-gnu-emacs/2010-07/msg00291.html"
+  (let ((title))
+    (with-current-buffer (url-retrieve-synchronously url)
+      (let* ((title (progn (goto-char (point-min))
+			   (when (re-search-forward "<title>\\([^<]*\\)</title>" nil t 1)
+			     (match-string 1))))
+	     (coding (progn (goto-char (point-min))
+			    (when (re-search-forward "charset=\"?\\([-0-9a-zA-Z]*\\)\"?" nil t 1)
+			      (match-string 1)))))
+	(if (and coding (not (string= "" coding)))
+	    (decode-coding-string title (intern (downcase coding)))
+	  title)))))
 #+END_SRC
 ** Org agenda listings
 #+begin_src emacs-lisp
