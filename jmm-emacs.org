@@ -1455,7 +1455,8 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
 *** Twitter bootstrap HTML
     The base HTML can look a little plain. This package uses bootstrap to theme HTML exports.
 #+BEGIN_SRC emacs-lisp
-(use-package ox-twbs)
+(use-package ox-twbs
+  :defer t)
 #+END_SRC
 *** For exporting latex
  http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
@@ -2289,6 +2290,7 @@ These functions clock into a task if it exists and creates it using
    I'm starting to learn to use [[https://github.com/jkitchin/org-ref][org-ref]].
 #+BEGIN_SRC emacs-lisp
 (use-package org-ref
+  :defer t
   :init
   (setq org-ref-bibtex-hydra-key-binding (kbd "C-c C-j"))
   (setq reftex-default-bibliography '("~/org-ref/references.bib"))
@@ -2309,6 +2311,7 @@ These functions clock into a task if it exists and creates it using
 	     (list (car (org-ref-get-bibtex-key-and-file thekey))))))))
 
 (use-package org-ref-bibtex
+  :defer t
   :init
   (setq org-ref-bibtex-hydra-key-binding (kbd "C-c C-j")))
 #+END_SRC
@@ -3181,6 +3184,7 @@ specifies the list of buffers to kill, asking for approval for each one."
    on links.
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
+  :defer t
   :init
   (setq pdf-view-continuous nil)
   (add-hook 'pdf-view-before-change-page-hook 'josh/pdf-view-store-page-register)
@@ -3260,6 +3264,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 #+BEGIN_SRC emacs-lisp
 (use-package emojify
   :ensure t
+  :defer t
   :init
   (setq emojify-emoji-styles '(unicode))
   (bind-key "<f9> e" 'emojify-insert-emoji)
