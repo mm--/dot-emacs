@@ -124,6 +124,9 @@ Enable all the disabled commands
   (set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
   (setq visual-line-fringe-indicators '(nil right-curly-arrow))
 
+  (setq history-length 1000)
+  (setq history-delete-duplicates t)
+
   (setq browse-url-browser-function 'browse-url-generic
         browse-url-generic-program "chromium")
   (setq shr-external-browser 'browse-url-generic) ;For eww
