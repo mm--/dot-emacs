@@ -1283,7 +1283,7 @@ Same thing as above, but also include the next three days agenda.
  '(" " "Default agenda"
    ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
                 (org-agenda-skip-scheduled-if-done t)
-                (org-agenda-span 8)))
+                (org-agenda-span 2)))
     (todo "NEXT"
           ((org-agenda-overriding-header "Unscheduled next tasks")
            (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
