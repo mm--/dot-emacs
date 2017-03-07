@@ -2296,7 +2296,7 @@ These functions clock into a task if it exists and creates it using
   (setq reftex-default-bibliography '("~/org-ref/references.bib"))
   ;; see org-ref for use of these variables
   (setq org-ref-bibliography-notes "~/org-ref/notes.org"
-	org-ref-default-bibliography '("~/org-ref/references.bib" "~/org-ref/erlich.bib")
+	org-ref-default-bibliography (file-expand-wildcards "~/org-ref/*.bib")
 	org-ref-pdf-directory "~/org-ref/bibtex-pdfs/")
   (setq bibtex-completion-bibliography org-ref-default-bibliography
 	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
