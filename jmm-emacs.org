@@ -3206,6 +3206,7 @@ specifies the list of buffers to kill, asking for approval for each one."
   (pdf-tools-install)
   :bind (:map pdf-view-mode-map
 	      ("x" . xah-open-in-external-app)
+	      ("M-s o" . pdf-occur)
 	      ("e" . jmm/pdf-view-espeak-page)))
 #+END_SRC
 
