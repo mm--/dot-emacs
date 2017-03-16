@@ -2302,7 +2302,7 @@ These functions clock into a task if it exists and creates it using
 	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
 	bibtex-completion-pdf-field "file"
 	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
-  (bind-key "C-c B" 'helm-bibtex)
+  (bind-key "C-c z" 'helm-bibtex)
   ;; Use helm-bibtex-notes file for notes
   (setq org-ref-notes-function
 	(lambda (thekey)
