@@ -2302,7 +2302,10 @@ These functions clock into a task if it exists and creates it using
   (setq bibtex-completion-bibliography org-ref-default-bibliography
 	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
 	bibtex-completion-pdf-field "file"
+	bibtex-completion-additional-search-fields '(keywords journal)
 	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
+  (setq bibtex-completion-display-formats
+	'((t . "${author:36} ${title:*} ${year:4} ${journal:7} ${=has-pdf=:1}${=has-note=:1} ${keywords:12}")))
   (bind-key "C-c z" 'helm-bibtex)
   ;; Use helm-bibtex-notes file for notes
   (setq org-ref-notes-function
