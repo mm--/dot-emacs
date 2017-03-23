@@ -3242,6 +3242,10 @@ specifies the list of buffers to kill, asking for approval for each one."
 
 *** Store the current PDF page before jumping
 
+Note: Actually, this doesn't seem to be necessary. You can use
+~pdf-history-forward~ and ~pdf-history-backward~, which are bound to
+~N~ and ~B~, respectively.
+
 When clicking on links (like to references), I'd like to be able to
 quickly jump back to where I was. Basically we just add this function
 to ~pdf-view-before-change-page-hook~
