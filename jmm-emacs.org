@@ -1329,6 +1329,32 @@ Other agendas. Like movies to see, things I need to buy, and so on.
       (org-agenda-overriding-header "Movies to see: "))))
 #+END_SRC
 
+An agenda for unscheduled tasks where we've set a deadline, but never scheduled it.
+Show earlier due entries first.
+
+#+BEGIN_SRC emacs-lisp
+(defun josh/plist-get (plist prop &rest rest-props)
+  "Recursively apply `plist-get' to plist"
+  (let ((got (plist-get plist prop)))
+    (if (and got rest-props)
+	(apply 'josh/plist-get got rest-props)
+      got)))
+
+(defun josh/org-get-raw-deadline ()
+  "Raw raw deadline for element at point."
+  (josh/plist-get (org-element-at-point) 'headline :deadline 'timestamp :raw-value))
+
+(org-add-agenda-custom-command
+   '("u" "Unscheduled Deadline" alltodo ""
+     ((org-agenda-overriding-header "Unscheduled TODOs with deadlines")
+      (org-agenda-prefix-format " %i %-12:c%?-12t% s%-22(josh/org-get-raw-deadline) ")
+      (org-agenda-sorting-strategy '(deadline-up))
+      (org-agenda-skip-function
+       '(or (org-agenda-skip-entry-if 'scheduled 'notdeadline)
+	    (and (bh/is-project-p) (bh/skip-non-stuck-projects)))))))
+#+END_SRC
+
+
 ** Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
    don't want to have the hotkeys for each of these tags repeatedly in
