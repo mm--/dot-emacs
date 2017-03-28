@@ -148,12 +148,9 @@ Make scripts executable
 
 ** Dealing with the clipboard
 #+begin_src emacs-lisp
-  (setq x-select-enable-clipboard t) ; as above
-  (setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
-  ;; Setting "x-select-enable-primary" allows me to paste into emacs from an xterm selection using "C-y" (yank)
-  ;; A problem, though, is that it breaks kill-ring-save yanking with multiple-cursors
-  ;; You can still from the X primary selection using middle click
-  ;; (setq x-select-enable-primary t)
+(setq x-select-enable-clipboard t) ; as above
+(setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+(setq select-enable-primary t)
 #+end_src
 ** Windmove
 #+begin_src emacs-lisp
@@ -2939,6 +2936,19 @@ specifies the list of buffers to kill, asking for approval for each one."
   (define-key endless/mc-map "\C-e"
     #'mc/edit-ends-of-lines)
 #+END_SRC
+*** Disable primary selection for multiple cursors
+    Setting ~x-select-enable-primary~ allows me to paste into emacs from an xterm selection using "~C-y~" (yank)
+    A problem, though, is that it breaks ~kill-ring-save~ yanking with multiple-cursors
+    You can still paste from the X primary selection using middle click
+
+    But since I want to copy from dired using ~w~ and paste into
+    xterm, I'll only disable ~x-select-enable-primary~ while using multiple cursors.
+
+#+BEGIN_SRC emacs-lisp
+(add-hook 'multiple-cursors-mode-enabled-hook (lambda () (setq select-enable-primary nil)))
+(add-hook 'multiple-cursors-mode-disabled-hook (lambda () (setq select-enable-primary t)))
+#+END_SRC
+
 ** Expand Region
 #+begin_src emacs-lisp
   (use-package expand-region
