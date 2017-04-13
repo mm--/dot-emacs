@@ -2571,8 +2571,8 @@ Set up hotkeys and stuff for helm-swoop
    Helm-org-rifle is a really nice way to swoop through org-mode
 #+BEGIN_SRC emacs-lisp
   (use-package helm-org-rifle
-                 :bind (("C-c r" . helm-org-rifle-org-directory)
-                        ("C-c R" . helm-org-rifle)))
+                 :bind (("C-c R" . helm-org-rifle-org-directory)
+                        ("C-c r" . helm-org-rifle)))
 #+END_SRC
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
