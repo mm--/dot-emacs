@@ -3252,7 +3252,8 @@ specifies the list of buffers to kill, asking for approval for each one."
   :bind (:map pdf-view-mode-map
 	      ("x" . xah-open-in-external-app)
 	      ("M-s o" . pdf-occur)
-	      ("e" . jmm/pdf-view-espeak-page)))
+	      ("e" . jmm/pdf-view-espeak-page)
+	      ("E" . jmm/pdf-edit-helm-bibtex-notes)))
 #+END_SRC
 
 *** Espeak a PDF page
@@ -3302,6 +3303,22 @@ to ~pdf-view-before-change-page-hook~
 (add-hook 'pdf-view-before-change-page-hook 'josh/pdf-view-store-page-register)
 #+END_SRC
 
+*** Open bibtex notes
+
+Many of the PDFs I open are stored in my ~org-ref~ / ~helm-bibtex~
+directory. I'd like a hotkey to open notes I have for a PDF. This
+function splits the window slightly and opens the notes file there.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/pdf-edit-helm-bibtex-notes ()
+  "Edit the notes for the PDF, assuming it's in one of our bibtex files"
+  (interactive)
+  (let ((key (file-name-base)))
+    (when (= (length (window-list)) 1)
+      (split-window nil -90 'left))
+    (other-window 1)
+    (bibtex-completion-edit-notes (list key))))
+#+END_SRC
 
 ** Ace-window
 [[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
