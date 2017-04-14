@@ -1354,6 +1354,31 @@ Show earlier due entries first.
 	    (and (bh/is-project-p) (bh/skip-non-stuck-projects)))))))
 #+END_SRC
 
+A basic agenda for goals.
+In the future I should make this more nuanced.
+- Which goals have I started?
+- Which goals are deferred?
+- What are the different categories of goals, and in what time range
+  do I plan to have them done?
+  - Do they have deadlines, or are they just lofty ideas?
+- Some of these can have ~org-agenda-overriding-columns-format~ set to view it automatically
+- Sort by deadlines or importance?
+
+#+BEGIN_SRC emacs-lisp
+;; TODO: Eventually just make this more like Sacha Chua's evil plans
+(org-add-agenda-custom-command
+   `("g" "Goals"
+     ((tags "goal"
+	    ((org-agenda-overriding-header "Goals")
+	     (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))))
+      (tags "LIFEGOAL"
+	    ((org-agenda-overriding-header "Life Goals")
+	     )))
+     ((org-agenda-overriding-columns-format "%50ITEM(Goal) %5Effort(Time){:} %6CLOCKSUM{Total}")
+      (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
+      ;; (org-agenda-view-columns-initially t)
+      (org-agenda-hide-tags-regexp ,(rx (or "LIFEGOAL" "goal"))))))
+#+END_SRC
 
 ** Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
