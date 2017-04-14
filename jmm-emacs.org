@@ -1049,7 +1049,9 @@ Because dired-jump is pretty useful
   :ensure org-plus-contrib
   :bind (("C-c c" . org-capture)
 	 ("C-c a" . org-agenda)
-	 ("C-c l" . org-store-link))
+	 ("C-c l" . org-store-link)
+	 ("C-c L" . org-insert-link-global)
+	 ("C-c o" . org-open-at-point-global))
   :init
   (setq org-indirect-buffer-display 'current-window)
   (setq org-catch-invisible-edits 'smart)
