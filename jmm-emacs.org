@@ -2060,51 +2060,51 @@ These functions clock into a task if it exists and creates it using
 ** Helm Org Buffer
    This command makes it easy to quickly switch to an org-mode buffer.
 #+BEGIN_SRC emacs-lisp
-  (require 'helm-types)
-  (require 'helm-buffers)
-  (defvar helm-org-buffers-list-cache nil)
+(require 'helm-types)
+(require 'helm-buffers)
+(defvar helm-org-buffers-list-cache nil)
 
-  (defclass helm-source-org-buffer (helm-source-sync helm-type-buffer)
-    ((init :initform (lambda ()
-                       (setq helm-org-buffers-list-cache
-                             (mapcar (lambda (b)
-                                       (with-current-buffer b (buffer-name)))
-                                     (-filter (lambda (b)
-                                                (with-current-buffer b
-                                                  (and (eq major-mode 'org-mode)
-                                                       (buffer-name))))
-                                              (buffer-list))))
-                       (let ((result (cl-loop for b in helm-org-buffers-list-cache
-                                              maximize (length b) into len-buf
-                                              maximize (length (with-current-buffer b
-                                                                 (symbol-name major-mode)))
-                                              into len-mode
-                                              finally return (cons len-buf len-mode))))
-                         (unless helm-buffer-max-length
-                           (setq helm-buffer-max-length (car result)))
-                         (unless helm-buffer-max-len-mode
-                           (setq helm-buffer-max-len-mode (cdr result))))))
-     (candidates :initform helm-org-buffers-list-cache)
-     (matchplugin :initform nil)
-     (match :initform 'helm-buffers-match-function)
-     (persistent-action :initform 'helm-buffers-list-persistent-action)
-     (keymap :initform helm-buffer-map)
-     (volatile :initform t)
-     (persistent-help
-      :initform
-      "Show this buffer / C-u \\[helm-execute-persistent-action]: Kill this buffer")))
+(defclass helm-source-org-buffer (helm-source-sync helm-type-buffer)
+  ((init :initform (lambda ()
+                     (setq helm-org-buffers-list-cache
+                           (mapcar (lambda (b)
+                                     (with-current-buffer b (buffer-name)))
+                                   (-filter (lambda (b)
+                                              (with-current-buffer b
+                                                (and (eq major-mode 'org-mode)
+                                                     (buffer-name))))
+                                            (buffer-list))))
+                     (let ((result (cl-loop for b in helm-org-buffers-list-cache
+                                            maximize (length b) into len-buf
+                                            maximize (length (with-current-buffer b
+                                                               (symbol-name major-mode)))
+                                            into len-mode
+                                            finally return (cons len-buf len-mode))))
+                       (unless helm-buffer-max-length
+                         (setq helm-buffer-max-length (car result)))
+                       (unless helm-buffer-max-len-mode
+                         (setq helm-buffer-max-len-mode (cdr result))))))
+   (candidates :initform helm-org-buffers-list-cache)
+   (matchplugin :initform nil)
+   (match :initform 'helm-buffers-match-function)
+   (persistent-action :initform 'helm-buffers-list-persistent-action)
+   (keymap :initform helm-buffer-map)
+   (volatile :initform t)
+   (persistent-help
+    :initform
+    "Show this buffer / C-u \\[helm-execute-persistent-action]: Kill this buffer")))
 
-  (defvar helm-source-org-buffers-list (helm-make-source "Org-mode buffers" 'helm-source-org-buffer))
+(defvar helm-source-org-buffers-list (helm-make-source "Org-mode buffers" 'helm-source-org-buffer))
 
-  (defun helm-org-buffer ()
-    (interactive)
-    (helm :sources helm-source-org-buffers-list
-          :buffer "*helm projectile*"
-          :prompt "Switch to Org buffer:"))
+(defun helm-org-buffer ()
+  (interactive)
+  (helm :sources helm-source-org-buffers-list
+        :buffer "*helm projectile*"
+        :prompt "Switch to Org buffer:"))
 
-  (global-set-key (kbd "C-c o") 'helm-org-buffer)
-  ;; This is also a good key just for swooping
-  (global-set-key (kbd "C-c O") 'helm-multi-swoop-org)
+;; (global-set-key (kbd "C-c o") 'helm-org-buffer)
+;; This is also a good key just for swooping
+(global-set-key (kbd "C-c O") 'helm-multi-swoop-org)
 #+END_SRC
 ** Show how old an entry is
    I usually have "Added: [inactive timestamp]" added to most of my
