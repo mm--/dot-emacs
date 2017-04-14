@@ -1257,8 +1257,9 @@ Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
 An agenda which shows which papers I should read.
 #+BEGIN_SRC emacs-lisp
 (org-add-agenda-custom-command
-   '("j" "Journal" tags "+LEVEL=2+paper/-DONE-CANCELLED"
-     ((org-agenda-files '("~/org/lookup.org"))
+   '("j" "Journal articles" tags-todo "+paper"
+     ((org-agenda-prefix-format " %i %-8:c%(josh/org-show-effort-and-clocked) ")
+      (org-agenda-hide-tags-regexp "paper")
       (org-agenda-overriding-header "Journal articles: "))))
 #+END_SRC
 
