@@ -2464,6 +2464,8 @@ Function to send HTML part to the browser
   (require 'helm-config)
   (global-set-key (kbd "C-c h") 'helm-mini)
   (use-package helm-mode
+    :init
+    (setq helm-ff-newfile-prompt-p nil)
     :config
     (progn (mapc (lambda (x) (add-to-list 'helm-completing-read-handlers-alist
                                  (list x)))
