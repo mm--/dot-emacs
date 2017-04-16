@@ -1510,11 +1510,66 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
 (use-package ox-twbs
   :defer t)
 #+END_SRC
+
 *** For exporting latex
  http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
  #+begin_src emacs-lisp
    (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
  #+end_src
+*** Exporting calendar files
+
+Instead of always using org-agenda, I like viewing my events and
+to-dos in a calendar format. Org-mode has a pretty decent icalendar
+exporter, but I find I frequently need to export updated ~.ics~ files.
+
+To not block emacs, I'd like a function to export my calendar files
+asynchronously. And so we don't constantly perform redundant exports,
+let's only export org-mode agenda files that are newer than their
+~.ics~ counterparts.
+
+#+BEGIN_SRC emacs-lisp
+
+(defun jmm/org-should-export-new-ics ()
+  "Should we export a new icalendar .ics file for the current buffer?
+We do this if either
+- The export file doesn't exist
+- The export file is older than the current buffer file.
+
+This function needs to be run in the context of the org file
+we're considering exporting."
+  (let ((file (buffer-file-name (buffer-base-buffer)))
+	(export-file (org-export-output-file-name ".ics")))
+    (or (not (file-exists-p export-file))
+	(file-newer-than-file-p file export-file))))
+
+(defun jmm/org-export-ical-stuff ()
+  "Export icalendar stuff asynchronously. Only export newly modified files."
+  (interactive)
+  (let ((files (cl-remove-if-not #'file-exists-p (org-agenda-files t)))
+	files-to-export)
+    (dolist (file files files-to-export)
+      (with-current-buffer (org-get-agenda-file-buffer file)
+	(when (jmm/org-should-export-new-ics)
+	  (push file files-to-export))))
+    (setq the-files-to-export files-to-export)
+    ;; TODO: Export all files, not just files that were changed?
+    (if files-to-export
+	(org-export-async-start
+	    (lambda (results)
+	      (message "Updated %d calendar files" (seq-length results))
+	      (setq blah2 results)
+	      (apply 'start-process "upload-ics-process" " *upload-ics-process*" "~/code/sh/upload-ical.sh" results)
+	      (dolist (f results) (org-export-add-to-stack f 'icalendar)))
+	  `(let (output-files)
+	     (dolist (file ',files-to-export output-files)
+	       (with-current-buffer (org-get-agenda-file-buffer file)
+		 (push (expand-file-name (org-icalendar-export-to-ics))
+		       output-files)))))
+      (message "All icalendar files are already up to date"))))
+
+(bind-key "<f9> i" 'jmm/org-export-ical-stuff)
+#+END_SRC
+
 ** Clocking
 *** Easier method to clock into some frequent habits
 Some habits occur quite frequently, and it's kind of a pain to have to
