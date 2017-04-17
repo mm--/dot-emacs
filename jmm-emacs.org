@@ -1259,11 +1259,56 @@ Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
 
 An agenda which shows which papers I should read.
 #+BEGIN_SRC emacs-lisp
+;; Note: josh/plist-get is defined elsewhere in this file
+(defun jmm/org-get-raw-scheduled ()
+  "Raw scheduled date for element at point."
+  (concat				;If it's nil, don't display anything
+   (josh/plist-get (org-element-at-point) 'headline :scheduled 'timestamp :raw-value)))
+
+(defun jmm/org-get-raw-created ()
+  "Raw created date for element at point."
+  (concat				;If it's nil, don't display anything
+   (org-entry-get (point) org-expiry-created-property-name)))
+
+(defun jmm/org-get-created-set-property (agendastr)
+  "Takes in a line AGENDASTR.
+   If it has \"created-time\" set, return it.
+   Otherwise looks for the `org-expiry-created-property-name' and sets \"created-time\""
+  (let* ((has-ct-prop (plist-member (text-properties-at 0 agendastr) 'created-time))
+	 (createdtime (cadr has-ct-prop)))
+    (if has-ct-prop
+	createdtime
+      (let* ((createdprop (org-entry-get (get-text-property 0 'org-hd-marker agendastr) org-expiry-created-property-name))
+	     (createts (if createdprop (org-time-string-to-absolute createdprop))))
+	(org-add-props agendastr nil
+	  'created-time createts)
+	createts))))
+
+(defun jmm/org-agenda-sort-created-time (a b)
+  "To be set as `org-agenda-cmp-user-defined'.
+   Very similar to `org-cmp-ts'"
+  (let* ((def (if org-sort-agenda-notime-is-late most-positive-fixnum -1))
+	 (ta (or (jmm/org-get-created-set-property a) def))
+	 (tb (or (jmm/org-get-created-set-property b) def)))
+    (cond ((< ta tb) -1)
+	  ((< tb ta) +1))))
+
 (org-add-agenda-custom-command
-   '("j" "Journal articles" tags-todo "+paper"
-     ((org-agenda-prefix-format " %i %-8:c%(josh/org-show-effort-and-clocked) ")
-      (org-agenda-hide-tags-regexp "paper")
-      (org-agenda-overriding-header "Journal articles: "))))
+ '("j" "Journal articles"
+   ((tags-todo "+paper"
+	      ((org-agenda-overriding-header "Scheduled articles")
+	       (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled 'todo 'done))
+	       (org-agenda-prefix-format " %i %-5:c %-17(jmm/org-get-raw-scheduled) ")
+	       (org-agenda-sorting-strategy '(scheduled-up))))
+    (tags-todo "+paper"
+	      ((org-agenda-overriding-header "Unscheduled articles")
+	       (org-agenda-skip-function '(org-agenda-skip-entry-if 'scheduled 'todo 'done))
+	       (org-agenda-prefix-format " %i %-5:c %-22(jmm/org-get-raw-created) ")
+	       (org-agenda-cmp-user-defined 'jmm/org-agenda-sort-created-time)
+	       (org-sort-agenda-notime-is-late nil)
+	       (org-agenda-sorting-strategy '(priority-down user-defined-down))))
+    )
+   ((org-agenda-hide-tags-regexp "paper"))))
 #+END_SRC
 
 A projects-related agenda. View next tasks, waiting, and stuck projects.
