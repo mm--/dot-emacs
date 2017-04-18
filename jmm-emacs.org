@@ -2515,6 +2515,7 @@ toggles between `rename-file' and `copy-file'"
 	   :map notmuch-show-mode-map
 	   ("b" . josh/notmuch-send-html-to-browser)
 	   ("B" . notmuch-show-resend-message)
+	   ("o" . jmm/notmuch-show-open-in-gmail)
 	   ))
 (use-package org-notmuch)
 #+END_SRC
@@ -2545,6 +2546,37 @@ Function to send HTML part to the browser
     (when (search-forward "text/html" nil t)
       (notmuch-show-view-part))))
 #+END_SRC
+
+** Open an email with gmail
+
+Gmail does some nice stuff occasionally. One of the things I like is
+that it caches loading of external images, so senders can't track when
+you've opened some mail. Of course, /Gmail/ can still track you, so
+it's up to you who you want tracking you (or, you can decide not to
+see images in emails).
+
+This function opens an email in Gmail. For most HTML files I should
+use ~josh/notmuch-send-html-to-browser~ though.
+
+#+BEGIN_SRC emacs-lisp
+(defvar jmm/gmail-to-user-id-alist '(("tag0" . 0)
+				     ("tag1" . 1))
+  "This should be an alist of tags and their associated user number in gmail.
+For example, if mail to your school account is user 0,
+  specify (\"school\" . 0) as an item in the alist")
+
+(defun jmm/notmuch-show-open-in-gmail ()
+  "Open the displayed message in gmail"
+  (interactive)
+  (let ((msgid (notmuch-show-get-message-id t))
+	(userid (or (cdr (assoc (car (-intersection (mapcar 'car jmm/gmail-to-user-id-alist)
+						(notmuch-show-get-tags)))
+				jmm/gmail-to-user-id-alist))
+		    0)))
+    (browse-url (concat (format "https://mail.google.com/mail/u/%d/#search/" userid)
+			(url-hexify-string (format "rfc822msgid:%s" msgid))))))
+#+END_SRC
+
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
   to use Gnus to read RSS, but elfeed is nice in that it doesn't block
