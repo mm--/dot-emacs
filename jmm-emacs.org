@@ -1736,8 +1736,11 @@ These functions clock into a task if it exists and creates it using
 #+end_src
 *** Quick key for clocking into current task
 
+    As well as clocking into previous tasks.
+
 #+begin_src emacs-lisp
-  (global-set-key (kbd "<f11>") 'org-clock-jump-to-current-clock)
+  (bind-key "<f11>" 'org-clock-jump-to-current-clock)
+  (bind-key "C-<f11>" 'org-clock-in-last)
 #+end_src
 
 ** Refiling to other places
