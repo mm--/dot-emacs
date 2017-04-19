@@ -3409,14 +3409,14 @@ specifies the list of buffers to kill, asking for approval for each one."
   :defer t
   :init
   (setq pdf-view-continuous nil)
-  (add-hook 'pdf-view-before-change-page-hook 'josh/pdf-view-store-page-register)
   :config
   (pdf-tools-install)
   :bind (:map pdf-view-mode-map
 	      ("x" . xah-open-in-external-app)
 	      ("M-s o" . pdf-occur)
 	      ("e" . jmm/pdf-view-espeak-page)
-	      ("E" . jmm/pdf-edit-helm-bibtex-notes)))
+	      ("E" . jmm/pdf-edit-helm-bibtex-notes)
+	      ("a" . jmm/pdf-annotate-hydra/body)))
 #+END_SRC
 
 *** Espeak a PDF page
@@ -3448,24 +3448,6 @@ specifies the list of buffers to kill, asking for approval for each one."
     (process-send-eof process)))
 #+END_SRC
 
-*** Store the current PDF page before jumping
-
-Note: Actually, this doesn't seem to be necessary. You can use
-~pdf-history-forward~ and ~pdf-history-backward~, which are bound to
-~N~ and ~B~, respectively.
-
-When clicking on links (like to references), I'd like to be able to
-quickly jump back to where I was. Basically we just add this function
-to ~pdf-view-before-change-page-hook~
-
-#+BEGIN_SRC emacs-lisp
-(defun josh/pdf-view-store-page-register ()
-  "Store the current page in register \"p\""
-  (pdf-view-position-to-register ?p))
-
-(add-hook 'pdf-view-before-change-page-hook 'josh/pdf-view-store-page-register)
-#+END_SRC
-
 *** Open bibtex notes
 
 Many of the PDFs I open are stored in my ~org-ref~ / ~helm-bibtex~
@@ -3482,6 +3464,49 @@ function splits the window slightly and opens the notes file there.
     (other-window 1)
     (bibtex-completion-edit-notes (list key))))
 #+END_SRC
+
+*** Keys to highlight with colors
+
+    Pdf-tools makes highlighting fairly straightforward. Here I
+    provide a hydra that makes it easy to quickly choose colors and
+    annotation types for PDFs. To use it, select some text you want to
+    highlight/underline/strike-out and press "~a~".
+
+#+BEGIN_SRC emacs-lisp
+(require 'hydra)
+(defvar jmm/pdf-annot-type 'highlight)
+
+(defun jmm/pdf-add-annot (color)
+  (kill-new (mapconcat 'identity (pdf-view-active-region-text) "\n"))
+  (pdf-annot-add-markup-annotation (pdf-view-active-region t) jmm/pdf-annot-type color))
+
+(defhydra jmm/pdf-annotate-color-hydra (:exit t)
+  "Color"
+  ("y" (jmm/pdf-add-annot "yellow") "yellow")
+  ("b" (jmm/pdf-add-annot "blue") "blue")
+  ("g" (jmm/pdf-add-annot "green") "green")
+  ("o" (jmm/pdf-add-annot "orange") "orange")
+  ("r" (jmm/pdf-add-annot "red") "red")
+  ("B" (jmm/pdf-add-annot "brown") "brown")
+  ("p" (jmm/pdf-add-annot "pink") "pink")
+  ("v" (jmm/pdf-add-annot "violet") "violet")
+  ("q" nil "cancel"))
+
+(defun jmm/pdf-annotate-run-hydra-with-type (type)
+  "See `pdf-annot-add-markup-annotation' for possible TYPEs"
+  (setq jmm/pdf-annot-type type)
+  (let ((jmm/pdf-annot-type type))
+    (jmm/pdf-annotate-color-hydra/body)))
+
+(defhydra jmm/pdf-annotate-hydra (:exit t)
+  "Annotate"
+  ("h" (jmm/pdf-annotate-run-hydra-with-type 'highlight) "highlight")
+  ("s" (jmm/pdf-annotate-run-hydra-with-type 'squiggly) "squiggly")
+  ("u" (jmm/pdf-annotate-run-hydra-with-type 'underline) "underline")
+  ("o" (jmm/pdf-annotate-run-hydra-with-type 'strike-out) "strike-out")
+  ("q" nil "cancel"))
+#+END_SRC
+
 
 ** Ace-window
 [[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
