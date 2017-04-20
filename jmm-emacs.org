@@ -2720,6 +2720,7 @@ Set up hotkeys and stuff for helm-swoop
                :bind (("M-i" . helm-swoop)
                       ("M-I" . helm-swoop-back-to-last-point)
                       ("C-c M-i" . helm-multi-swoop)
+		      ("C-c d" . helm-multi-swoop-dired)
                       ("C-x M-i" . helm-multi-swoop-all))
                :config (progn
                          ;; When doing isearch, hand the word over to helm-swoop
@@ -2727,6 +2728,17 @@ Set up hotkeys and stuff for helm-swoop
                          ;; From helm-swoop to helm-multi-swoop-all
                          (define-key helm-swoop-map (kbd "M-i") 'helm-multi-swoop-all-from-helm-swoop)))
 #+END_SRC
+
+Make an easy way to find files in open dired buffers
+
+#+BEGIN_SRC emacs-lisp
+(require 'helm-swoop)
+(defun helm-multi-swoop-dired (&optional $query)
+  "Applies all dired-mode buffers to helm-multi-swoop"
+  (interactive)
+  (helm-multi-swoop-by-mode 'dired-mode $query))
+#+END_SRC
+
 ** helm-descbinds
    Describe bindings.
 #+BEGIN_SRC emacs-lisp
