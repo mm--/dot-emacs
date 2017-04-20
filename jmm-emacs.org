@@ -2573,7 +2573,7 @@ For example, if mail to your school account is user 0,
 						(notmuch-show-get-tags)))
 				jmm/gmail-to-user-id-alist))
 		    0)))
-    (browse-url (concat (format "https://mail.google.com/mail/u/%d/#search/" userid)
+    (browse-url (concat (format "https://mail.google.com/mail/u/%d/?ibxr=0#search/" userid)
 			(url-hexify-string (format "rfc822msgid:%s" msgid))))))
 #+END_SRC
 
