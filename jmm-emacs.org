@@ -2457,7 +2457,7 @@ These functions clock into a task if it exists and creates it using
 	org-ref-default-bibliography (file-expand-wildcards "~/org-ref/*.bib")
 	org-ref-pdf-directory "~/org-ref/bibtex-pdfs/")
   (setq bibtex-completion-bibliography org-ref-default-bibliography
-	bibtex-completion-library-path "~/org-ref/bibtex-pdfs"
+	bibtex-completion-library-path '("~/org-ref/bibtex-pdfs" "~/org-ref/zotfile")
 	bibtex-completion-pdf-field "file"
 	bibtex-completion-additional-search-fields '(keywords journal)
 	bibtex-completion-notes-path "~/org-ref/helm-bibtex-notes")
@@ -2476,6 +2476,7 @@ These functions clock into a task if it exists and creates it using
   :init
   (setq org-ref-bibtex-hydra-key-binding (kbd "C-c C-j")))
 #+END_SRC
+*** Associate most recent PDF with bibtex entry
 
 Here's a function for associating the most recently downloaded PDF with a bibtex entry
 #+BEGIN_SRC emacs-lisp
@@ -2497,6 +2498,27 @@ toggles between `rename-file' and `copy-file'"
 	(progn
 	  (funcall file-move-func file pdf)
 	  (message (format "Created file %s from %s" pdf file)))))))
+#+END_SRC
+*** Find zotero files
+
+I use [[http://zotfile.com/][Zotfile]] to move PDFs from a bunch of disparate folders in Zotero
+to one shared folder. Zotfile moves PDFs and stores them as links in
+entries. When [[https://github.com/retorquere/zotero-better-bibtex][Better BibTeX]] exports ~.bib~ files, these files show up
+as being a ~/zotfile/~ folder. Helm-bibtex interprets this as an
+absolute path (which it kind of should), and isn't able to find my PDF
+files. This tries to fix that.
+
+I assume that files are stored in a "zotfile" directory
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/helm-bibtex-replace-zotfile-with-relative-path (orig-fun &rest args)
+  "Replace \"/zotfile/\" with \"zotfile\""
+  (let ((res (apply orig-fun args)))
+    (if (stringp res)
+	(replace-regexp-in-string "/zotfile/" "" res)
+      res)))
+
+(advice-add 'bibtex-completion-get-value :around #'jmm/helm-bibtex-replace-zotfile-with-relative-path)
 #+END_SRC
 
 * Notmuch
