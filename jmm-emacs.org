@@ -2417,7 +2417,18 @@ These functions clock into a task if it exists and creates it using
 	      ("M-T" . josh/org-convert-added-to-created-property)
 	      ("M-N" . josh/org-convert-added-or-add-created)))
 #+END_SRC
+*** Add ~CREATED~ property to captured headlines
+    I'd like to know when I captured headlines. Here I'll add a hook
+    to ~org-capture-mode~ that adds the ~CREATED~ property if we're
+    capturing an org-mode heading.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-capture-add-created-time ()
+  "Add the CREATED property among when capturing a headline"
+  (when (eq major-mode 'org-mode)
+    (josh/org-convert-added-or-add-created)))
 
+(add-hook 'org-capture-mode-hook 'jmm/org-capture-add-created-time)
+#+END_SRC
 ** Marking headings with a tag
    Sometimes I want to perform an action in bulk on a bunch of
    entries. For example, I might want to refile a bunch of headings or
