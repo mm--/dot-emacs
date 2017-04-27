@@ -2519,14 +2519,17 @@ as being a ~/zotfile/~ folder. Helm-bibtex interprets this as an
 absolute path (which it kind of should), and isn't able to find my PDF
 files. This tries to fix that.
 
-I assume that files are stored in a "zotfile" directory
+I assume that files are stored in a "zotfile" directory.
+
+Also, this advice removes HTML snapshots, since I generally don't want
+to look at them anyway.
 
 #+BEGIN_SRC emacs-lisp
 (defun jmm/helm-bibtex-replace-zotfile-with-relative-path (orig-fun &rest args)
-  "Replace \"/zotfile/\" with \"zotfile\""
+  "Replace \"/zotfile/\" with \"zotfile\". Also remove any snapshots."
   (let ((res (apply orig-fun args)))
     (if (stringp res)
-	(replace-regexp-in-string "/zotfile/" "" res)
+	(replace-regexp-in-string "\\(;[a-zA-Z0-9 ]*?Snapshot:.*?text/html\\|/zotfile/\\)" "" res)
       res)))
 
 (advice-add 'bibtex-completion-get-value :around #'jmm/helm-bibtex-replace-zotfile-with-relative-path)
