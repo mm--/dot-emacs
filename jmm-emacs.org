@@ -1440,7 +1440,7 @@ In the future I should make this more nuanced.
                                  ("work" . ?w) ("home" . ?h)
                                  ("REWARD" . ?R) ("SHOPPING" . ?s)
                                  ("PESARAN" . ?p) ("erlich" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
-                                 ("vague" . ?v) ("LOOKUP" . ?l)
+                                 ("vague" . ?v) ("lookup" . ?l)
                                  ("CODING" . ?c)
                                  ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("goal" . ?g) ("LIFEGOAL" . ?G)))
 
