@@ -21,6 +21,7 @@
 	dired-previous-line
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
+	ess-eval-line
 	ess-indent-or-complete
 	ess-smart-S-assign
 	ess-smart-comma
@@ -28,10 +29,12 @@
 	eval-last-sexp
 	fill-paragraph
 	forward-sexp
+	helm-dabbrev
 	indent-for-tab-command
 	indent-region
 	insert-register
 	josh/org-convert-added-or-add-created
+	josh/org-toggle-marked-tag
 	kill-region
 	kill-sexp
 	ledger-post-align-xact
@@ -94,6 +97,7 @@
 	end-of-buffer
 	eval-expression
 	find-file
+	handle-select-window
 	handle-switch-frame
 	helm-M-x
 	helm-swoop
