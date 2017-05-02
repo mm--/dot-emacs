@@ -288,12 +288,13 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Spelling
 
 #+begin_src emacs-lisp
-  (setq-default ispell-program-name "hunspell")
-  (setq-default ispell-grep-command "grep")
-  (setq-default ispell-grep-options "-iE")
-  (setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
-  (setq-default ispell-silently-savep t)
-  (use-package rw-hunspell)
+(setq-default ispell-program-name "hunspell")
+(setq-default ispell-grep-command "grep")
+(setq-default ispell-grep-options "-iE")
+(setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
+(setq-default ispell-silently-savep t)
+(use-package rw-hunspell
+  :after flyspell)
 #+end_src
 
 #+begin_src emacs-lisp
@@ -543,8 +544,7 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   https://github.com/vspinu/polymode/issues/30 that uses rmarkdown.
 #+BEGIN_SRC emacs-lisp
   (use-package polymode
-    :init
-    (add-to-list 'auto-mode-alist '("\\.Rmd" . poly-markdown+r-mode))
+    :mode ("\\.Rmd" . poly-markdown+r-mode)
     :config
     (define-key polymode-mode-map (kbd "M-n r") 'ess-render-rmarkdown))
 
@@ -640,36 +640,23 @@ of erc-modified-channels-alist"
 
 * rcirc
 #+begin_src emacs-lisp
-(require 'rcirc)
-#+end_src
-** Spelling
-#+begin_src emacs-lisp
-(add-hook 'rcirc-mode-hook (lambda ()
-			     (flyspell-mode 1)))
-#+end_src
-** Other
-#+begin_src emacs-lisp
+(use-package rcirc
+  :commands (rcirc)
+  :init
   (setq rcirc-debug-flag t)
-
-  ;; Adjust the colours of one of the faces.
-  (set-face-foreground 'rcirc-my-nick "red" nil)
-
   (setq rcirc-default-nick "emdash")
   (setq rcirc-default-user-name "joshm")
   (setq rcirc-default-full-name "Josh Moller-Mara")
-
   (setq rcirc-buffer-maximum-lines 2000)
-  ;; rcirc-server-alist moved to secrets file, as it contains passwords.
-
+  :config
+  ;; Adjust the colours of one of the faces.
+  (set-face-foreground 'rcirc-my-nick "red" nil)
+  (add-hook 'rcirc-mode-hook (lambda ()
+			       (flyspell-mode 1)))
   (add-hook 'rcirc-mode-hook
             (lambda ()
-              (rcirc-track-minor-mode 1)))
-
-  (add-hook 'rcirc-mode-hook (lambda ()
-                               (flyspell-mode 1)))
-
+              (rcirc-track-minor-mode 1))))
 #+end_src
-
 ** Reconnect after disconnect
 
 #+begin_src emacs-lisp
@@ -700,12 +687,14 @@ of erc-modified-channels-alist"
 
 ** Load rcirc-notify
 #+begin_src emacs-lisp
-  (eval-after-load 'rcirc '(use-package rcirc-notify))
+(use-package rcirc-notify
+  :after rcirc)
 #+end_src
 
 ** Load rcirc color
 #+begin_src emacs-lisp
-  (eval-after-load 'rcirc '(use-package rcirc-color))
+(use-package rcirc-colo
+  :after rcirc)
 #+end_src
 
 ** Display IRC activity in window manager
@@ -770,11 +759,12 @@ of erc-modified-channels-alist"
 #+end_src
 * BBDB
 #+begin_src emacs-lisp
-  (use-package bbdb
-               :config (progn
-                         (bbdb-initialize 'gnus 'message)
-                         (setq bbdb-use-pop-up nil)              ;Don't pop up
-                         (setq bbdb-quiet-about-name-mismatches nil)))
+(use-package bbdb
+  :defer t
+  :config (progn
+	    (bbdb-initialize 'gnus 'message)
+	    (setq bbdb-use-pop-up nil)              ;Don't pop up
+	    (setq bbdb-quiet-about-name-mismatches nil)))
 #+end_src
 * GNUS
   I don't really use GNUS much anymore. I used to use it for email,
@@ -1047,11 +1037,18 @@ Because dired-jump is pretty useful
 #+BEGIN_SRC emacs-lisp
 (use-package org
   :ensure org-plus-contrib
+  :defer t
   :bind (("C-c c" . org-capture)
 	 ("C-c a" . org-agenda)
 	 ("C-c l" . org-store-link)
 	 ("C-c L" . org-insert-link-global)
-	 ("C-c o" . org-open-at-point-global))
+	 ("C-c o" . org-open-at-point-global)
+	 :map org-mode-map
+	 ("M-T" . josh/org-convert-added-to-created-property)
+	 ("M-N" . josh/org-convert-added-or-add-created)
+	 ("M-M" . josh/org-toggle-marked-tag)
+	 )
+  :mode ("\\.org\\'" . org-mode)
   :init
   (setq org-indirect-buffer-display 'current-window)
   (setq org-catch-invisible-edits 'smart)
@@ -1061,8 +1058,11 @@ Because dired-jump is pretty useful
 	org-default-priority ?D)
   (unbind-key "C-'" org-mode-map)
   :config
-  (use-package org-screenshot)
-  (use-package org-depend))
+  (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
+  (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
+  (require 'org-screenshot)
+  (require 'org-depend)
+  (require 'org-expiry))
 #+END_SRC
 ** Setup my agenda file
    Read from "org-agendas" where the agenda files are.
@@ -1521,15 +1521,16 @@ Require org-drill.
 Add random noise to the due dates of cards, so they're not always clumped together.
 Also, change the default cloze delimiters, as the defaults weren't working well for me.
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/elisp/org-mode/contrib/lisp/")
-  (use-package org-drill
-               :config (progn
-                         (add-to-list 'org-modules 'org-drill)
-                         (setq org-drill-add-random-noise-to-intervals-p t)
-                         (setq org-drill-hint-separator "||")
-                         (setq org-drill-left-cloze-delimiter "<[")
-                         (setq org-drill-right-cloze-delimiter "]>")
-                         (setq org-drill-learn-fraction 0.25)))
+(add-to-list 'load-path "~/elisp/org-mode/contrib/lisp/")
+(use-package org-drill
+  :after org
+  :config (progn
+	    (add-to-list 'org-modules 'org-drill)
+	    (setq org-drill-add-random-noise-to-intervals-p t)
+	    (setq org-drill-hint-separator "||")
+	    (setq org-drill-left-cloze-delimiter "<[")
+	    (setq org-drill-right-cloze-delimiter "]>")
+	    (setq org-drill-learn-fraction 0.25)))
 #+end_src
 
 *** org-preview-latex-fragment
@@ -2375,11 +2376,8 @@ These functions clock into a task if it exists and creates it using
 ** Org expiry
    Use org-expiry to make a "created" property.
 #+BEGIN_SRC emacs-lisp
-(use-package org-expiry
-  :init
-  (setq org-expiry-created-property-name "CREATED")
-  (setq org-expiry-inactive-timestamps t))
-
+(setq org-expiry-created-property-name "CREATED")
+(setq org-expiry-inactive-timestamps t)
 ;; (use-package org
 ;;   :bind (:map org-mode-map
 ;; 	      ("M-N" . org-expiry-insert-created)))
@@ -2411,11 +2409,6 @@ These functions clock into a task if it exists and creates it using
   (interactive)
   (unless (josh/org-convert-added-to-created-property)
     (org-expiry-insert-created)))
-
-(use-package org
-  :bind (:map org-mode-map
-	      ("M-T" . josh/org-convert-added-to-created-property)
-	      ("M-N" . josh/org-convert-added-or-add-created)))
 #+END_SRC
 *** Add ~CREATED~ property to captured headlines
     I'd like to know when I captured headlines. Here I'll add a hook
@@ -2439,16 +2432,10 @@ These functions clock into a task if it exists and creates it using
    In order to get a bunch of "marked" entries in an agenda, though,
    we want a quick way to add something like a "MARKED" tag. The code
    below does that.
-#+BEGIN_SRC emacs-lisp
-(use-package org
-  :bind (:map org-mode-map
-	      ("M-M" . josh/org-toggle-marked-tag))
-  :init
-  (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
-  (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
-  :config
-  (require 'ox))
 
+   (Note, I probably moved it above in the ~use-package~ for org)
+
+#+BEGIN_SRC emacs-lisp
 (defun josh/org-toggle-marked-tag ()
   "Add a \"MARKED\" tag to a headline"
   (interactive)
@@ -2660,31 +2647,32 @@ For example, if mail to your school account is user 0,
 #+end_src
 * Helm
 #+begin_src emacs-lisp
-  (require 'helm-config)
-  (global-set-key (kbd "C-c h") 'helm-mini)
-  (use-package helm-mode
-    :init
-    (setq helm-ff-newfile-prompt-p nil)
-    :config
-    (progn (mapc (lambda (x) (add-to-list 'helm-completing-read-handlers-alist
-                                 (list x)))
-        (list 'dired-do-rename
-              'dired-do-copy
-              'dired-do-delete
-              'dired-do-symlink
-              'dired-create-directory
-              'find-file))
-           (helm-mode 1)))
-  (global-set-key (kbd "C-x b") 'helm-buffers-list)
-  ;; (global-set-key (kbd "C-x C-f") 'helm-find-files)
-  (global-set-key (kbd "C-x f") 'helm-for-files)
-  (global-set-key (kbd "M-x") 'helm-M-x)
-  (global-set-key (kbd "M-y") 'helm-show-kill-ring)
-  (global-set-key (kbd "M-s o") 'helm-occur)
-  (global-set-key (kbd "M-g s") 'helm-do-grep)
-  (global-set-key (kbd "M-g b") 'helm-resume)
-  (global-set-key (kbd "C-c SPC") 'helm-all-mark-rings)
-  (global-set-key (kbd "C-c b") 'helm-bookmarks)
+(require 'helm-config)
+(global-set-key (kbd "C-c h") 'helm-mini)
+(use-package helm-mode
+  :bind (("M-x" . helm-M-x)
+	 ("C-x b" . helm-buffers-list)
+	 ;; ("C-x C-f" . helm-find-files)
+	 ("C-x f" . helm-for-files)
+	 ("M-x" . helm-M-x)
+	 ("M-y" . helm-show-kill-ring)
+	 ("M-s o" . helm-occur)
+	 ("M-g s" . helm-do-grep)
+	 ("M-g b" . helm-resume)
+	 ("C-c SPC" . helm-all-mark-rings)
+	 ("C-c b" . helm-bookmarks))
+  :init
+  (setq helm-ff-newfile-prompt-p nil)
+  :config
+  (progn (mapc (lambda (x) (add-to-list 'helm-completing-read-handlers-alist
+                               (list x)))
+      (list 'dired-do-rename
+            'dired-do-copy
+            'dired-do-delete
+            'dired-do-symlink
+            'dired-create-directory
+            'find-file))
+         (helm-mode 1)))
 #+end_src
 ** Other Helm actions I find useful
    I like being able to open an xterm or quickly jump to dired with helm.
@@ -2752,17 +2740,18 @@ For example, if mail to your school account is user 0,
 ** helm-swoop
 Set up hotkeys and stuff for helm-swoop
 #+BEGIN_SRC emacs-lisp
-  (use-package helm-swoop
-               :bind (("M-i" . helm-swoop)
-                      ("M-I" . helm-swoop-back-to-last-point)
-                      ("C-c M-i" . helm-multi-swoop)
-		      ("C-c d" . helm-multi-swoop-dired)
-                      ("C-x M-i" . helm-multi-swoop-all))
-               :config (progn
-                         ;; When doing isearch, hand the word over to helm-swoop
-                         (define-key isearch-mode-map (kbd "M-i") 'helm-swoop-from-isearch)
-                         ;; From helm-swoop to helm-multi-swoop-all
-                         (define-key helm-swoop-map (kbd "M-i") 'helm-multi-swoop-all-from-helm-swoop)))
+(use-package helm-swoop
+             :bind (("M-i" . helm-swoop)
+                    ("M-I" . helm-swoop-back-to-last-point)
+                    ("C-c M-i" . helm-multi-swoop)
+		    ("C-c d" . helm-multi-swoop-dired)
+                    ("C-x M-i" . helm-multi-swoop-all)
+		    :map isearch-mode-map
+		    ;; When doing isearch, hand the word over to helm-swoop
+		    ("M-i" . helm-swoop-from-isearch)
+		    :map helm-swoop-map
+		    ;; From helm-swoop to helm-multi-swoop-all
+		    ("M-i" . helm-multi-swoop-all-from-helm-swoop)))
 #+END_SRC
 
 Make an easy way to find files in open dired buffers
@@ -2822,13 +2811,13 @@ Make an easy way to find files in open dired buffers
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
   :ensure t
+  :commands (flycheck-mode global-flycheck-mode)
   :config
   ;; Disable jshint. I use eslint
   ;; Also disable Emacs lisp checkdoc stuff for now
   (setq-default flycheck-disabled-checkers
 		(append flycheck-disabled-checkers
-			'(javascript-jshint emacs-lisp-checkdoc)))
-  (global-flycheck-mode 1))
+			'(javascript-jshint emacs-lisp-checkdoc))))
 #+END_SRC
 ** Use a local eslint from ~node_modules~ before a global one
    From [[http://emacs.stackexchange.com/questions/21205/flycheck-with-file-relative-eslint-executable]]
@@ -2987,31 +2976,27 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 ** Search Gregg Shorthand Dictionary
 #+begin_src emacs-lisp
-  (defun gsd ()
-    (interactive)
-      (find-file-read-only "~/Downloads/gregg/gsd.txt")
-      (helm-occur)
-      (start-process "evince-gsd" " gsd-processes" "evince"
-                     (concat "--page-label="
-                             (number-to-string (- (string-to-number
-                                                   (substring (what-page) 5 8))
-                                                  12)))
-                     "/home/jm3/Downloads/gregg/gsd.pdf"))
-
-  (when (and (require 'pdf-tools nil 'noerror)
+(defun gsd ()
+  (interactive)
+    (find-file-read-only "~/Downloads/gregg/gsd.txt")
+    (helm-occur)
+    (if (and (require 'pdf-tools nil 'noerror)
 	     (require 'pdf-isearch nil 'noerror))
-    (defun gsd ()
-      (interactive)
-      (find-file-read-only "~/Downloads/gregg/gsd.txt")
-      (helm-occur)
-      (setq gsd-word (word-at-point))
-      (setq gsd-page (string-to-number (substring (what-page) 5 8)))
-      (find-file-read-only "~/Downloads/gregg/gsd.pdf")
-      (pdf-view-goto-page gsd-page)
-      (setq gsd-matches (pdf-isearch-search-page gsd-word))
-      (pdf-isearch-hl-matches (car gsd-matches) gsd-matches t)))
+	(progn
+	  (setq gsd-word (word-at-point))
+	  (setq gsd-page (string-to-number (substring (what-page) 5 8)))
+	  (find-file-read-only "~/Downloads/gregg/gsd.pdf")
+	  (pdf-view-goto-page gsd-page)
+	  (setq gsd-matches (pdf-isearch-search-page gsd-word))
+	  (pdf-isearch-hl-matches (car gsd-matches) gsd-matches t))
+      (start-process "evince-gsd" " gsd-processes" "evince"
+		     (concat "--page-label="
+			     (number-to-string (- (string-to-number
+						   (substring (what-page) 5 8))
+						  12)))
+		     "/home/jm3/Downloads/gregg/gsd.pdf")))
 
-  (global-set-key (kbd "<f9> g") 'gsd)
+(global-set-key (kbd "<f9> g") 'gsd)
 #+end_src
 ** Window Dedication
 #+begin_src emacs-lisp
@@ -3267,8 +3252,9 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 ** Ledger
 #+begin_src emacs-lisp
-  (use-package ledger
-               :ensure ledger-mode)
+(use-package ledger
+  :commands ledger-mode
+  :ensure ledger-mode)
 #+end_src
 ** Swank-js
 #+begin_src emacs-lisp
@@ -3306,9 +3292,10 @@ specifies the list of buffers to kill, asking for approval for each one."
    your javascript files as well as tell you the type of variable.
 
 #+begin_src emacs-lisp
-  (add-to-list 'load-path "~/Downloads/tern/emacs")
-  (use-package tern
-               :config (add-hook 'js2-mode-hook (lambda () (tern-mode t))))
+(add-to-list 'load-path "~/Downloads/tern/emacs")
+(use-package tern
+  :commands tern-mode
+  :config (add-hook 'js2-mode-hook (lambda () (tern-mode t))))
 #+end_src
 ** Projectile
    Projectile is a neat library that makes it easy to deal with
@@ -3317,27 +3304,25 @@ specifies the list of buffers to kill, asking for approval for each one."
 
    This configuration also turns on ~helm-projectile~ bindings by default.
 #+begin_src emacs-lisp
-  (use-package projectile
-    :ensure t
-    :diminish projectile-mode
-    :config
-    (progn
-      (projectile-global-mode)
-      (setq projectile-svn-command "find . -type f -not -iwholename '*.svn/*' -print0")
-      (setq projectile-completion-system 'helm-comp-read)))
+(use-package projectile
+  :ensure t
+  :diminish projectile-mode
+  :bind-keymap ("C-c p" . projectile-command-map)
+  :config
+  (progn
+    (projectile-global-mode)
+    ;; Easily switch between .html, .js, and .css
+    (add-to-list 'projectile-other-file-alist '("html" "css" "js"))
+    (add-to-list 'projectile-other-file-alist '("js" "css" "html"))
+    (setq projectile-svn-command "find . -type f -not -iwholename '*.svn/*' -print0")
+    (setq projectile-completion-system 'helm-comp-read)))
 
-  (use-package helm-projectile
-    :ensure t
-    :config
-    (helm-projectile-toggle 1))
+(use-package helm-projectile
+  :ensure t
+  :after projectile
+  :config
+  (helm-projectile-toggle 1))
 #+end_src
-*** Switching between web stuff
-    Easily switch between .html, .js, and .css
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'projectile-other-file-alist '("html" "css" "js"))
-  (add-to-list 'projectile-other-file-alist '("js" "css" "html"))
-#+END_SRC
-
 ** Yasnippet
    So I can have recursive snippets.
 #+begin_src emacs-lisp
@@ -3433,25 +3418,26 @@ specifies the list of buffers to kill, asking for approval for each one."
 ** skewer-mode
    Some functions to evaluate either the region (if active) or the last expression.
 #+BEGIN_SRC emacs-lisp
-  (defun skewer-eval-last-expression-or-region (&optional prefix)
-    "Evaluate the JavaScript expression before the point in the
-  waiting browser. If invoked with a prefix argument, insert the
-  result into the current buffer."
-    (interactive "P")
-    (if (use-region-p)
-        (skewer-eval-region (region-beginning) (region-end))
-      (skewer-eval-last-expression prefix)))
+(defun skewer-eval-last-expression-or-region (&optional prefix)
+  "Evaluate the JavaScript expression before the point in the
+waiting browser. If invoked with a prefix argument, insert the
+result into the current buffer."
+  (interactive "P")
+  (if (use-region-p)
+      (skewer-eval-region (region-beginning) (region-end))
+    (skewer-eval-last-expression prefix)))
 
-  (defun skewer-eval-region (beg end)
-    "Execute the region as JavaScript code in the attached browsers."
-    (interactive "r")
-    (deactivate-mark)
-    (skewer-flash-region beg end)
-    (skewer-eval (buffer-substring beg end) #'skewer-post-minibuffer))
+(defun skewer-eval-region (beg end)
+  "Execute the region as JavaScript code in the attached browsers."
+  (interactive "r")
+  (deactivate-mark)
+  (skewer-flash-region beg end)
+  (skewer-eval (buffer-substring beg end) #'skewer-post-minibuffer))
 
-  (use-package skewer-mode
-    :config
-    (define-key skewer-mode-map (kbd "C-x C-e") 'skewer-eval-last-expression-or-region))
+(use-package skewer-mode
+  :commands (skewer-mode skewer-html-mode skewer-css-mode run-skewer)
+  :config
+  (define-key skewer-mode-map (kbd "C-x C-e") 'skewer-eval-last-expression-or-region))
 #+END_SRC
 ** diff-hl
    Diff-hl seems to be a useful way to visualize uncommitted changes in a file.
@@ -3474,11 +3460,12 @@ specifies the list of buffers to kill, asking for approval for each one."
    I use a remote session, which means I usually set
    ~matlab-shell-command~ to a shell script that runs matlab over ssh.
 #+BEGIN_SRC emacs-lisp
-  (use-package matlab
-    :init
-    (setq matlab-shell-echoes nil)
-    :config
-    (define-key matlab-mode-map (kbd "C-c C-j") 'matlab-shell-run-region-or-line)) 
+(use-package matlab
+  :mode ("\\.m$" . matlab-mode)
+  :init
+  (setq matlab-shell-echoes nil)
+  :config
+  (define-key matlab-mode-map (kbd "C-c C-j") 'matlab-shell-run-region-or-line)) 
 #+END_SRC
 
 ** Pdf-tools
@@ -3488,7 +3475,7 @@ specifies the list of buffers to kill, asking for approval for each one."
    on links.
 #+BEGIN_SRC emacs-lisp
 (use-package pdf-tools
-  :defer t
+  :mode ("\\.[pP][dD][fF]\\'" . pdf-view-mode)
   :init
   (setq pdf-view-continuous nil)
   :config
@@ -3606,8 +3593,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 #+BEGIN_SRC emacs-lisp
 (use-package web-mode
   :ensure t
-  :init
-  (add-to-list 'auto-mode-alist '("\\.html?\\'" . web-mode)))
+  :mode ("\\.html?\\'" . web-mode))
 #+END_SRC
 
 ** Emojify
