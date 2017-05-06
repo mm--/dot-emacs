@@ -1747,7 +1747,36 @@ These functions clock into a task if it exists and creates it using
   (bind-key "<f11>" 'org-clock-jump-to-current-clock)
   (bind-key "C-<f11>" 'org-clock-in-last)
 #+end_src
+*** Inserting a link to the currently clocked task
+    When I'm capturing tasks or other ~org~ headlines, many times it's
+    related to the task I'm currently clocking.
 
+    I like to have contexts for why I captured certain items, so it's
+    nice to have a function that inserts a link to the currently
+    clocked task.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-current-clock-link ()
+  "Get the link of the currently clocked item."
+  (save-window-excursion
+    (let ((org-id-link-to-org-use-id t)	;Make a global ID
+	  (clock (cons org-clock-marker
+		       org-clock-start-time)))
+    (unless (marker-buffer (car clock))
+      (error "No clock is currently running"))
+    (org-with-clock clock (org-clock-goto))
+    (with-current-buffer (marker-buffer (car clock))
+      (save-excursion
+	(goto-char (car clock))
+	(org-back-to-heading t)
+	(org-store-link t))))))
+
+(defun jmm/insert-org-current-clock-link ()
+  "Insert a link of the currently clocked item"
+  (interactive)
+  (insert (jmm/org-current-clock-link)))
+
+(bind-key "<S-f11>" 'jmm/insert-org-current-clock-link)
+#+END_SRC
 ** Refiling to other places
    This is so we're able to refile to other files
 #+begin_src emacs-lisp
