@@ -1002,11 +1002,6 @@ Because dired-jump is pretty useful
 (add-to-list 'tramp-default-proxies-alist '((and (string-match system-name (tramp-file-name-host (car target-alist))) "DONTMATCHMEPLEASE") "\\`root\\'" "/ssh:%h:"))
 #+end_src
 
-** Prompt for Yubikeys
-#+begin_src emacs-lisp
-  (setq tramp-password-prompt-regexp "^.*\\(Yubikey\\|[pP]assword\\|[pP]assphrase\\).*: ? *")
-#+end_src
-
 ** Kill Tramp buffers
    Sometimes, having Tramp buffers open will weirdly cause other Emacs
    functions to fail or load slowly. For example, if you've got a
