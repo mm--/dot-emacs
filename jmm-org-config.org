@@ -406,7 +406,18 @@ In the future I should make this more nuanced.
       ;; (org-agenda-view-columns-initially t)
       (org-agenda-hide-tags-regexp ,(rx (or "LIFEGOAL" "goal"))))))
 #+END_SRC
+** A better way of viewing tags in the agenda
 
+   Tags in the agenda can get pretty messy. [[https://lists.gnu.org/archive/html/emacs-orgmode/2010-12/msg00410.html][This page]] from the
+   org-mode mailing list provides a nice function to align tags in the
+   agenda to the right margin.
+#+BEGIN_SRC emacs-lisp
+(defun place-agenda-tags ()
+  "Put the agenda tags by the right border of the agenda window."
+  (setq org-agenda-tags-column (- 4 (window-width)))
+  (org-agenda-align-tags))
+(add-hook 'org-finalize-agenda-hook 'place-agenda-tags)
+#+END_SRC
 * Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
    don't want to have the hotkeys for each of these tags repeatedly in
