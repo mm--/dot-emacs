@@ -37,6 +37,8 @@ loaded ~org-plus-contrib~
   (require 'org-screenshot)
   (require 'org-depend)
   (require 'org-expiry)
+  (require 'org-inlinetask)
+  (require 'org-collector)
   (require 'ox))
 #+END_SRC
 
