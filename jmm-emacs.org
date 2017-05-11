@@ -2000,10 +2000,12 @@ result into the current buffer."
    Optional ARG takes an WPM speed (i.e. \"4\" becomes 400 WPM)"
   (interactive "P")
   (let* ((wpm (number-to-string (if arg (* arg 100) josh/espeak-speed)))
-	 (pdf-text (car (prog2
-			    (unless pdf-view-active-region (pdf-view-mark-whole-page))
-			    (pdf-view-active-region-text)
-			  (pdf-view-deactivate-region))))
+	 (pdf-text (mapconcat 'identity
+			      (prog2
+				  (unless pdf-view-active-region (pdf-view-mark-whole-page))
+				  (pdf-view-active-region-text)
+				(pdf-view-deactivate-region))
+			      "\n"))
 	 (fixed-pdf-text (replace-regexp-in-string "-\n" "" pdf-text))
 	 (process (start-process "espeak-process" " *espeak-pdf-view*" jmm/espeak-script wpm)))
     (process-send-string process (concat fixed-pdf-text "\n"))
