@@ -1978,7 +1978,8 @@ result into the current buffer."
 	      ("M-s o" . pdf-occur)
 	      ("e" . jmm/pdf-view-espeak-page)
 	      ("E" . jmm/pdf-edit-helm-bibtex-notes)
-	      ("a" . jmm/pdf-annotate-hydra/body)))
+	      ("a" . jmm/pdf-annotate-hydra/body)
+	      ("C-c C-o" . jmm/pdf-crop-image-width)))
 #+END_SRC
 
 *** Espeak a PDF page
@@ -2071,6 +2072,35 @@ function splits the window slightly and opens the notes file there.
   ("q" nil "cancel"))
 #+END_SRC
 
+*** Clip an image
+
+    A really cool feature of PDF Tools is that there's a command
+    ~pdf-view-extract-region-image~ that's bound to ~C-c C-i~. By
+    holding down ~Meta~ and dragging your mouse, you can easily select
+    a region to clip. The only problem (for me) is that sometimes this
+    clipped image is kinda small. If I want to use the image in a
+    presentation, I'd like a high-resolution version.
+
+    This command allows me to extract an image with a specified width.
+
+#+BEGIN_SRC emacs-lisp
+(require 'dash)
+(defvar jmm/pdf-image-preferred-width 1000
+  "Default width for cropping an image")
+
+(defun jmm/pdf-crop-image-width (&optional arg)
+  "Crop an image. Use optional ARG as the pixel width, otherwise
+use `jmm/pdf-image-preferred-width'.
+
+This function uses `pdf-view-extract-region-image'
+but more easily allows you to scale up images."
+  (interactive "P")
+  (-let* (((left top right bottom) (car (pdf-view-active-region)))
+	  (percentwidth (- right left))
+	  (desiredwidth (if (numberp arg) arg jmm/pdf-image-preferred-width))
+	  (fakesize (round (/ desiredwidth percentwidth))))
+    (pdf-view-extract-region-image (pdf-view-active-region) nil (cons fakesize nil))))
+#+END_SRC
 
 ** Ace-window
 [[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
