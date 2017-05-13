@@ -1979,6 +1979,7 @@ result into the current buffer."
 	      ("e" . jmm/pdf-view-espeak-page)
 	      ("E" . jmm/pdf-edit-helm-bibtex-notes)
 	      ("a" . jmm/pdf-annotate-hydra/body)
+	      ("c" . jmm/pdf-view-copy-text-other-window)
 	      ("C-c C-o" . jmm/pdf-crop-image-width)))
 #+END_SRC
 
@@ -2100,6 +2101,33 @@ but more easily allows you to scale up images."
 	  (desiredwidth (if (numberp arg) arg jmm/pdf-image-preferred-width))
 	  (fakesize (round (/ desiredwidth percentwidth))))
     (pdf-view-extract-region-image (pdf-view-active-region) nil (cons fakesize nil))))
+#+END_SRC
+*** Copy string to other window
+
+    This function makes it easy to copy quotes into my notes files.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/pdf-view-copy-text-other-window (&optional arg)
+  "Copy the text in PDF view to the other window.
+This function automatically unfills and re-fills text, eliminating word-wrapping hyphens.
+With optional ARG, quote the string."
+  (interactive "P")
+  (let* ((pdf-text (if pdf-view-active-region
+		       (mapconcat 'identity
+				  (prog1
+				      (pdf-view-active-region-text)
+				    (pdf-view-deactivate-region))
+				  " ")
+		     (car kill-ring)))
+	 (fixed-pdf-text (->> pdf-text
+			      (replace-regexp-in-string "-\n" "")
+			      (replace-regexp-in-string "\n" " "))))
+    ;; (save-selected-window
+    (other-window 1)
+    (when arg (insert "\""))
+    (insert fixed-pdf-text)
+    (when arg (insert "\""))
+    (fill-paragraph)))
 #+END_SRC
 
 ** Ace-window
