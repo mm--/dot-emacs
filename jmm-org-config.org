@@ -27,6 +27,7 @@ loaded ~org-plus-contrib~
   (setq org-indirect-buffer-display 'current-window)
   (setq org-catch-invisible-edits 'smart)
   (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
+  (setq org-clock-out-remove-zero-time-clocks t)
   (setq org-highest-priority ?A
 	org-lowest-priority ?F
 	org-default-priority ?D)
