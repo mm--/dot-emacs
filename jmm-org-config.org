@@ -1281,7 +1281,7 @@ These functions clock into a task if it exists and creates it using
 (defun josh/org-get-added-time ()
   "Get the time an entry was added"
   (or
-   (cdr (assoc "CREATED" (org-entry-properties))) ;The "CREATED" property
+   (org-entry-get (point) org-expiry-created-property-name)
    (save-excursion
      (org-back-to-heading t)
      (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
