@@ -315,6 +315,9 @@ Same thing as above, but also include the next three days agenda.
     (todo "NEXT"
           ((org-agenda-overriding-header "Unscheduled next tasks")
            (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
+	   (org-agenda-cmp-user-defined 'jmm/org-agenda-sort-next-time)
+    	   (org-sort-agenda-notime-is-late nil)
+    	   (org-agenda-sorting-strategy '(priority-down user-defined-down))
            (org-agenda-skip-function
             (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
                            (bh/skip-projects-and-habits-and-single-tasks))))))
@@ -421,6 +424,50 @@ In the future I should make this more nuanced.
   (org-agenda-align-tags))
 (add-hook 'org-finalize-agenda-hook 'place-agenda-tags)
 #+END_SRC
+** Sorting timestamps in the agenda
+
+   I'd like to sort my ~NEXT~ actions by their age. This lets me know
+   which ~NEXT~ actions have been sitting around and not getting done,
+   which is a sign that the action needs to be either better specified
+   or further broken down.
+
+   Sorting in the agenda is pretty slow. Here are some macros and
+   functions that try to use memoization to speed up sorting.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro jmm/org-agenda-memoize (funcname key ifnotmemoized)
+  "Make a function that memoizes some stuff in org-agenda properties. Use symbol KEY as the text property"
+  (let ((hasprop (gensym))
+	(newval (gensym)))
+    `(defun ,funcname (agendastr)
+       (let* ((,hasprop (plist-member (text-properties-at 0 agendastr) ,key)))
+	 (if ,hasprop
+	     (cadr ,hasprop)		;get the actual value
+	   (let* ((,newval (,ifnotmemoized (get-text-property 0 'org-hd-marker agendastr))))
+	     (org-add-props agendastr nil
+	       ,key ,newval)
+	     ,newval))))))
+
+;; FIXME. Needs to be some other number when neither defined
+(jmm/org-agenda-memoize
+ jmm/org-agenda-get-next-time 'nexttime
+ (lambda (orgmarker)
+   (with-current-buffer (marker-buffer orgmarker)
+     (save-excursion
+       (goto-char (marker-position orgmarker))
+       (max (josh/absolute-time-or-0 (josh/org-get-next-time))
+	    (josh/absolute-time-or-0 (josh/org-get-added-time)))))))
+
+(defun jmm/org-agenda-sort-next-time (a b)
+  "To be set as `org-agenda-cmp-user-defined'.
+   Very similar to `org-cmp-ts'"
+  (let* ((def (if org-sort-agenda-notime-is-late most-positive-fixnum -1))
+	 (ta (or (jmm/org-agenda-get-next-time a) def))
+	 (tb (or (jmm/org-agenda-get-next-time b) def)))
+    (cond ((< ta tb) -1)
+	  ((< tb ta) +1))))
+#+END_SRC
+
 * Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
    don't want to have the hotkeys for each of these tags repeatedly in
