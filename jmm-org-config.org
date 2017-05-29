@@ -401,13 +401,13 @@ In the future I should make this more nuanced.
      ((tags "goal"
 	    ((org-agenda-overriding-header "Goals")
 	     (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))))
-      (tags "LIFEGOAL"
+      (tags "lifegoal"
 	    ((org-agenda-overriding-header "Life Goals")
 	     )))
      ((org-agenda-overriding-columns-format "%50ITEM(Goal) %5Effort(Time){:} %6CLOCKSUM{Total}")
       (org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done))
       ;; (org-agenda-view-columns-initially t)
-      (org-agenda-hide-tags-regexp ,(rx (or "LIFEGOAL" "goal"))))))
+      (org-agenda-hide-tags-regexp ,(rx (or "lifegoal" "goal"))))))
 #+END_SRC
 ** A better way of viewing tags in the agenda
 
@@ -435,7 +435,7 @@ In the future I should make this more nuanced.
                                  ("PESARAN" . ?p) ("erlich" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
                                  ("vague" . ?v) ("lookup" . ?l)
                                  ("CODING" . ?c)
-                                 ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("goal" . ?g) ("LIFEGOAL" . ?G)))
+                                 ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("goal" . ?g) ("lifegoal" . ?G)))
 
 (add-to-list 'org-tags-exclude-from-inheritance "IGNORE")
 #+END_SRC
