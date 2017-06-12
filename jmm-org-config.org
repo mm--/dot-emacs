@@ -1612,4 +1612,29 @@ to look at them anyway.
   :config
   (org-edna-load))
 #+END_SRC
+** Use links instead of bare UUIDs
 
+   One of the great features of Org Edna compared to org-depend is the
+   ability to use global dependencies. This means you can depend on
+   headlines in different files. One way to depend on external
+   headlines is to use the "~ids~" keyword with a UUID. The problem is
+   that UUIDs don't give you an idea of what you're depending on (or
+   triggering).
+
+   This function gives you the finder ~link-ids~, which works like
+   ~ids~ but instead takes quoted org mode links to headlines (using
+   the ~id:~ form). This lets you quickly add dependencies with
+   ~org-store-link~ / ~org-insert-link~, and allows you to see
+   dependencies' headlines.
+
+#+BEGIN_SRC emacs-lisp
+(defun org-edna-finder/link-ids (&rest ids)
+  "Find a list of headlines with given IDs.
+
+Unlike `org-edna-finder/ids', IDS here can be links of the form \"[[id:UUID][Headline]]\" (in quotes).
+This allows for easier readability of targets."
+  (mapcar (lambda (id) (save-window-excursion
+			 (org-open-link-from-string id)
+			 (point-marker)))
+	  ids))
+#+END_SRC
