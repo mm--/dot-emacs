@@ -36,7 +36,7 @@ loaded ~org-plus-contrib~
   (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
   (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
   (require 'org-screenshot)
-  (require 'org-depend)
+  ;; (require 'org-depend) 		;Replace with org-edna
   (require 'org-expiry)
   (require 'org-inlinetask)
   (require 'org-collector)
@@ -1595,5 +1595,21 @@ to look at them anyway.
       res)))
 
 (advice-add 'bibtex-completion-get-value :around #'jmm/helm-bibtex-replace-zotfile-with-relative-path)
+#+END_SRC
+* Org Edna
+
+  [[http://www.nongnu.org/org-edna-el/][Org Edna]] looks like a cool package for managing dependencies and
+  actions in org-mode. It basically builds off of [[http://orgmode.org/worg/org-contrib/org-depend.html][org-depend.el]], which
+  was made as a proof-of-concept for dependencies. Org Edna adds more
+  sophisticated ways of finding dependencies and triggering actions,
+  but one of the coolest things is that it's extensible. You can add
+  your own functions for dependencies and actions.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-edna
+  :after org
+  :ensure t
+  :config
+  (org-edna-load))
 #+END_SRC
 
