@@ -1638,3 +1638,66 @@ This allows for easier readability of targets."
 			 (point-marker)))
 	  ids))
 #+END_SRC
+** A hydra for setting some common triggers
+
+   It's a bit of a pain to set Org Edna triggers with
+   ~org-set-property~. I have a few common triggers I use that I'd
+   like to be able to set quickly. They are:
+   - Trigger the last stored link
+   - Set the next sibling to "NEXT"
+   - Mark the parent as "DONE"
+
+
+   Here I make a function for setting the ~TRIGGER~ property and
+   moving the point to it, so we can easily change the trigger after
+   setting it. Then, I make a hydra for setting some of the triggers I
+   mentioned earlier
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-edna-set-trigger-and-point (triggervalue)
+  "Set the TRIGGER property to TRIGGERVALUE. Move the point to
+the newly set value. Open the PROPERTIES drawer."
+  (let ((property "TRIGGER"))
+    (org-entry-put (point) property triggervalue)
+    (org-back-to-heading t)
+    (let* ((beg (point))
+	   (range (org-get-property-block beg 'force))
+	   (end (cdr range))
+	   (case-fold-search t))
+      (goto-char (1- (car range)))	;Need to go one character back to get property-drawer element
+      (let ((element (org-element-at-point)))
+	(when (eq (org-element-type element) 'property-drawer)
+	  (org-flag-drawer nil element)))
+      (goto-char (car range))
+      (re-search-forward (org-re-property property nil t) end t))))
+
+(defun jmm/org-edna-chain-next ()
+  "Set TRIGGER to chain next"
+  (interactive)
+  (jmm/org-edna-set-trigger-and-point "next-sibling todo!(NEXT) chain!(\"TRIGGER\")"))
+
+(defun jmm/org-pop-stored-link ()
+  "Get the string for the previously stored link, then remove it from `org-stored-links'"
+  (let* ((firstlink (car org-stored-links))
+       (link (car firstlink))
+       (desc (cadr firstlink)))
+    (setq org-stored-links (delq (assoc link org-stored-links)
+				   org-stored-links))
+    (org-make-link-string link desc)))
+
+(defun jmm/org-edna-link (&optional rest)
+  "Set TRIGGER to chain next. With option"
+  (interactive)
+  (jmm/org-edna-set-trigger-and-point
+   (format "link-ids(\"%s%s\")" (jmm/org-pop-stored-link) (if rest (concat " " rest) ""))))
+
+(defhydra jmm/org-edna-hydra (:color blue)
+  "Org Edna"
+  ("l" jmm/org-edna-link "Link")
+  ("L" (jmm/org-edna-link "todo!(NEXT)") "Link NEXT")
+  ("n" (jmm/org-edna-set-trigger-and-point "next-sibling todo!(NEXT)") "Next sibling NEXT")
+  ("N" (jmm/org-edna-set-trigger-and-point "next-sibling todo!(NEXT) chain!(\"TRIGGER\")") "Chain next-sibling NEXT")
+  ("p" (jmm/org-edna-set-trigger-and-point "parent todo!(DONE)") "Parent DONE")
+  ("q" nil "cancel"))
+
+(bind-key "<f9> d" 'jmm/org-edna-hydra/body)
+#+END_SRC
