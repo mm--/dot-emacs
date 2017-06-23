@@ -1688,7 +1688,7 @@ the newly set value. Open the PROPERTIES drawer."
   "Set TRIGGER to chain next. With option"
   (interactive)
   (jmm/org-edna-set-trigger-and-point
-   (format "link-ids(\"%s%s\")" (jmm/org-pop-stored-link) (if rest (concat " " rest) ""))))
+   (format "link-ids(\"%s\")%s" (jmm/org-pop-stored-link) (if rest (concat " " rest) ""))))
 
 (defhydra jmm/org-edna-hydra (:color blue)
   "Org Edna"
