@@ -819,6 +819,67 @@ These functions clock into a task if it exists and creates it using
 
 (bind-key "<S-f11>" 'jmm/insert-org-current-clock-link)
 #+END_SRC
+* Navigating
+** Jump to an org project with helm
+
+   I like using ~helm-org-rifle~ for a lot of jumping stuff. But
+   sometimes I want to jump to something that I know is a project, and
+   I don't want to see a bunch of extra headlines. These functions
+   show org projects in helm and let me (relatively) quickly jump to
+   them.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/skip-non-projects ()
+  "Same as `bh/skip-non-projects', but doesn't skip stuck projects"
+  (if (or (save-excursion (bh/skip-non-stuck-projects))
+	  (save-excursion (bh/skip-stuck-projects)))
+      (save-restriction
+        (widen)
+        (let ((subtree-end (save-excursion (org-end-of-subtree t))))
+          (cond
+           ((bh/is-project-p)
+            nil)
+           ((and (bh/is-project-subtree-p) (not (bh/is-task-p)))
+            nil)
+           (t
+            subtree-end))))
+    (save-excursion (org-end-of-subtree t))))
+
+(defun jmm/org-helm-project-candidates ()
+    (interactive)
+    (org-map-entries
+     (lambda ()
+       (cons (format "%s: %s"
+		     (s-left 13 (s-pad-left 13 " " (buffer-name)))
+		     (buffer-substring (line-beginning-position) (line-end-position)))
+	     (point-marker)))
+     "/TODO"
+     'agenda
+     'jmm/skip-non-projects))
+
+(defun jmm/org-jump-to-marker (place)
+  (switch-to-buffer (marker-buffer place))
+  (goto-char place)
+  (org-show-context))
+
+(setq jmm/helm-jump-org-project
+    '((name . "Jump to Org project")
+      (candidates . jmm/org-helm-project-candidates)
+      (case-fold-search . t)
+      (filtered-candidate-transformer
+       helm-adaptive-sort)
+      (action . (("Jump to"
+                  . jmm/org-jump-to-marker)))))
+
+(defun jmm/helm-org-jump-project ()
+  "Use helm to clock into a task"
+  (interactive)
+  (helm-other-buffer 'jmm/helm-jump-org-project
+		     "*Org Jump*"))
+
+(bind-key "<f9> J" 'jmm/helm-org-jump-project)
+#+END_SRC
+
 * Refiling to other places
    This is so we're able to refile to other files
 #+begin_src emacs-lisp
