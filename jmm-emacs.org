@@ -2166,3 +2166,22 @@ It also provides functions for swapping and moving windows, which is super helpf
  #+begin_src emacs-lisp
    (setq processing-location "~/Downloads/processing-2.1.2/processing-java")
  #+end_src
+** Dumb jump
+
+   I tried using [[https://github.com/jacktasia/dumb-jump][dumb-jump]] a bit, but didn't like its default keybindings.
+
+   [[https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/][Mike Zamansky]] has a post with some good bindings for it.
+
+#+BEGIN_SRC emacs-lisp
+(use-package dumb-jump
+  :ensure
+  :bind (("M-g o" . dumb-jump-go-other-window)
+	 ("M-g j" . dumb-jump-go)
+	 ("M-'" . dumb-jump-quick-look)
+	 ("M-g a" . dumb-jump-back)
+	 ("M-g x" . dumb-jump-go-prefer-external)
+	 ("M-g z" . dumb-jump-go-prefer-external-other-window))
+  :config
+  (setq dumb-jump-selector 'helm))
+#+END_SRC
+
