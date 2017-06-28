@@ -1286,23 +1286,6 @@ Make an easy way to find files in open dired buffers
 	   ("C-x M-g" . magit-dispatch-popup)))
 #+END_SRC
 
-* Processing
-  Define the location of processing.
-  Will be different for you.
-#+begin_src emacs-lisp
-  (setq processing-location "~/Downloads/processing-2.1.2/processing-java")
-#+end_src
-* Maxima
-  Here's a setup for Maxima, from EmacsWiki.
-#+BEGIN_SRC emacs-lisp
-  (add-to-list 'load-path "/usr/share/emacs/site-lisp/maxima/")
-  (autoload 'maxima-mode "maxima" "Maxima mode" t)
-  (autoload 'imaxima "imaxima" "Frontend for maxima with Image support" t)
-  (autoload 'maxima "maxima" "Maxima interaction" t)
-  (autoload 'imath-mode "imath" "Imath mode for math formula input" t)
-  (setq imaxima-use-maxima-mode-flag t)
-  (add-to-list 'auto-mode-alist '("\\.ma[cx]" . maxima-mode))
-#+END_SRC
 * Flycheck
   [[http://www.flycheck.org/en/latest/][Flycheck]] is a pretty good syntax checker for Emacs. Right now, I
   mostly use it to lint JavaScript files. I've also used it a couple
@@ -2163,3 +2146,23 @@ It also provides functions for swapping and moving windows, which is super helpf
   :config
   (global-emojify-mode 1))
 #+END_SRC
+** Maxima
+
+   I don't really use Maxima right now, but at one point I was trying to learn it
+
+   Here's a setup for Maxima, from EmacsWiki.
+ #+BEGIN_SRC emacs-lisp
+   (add-to-list 'load-path "/usr/share/emacs/site-lisp/maxima/")
+   (autoload 'maxima-mode "maxima" "Maxima mode" t)
+   (autoload 'imaxima "imaxima" "Frontend for maxima with Image support" t)
+   (autoload 'maxima "maxima" "Maxima interaction" t)
+   (autoload 'imath-mode "imath" "Imath mode for math formula input" t)
+   (setq imaxima-use-maxima-mode-flag t)
+   (add-to-list 'auto-mode-alist '("\\.ma[cx]" . maxima-mode))
+ #+END_SRC
+** Processing
+   Define the location of processing.
+   Will be different for you.
+ #+begin_src emacs-lisp
+   (setq processing-location "~/Downloads/processing-2.1.2/processing-java")
+ #+end_src
