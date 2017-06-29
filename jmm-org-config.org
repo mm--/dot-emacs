@@ -1762,3 +1762,44 @@ the newly set value. Open the PROPERTIES drawer."
 
 (bind-key "<f9> d" 'jmm/org-edna-hydra/body)
 #+END_SRC
+* Other useful functions
+** Org agenda current subtree or region
+
+alphapapa [[https://disqus.com/home/discussion/mollermara/fast_refiling_in_org_mode_with_hydras/#comment-3297304571][has a good function]] for creating an agenda for just the
+current subtree or region
+
+#+BEGIN_SRC emacs-lisp
+(defun ap/org-agenda-current-subtree-or-region (prefix)
+  "Display an agenda view for the current subtree or region.
+With prefix, display only TODO-keyword items."
+  ;; BUG: This doesn't work properly in indirect or narrowed (both?)
+  ;; buffers: it acts upon the whole buffer instead. It works in
+  ;; direct buffers.
+  (interactive "p")
+  (let (header)
+    (if (use-region-p)
+	(progn
+	  (setq header "Region")
+	  (put 'org-agenda-files 'org-restrict (list (buffer-file-name (current-buffer))))
+	  (setq org-agenda-restrict (current-buffer))
+	  (move-marker org-agenda-restrict-begin (region-beginning))
+	  (move-marker org-agenda-restrict-end
+		       (save-excursion
+			 ;; If point is at beginning of line, include heading on that line by moving point forward 1 char
+			 (goto-char (1+ (region-end)))
+			 (org-end-of-subtree))))
+      (progn
+	;; No region; restrict to subtree
+	(setq header "Subtree")
+	(org-agenda-set-restriction-lock 'subtree)))
+
+    ;; Sorting doesn't seem to be working, but the header is
+    (let ((org-agenda-sorting-strategy '(priority-down timestamp-up))
+	  (org-agenda-sticky nil)		;Force regeneration
+	  (org-agenda-overriding-header header))
+      (org-search-view (if (>= prefix 4) t nil) "*"))
+    (org-agenda-remove-restriction-lock t)
+    (message nil)))
+
+(bind-key "<f9> o r" 'ap/org-agenda-current-subtree-or-region)
+#+END_SRC
