@@ -1803,3 +1803,34 @@ With prefix, display only TODO-keyword items."
 
 (bind-key "<f9> o r" 'ap/org-agenda-current-subtree-or-region)
 #+END_SRC
+* Links
+** PDFView links
+
+   This adds ways to store and jump to links for PDF files viewed with
+   [[https://github.com/politza/pdf-tools][PDF tools]].
+
+#+BEGIN_SRC emacs-lisp
+(org-link-set-parameters "pdfview"
+			 :follow #'jmm/org-pdfview-follow-link
+			 :store #'jmm/org-pdfview-store-link)
+
+(defun jmm/org-pdfview-store-link ()
+  "Store a link to a pdfview page"
+  (when (eq major-mode 'pdf-view-mode)
+    (let* ((page (pdf-view-current-page))
+	   (file (bookmark-buffer-file-name))
+	   desc link)
+      (org-store-link-props :type "pdfview" :page page :file file)
+      (setq desc (format "%s page %s" (s-chop-suffix ".pdf" (buffer-name)) page))
+      (setq link (format "pdfview:%s::%s" file page))
+      (org-add-link-props :link link :description desc)
+      link)))
+
+(defun jmm/org-pdfview-follow-link (link)
+  ""
+  (-let [(file page) (s-split "::" link)]
+    (find-file-other-window file)
+    (unless (derived-mode-p 'pdf-view-mode)
+      (pdf-view-mode))
+    (pdf-view-goto-page (string-to-number page))))
+#+END_SRC
