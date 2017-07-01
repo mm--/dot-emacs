@@ -4,13 +4,6 @@
 The whole org-babel setup is shamelessly stolen from Sacha Chua.
 
 My org-mode configuration is [[./jmm-org-config.org][here]].
-* Personal information
-  Here I set up my name and email, which is used for things like Gnus.
-#+begin_src emacs-lisp
-  (setq user-full-name "Joshua Moller-Mara"
-        user-mail-address "jmm@cns.nyu.edu")
-#+end_src
-
 * Emacs initialization and package management
   Here I set up where to find my Elisp files, and the repositories for
   packages.
@@ -28,37 +21,39 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   Install packages if they aren't already.
 
 #+BEGIN_SRC emacs-lisp
-  (package-initialize)
-  (when (not package-archive-contents)
-    (package-refresh-contents))
-  (defvar my-packages '(ess
-                        magit
-                        helm
-                        auctex
-                        zenburn-theme
-                        multiple-cursors
-                        phi-search
-                        expand-region
-                        async
-                        auto-complete
-                        projectile
-                        ledger-mode
-                        helm-projectile
-                        helm-swoop
-                        js2-mode
-                        flycheck
-                        use-package
-                        ))
+(package-initialize)
+(when (not package-archive-contents)
+  (package-refresh-contents))
+(defvar my-packages '(ess
+                      magit
+                      helm
+                      auctex
+                      zenburn-theme
+                      multiple-cursors
+                      phi-search
+                      expand-region
+                      async
+                      auto-complete
+                      projectile
+                      ledger-mode
+                      f
+		      dash
+                      helm-projectile
+                      helm-swoop
+                      js2-mode
+                      flycheck
+                      use-package
+                      ))
 
-  (dolist (p my-packages)
-    (when (not(package-installed-p p))
-      (package-install p)))
-  (setq use-package-verbose t)
-  (require 'use-package)
-  (use-package auto-compile
-    :ensure t
-    :config (auto-compile-on-load-mode))
-  (setq load-prefer-newer t)
+(dolist (p my-packages)
+  (when (not (package-installed-p p))
+    (package-install p)))
+(setq use-package-verbose t)
+(require 'use-package)
+(use-package auto-compile
+  :ensure t
+  :config (auto-compile-on-load-mode))
+(setq load-prefer-newer t)
 #+END_SRC
 
 
@@ -158,6 +153,29 @@ Make scripts executable
 #+begin_src emacs-lisp
 (windmove-default-keybindings 'control)
 #+end_src
+** Load personal files
+
+   Load some elisp files that aren't tracked in git. Usually this is
+   scratchwork that I haven't completed, but it can also be personal
+   configuration options like setting ~user-full-name~.
+
+#+BEGIN_SRC emacs-lisp
+(require 'f)
+(defun jmm/org-maybe-tangle-el (file)
+  "Tangle an org file to an .el file only if org file is newer."
+  (let ((export-file (concat (f-no-ext file) ".el")))
+    (when (or (not (file-exists-p export-file))
+	      (file-newer-than-file-p file export-file))
+      (org-babel-tangle-file file export-file))))
+
+;; This gets called at the end of init.el
+(defun jmm/load-personal-files ()
+  (let ((personal (concat user-emacs-directory "personal")))
+    (when (f-directory-p personal)
+      ;; Ignore files starting with things like ".#"
+      (mapc 'jmm/org-maybe-tangle-el (directory-files personal t "^[a-zA-Z0-9].*.*org$"))
+      (mapc 'load (directory-files personal t "^[a-zA-Z0-9].*.*el$")))))
+#+END_SRC
 
 * Theme/Appearance
 #+begin_src emacs-lisp

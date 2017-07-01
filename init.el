@@ -12,3 +12,5 @@
 ;; (org-babel-tangle-file "~/.emacs.d/jmm-emacs.org" "~/.emacs.d/jmm-emacs.el")
 ;; (byte-compile-file "~/.emacs.d/jmm-emacs.el")
 ;; (load-file "~/.emacs.d/jmm-emacs.elc")
+
+(jmm/load-personal-files)
