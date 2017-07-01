@@ -276,7 +276,7 @@ An agenda which shows which papers I should read.
  '("j" "Journal articles"
    ((tags-todo "+paper"
 	      ((org-agenda-overriding-header "Scheduled articles")
-	       (org-agenda-skip-function '(org-agenda-skip-entry-if 'notscheduled 'todo 'done))
+	       (org-agenda-skip-function '(lambda () (or (org-agenda-skip-entry-if 'todo 'done) (org-agenda-skip-entry-if 'notscheduled))))
 	       (org-agenda-prefix-format " %i %-5:c %-17(jmm/org-get-raw-scheduled) ")
 	       (org-agenda-sorting-strategy '(scheduled-up))))
     (tags-todo "+paper"
