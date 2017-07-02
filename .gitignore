@@ -11,3 +11,16 @@ url/*
 /newsrc.eld
 /secrets.el
 /personal/
+/abbrev_defs
+/elisp/
+/emms/
+/eshell/
+/games/
+/jmm-org-config.el
+*.html
+*.css
+*.data
+/org-gcal/
+org-recent-headings
+/request/
+/emojis/

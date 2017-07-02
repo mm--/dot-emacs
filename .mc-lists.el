@@ -16,6 +16,7 @@
 	dabbrev-expand
 	delete-horizontal-space
 	delete-indentation
+	dired-flag-file-deletion
 	dired-maybe-insert-subdir
 	dired-next-line
 	dired-previous-line
@@ -33,10 +34,13 @@
 	indent-for-tab-command
 	indent-region
 	insert-register
+	jmm/org-add-tag
+	jmm/org-edna-hydra/body
 	josh/org-convert-added-or-add-created
 	josh/org-toggle-marked-tag
 	kill-region
 	kill-sexp
+	ledger-magic-tab
 	ledger-post-align-xact
 	markdown-exdent-or-delete
 	matlab-electric-comment
@@ -50,16 +54,21 @@
 	org-end-of-line
 	org-force-self-insert
 	org-kill-line
+	org-metaleft
 	org-metaright
 	org-open-line
 	org-previous-visible-heading
 	org-self-insert-command
 	org-set-tags-command
+	org-shiftdown
+	org-shiftmetaleft
+	org-shiftup
 	org-time-stamp-inactive
 	org-transpose-words
 	org-yank
 	orgtbl-hijacker-command-109
 	orgtbl-self-insert-command
+	paredit-forward-kill-word
 	paredit-join-sexps
 	paredit-open-round
 	paredit-wrap-round
@@ -78,6 +87,7 @@
 	wdired-toggle-bit
 	wdired-upcase-word
 	yaml-electric-backspace
+	yaml-electric-dash-and-dot
 	))
 
 (setq mc/cmds-to-run-once
@@ -94,17 +104,24 @@
 	ajmc/keyboard-reset
 	avy-goto-char-2
 	describe-key
+	dumb-jump-back
 	end-of-buffer
 	eval-expression
 	find-file
 	handle-select-window
 	handle-switch-frame
 	helm-M-x
+	helm-buffers-list
 	helm-swoop
 	isearch-forward-regexp
 	js2-mode-show-node
 	magit-status
 	menu-bar-open
+	orgtbl-hijacker-command-100
+	orgtbl-hijacker-command-102
+	orgtbl-hijacker-command-25
+	orgtbl-hijacker-command-5
+	revert-buffer
 	undefined
 	wdired-exit
 	wdired-finish-edit
