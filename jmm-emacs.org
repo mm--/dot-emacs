@@ -196,12 +196,12 @@ Set my font
 * Keybindings
 
 #+begin_src emacs-lisp
-  ;; (global-set-key (kbd "C-x g") 'gnus)
-  ;; (global-set-key (kbd "C-x C-a") 'artist-mode)
-  (global-set-key (kbd "C-x C-b") 'ibuffer)
-  (global-set-key (kbd "<f9> m") 'magit-status)
-  (define-key (current-global-map) [remap imenu] 'helm-imenu)
-  ;; Replaced with helm
+;; (bind-key "C-x g" 'gnus)
+;; (bind-key "C-x C-a" 'artist-mode)
+(bind-key "C-x C-b" 'ibuffer)
+(bind-key "<f9> m" 'magit-status)
+(define-key (current-global-map) [remap imenu] 'helm-imenu)
+;; Replaced with helm
 #+end_src
 
 * Autosaves and backups
@@ -239,8 +239,8 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Autocompletion, Hippie expand
 
 #+begin_src emacs-lisp
-(global-set-key (kbd "M-<return>") 'complete-tag) ;;bind complete-tag.
-(global-set-key (kbd "M-?") 'hippie-expand)
+(bind-key "M-<return>" 'complete-tag) ;;bind complete-tag.
+(bind-key "M-?" 'hippie-expand)
 #+end_src
 
 ** Hippie Expand stuff:
@@ -298,7 +298,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 #+end_src
 
 #+begin_src emacs-lisp
-(global-set-key (kbd "<f9> <f9>") 'recompile)
+(bind-key "<f9> <f9>" 'recompile)
 #+end_src
 
 #+begin_src emacs-lisp
@@ -762,7 +762,7 @@ of erc-modified-channels-alist"
    ;; (other-window 1)
    (shell (concat (buffer-name) " shell")))
 
-(global-set-key (kbd "C-x 4 s") 'run-half-shell)
+(bind-key "C-x 4 s" 'run-half-shell)
 #+end_src
 * Encryption
 #+begin_src emacs-lisp
@@ -834,7 +834,7 @@ Sometimes IMAP freezes, so I like to be able to kill it.
             (process-send-string process "\n")
             (process-send-eof process)))))))
 
-;; (global-set-key (kbd "<f9> e") 'josh/espeak-article)
+;; (bind-key "<f9> e" 'josh/espeak-article)
 #+end_src
 
 ** Go to RSS link in browser
@@ -1040,7 +1040,7 @@ Because dired-jump is pretty useful
             (buffer-list))
       (message (format "Killed %d buffer%s" i (if (eq i 1) "" "s")))))
 
-  (global-set-key (kbd "<f9> t") 'josh/kill-tramp-buffers)
+  (bind-key "<f9> t" 'josh/kill-tramp-buffers)
 #+END_SRC
 * Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
@@ -1168,12 +1168,13 @@ For example, if mail to your school account is user 0,
 * Helm
 #+begin_src emacs-lisp
 (require 'helm-config)
-(global-set-key (kbd "C-c h") 'helm-mini)
+(bind-key "C-c h" 'helm-mini)
 (use-package helm-mode
   :bind (("M-x" . helm-M-x)
 	 ("C-x b" . helm-buffers-list)
 	 ("C-x C-f" . helm-find-files)
 	 ("C-x f" . helm-for-files)
+	 ("C-x C-i" . helm-semantic-or-imenu)
 	 ("M-x" . helm-M-x)
 	 ("M-y" . helm-show-kill-ring)
 	 ("M-s o" . helm-occur)
@@ -1374,7 +1375,7 @@ specifies the list of buffers to kill, asking for approval for each one."
 	   (switch-to-buffer name)
 	   (kill-buffer-ask buffer)))
     (setq list (cdr list))))
-(global-set-key (kbd "C-x M-k") 'kill-some-buffers2)
+(bind-key "C-x M-k" 'kill-some-buffers2)
 #+end_src
 
 
@@ -1442,7 +1443,7 @@ specifies the list of buffers to kill, asking for approval for each one."
                   (host (elt (tramp-dissect-file-name path) 2)))
               (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
           (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd \"%s\"; zsh" path)))))
-  (global-set-key (kbd "<f9> x") 'start-xterm)
+  (bind-key "<f9> x" 'start-xterm)
 #+end_src
 
 ** Copy the path
@@ -1451,7 +1452,7 @@ specifies the list of buffers to kill, asking for approval for each one."
   "Copy the path the of the of the current buffer"
   (interactive)
   (kill-new (message "%s" (buffer-file-name))))
-(global-set-key (kbd "<f9> c") 'file-name-copy-path)
+(bind-key "<f9> c" 'file-name-copy-path)
 #+end_src
 
 ** Word wrapping
@@ -1472,7 +1473,7 @@ specifies the list of buffers to kill, asking for approval for each one."
    (rename-uniquely)
    (other-window -1))
 
-(global-set-key (kbd "C-x 4 t") 'run-half-term)
+(bind-key "C-x 4 t" 'run-half-term)
 #+end_src
 ** Search Gregg Shorthand Dictionary
 #+begin_src emacs-lisp
@@ -1496,7 +1497,7 @@ specifies the list of buffers to kill, asking for approval for each one."
 						  12)))
 		     "/home/jm3/Downloads/gregg/gsd.pdf")))
 
-(global-set-key (kbd "<f9> g") 'gsd)
+(bind-key "<f9> g" 'gsd)
 #+end_src
 ** Window Dedication
 #+begin_src emacs-lisp
@@ -1510,7 +1511,7 @@ specifies the list of buffers to kill, asking for approval for each one."
             (if dedicated "no longer " "")
             (buffer-name))))
 
-(global-set-key [pause] 'toggle-current-window-dedication)
+(bind-key [pause] 'toggle-current-window-dedication)
 #+end_src
 ** Chinese Cangjie 5 input
    I created a quail package for Cangjie version 5 using libcangjie's
@@ -1527,7 +1528,7 @@ specifies the list of buffers to kill, asking for approval for each one."
 
    A quick key to help look up Cangjie codes for characters I don't know.
 #+begin_src emacs-lisp
-  (global-set-key (kbd "<f9> s") 'quail-show-key)
+  (bind-key "<f9> s" 'quail-show-key)
 #+end_src
 ** Auto fill line
    Sometimes I want to wrap a line, but pressing =M-q= will treat
@@ -1543,7 +1544,7 @@ specifies the list of buffers to kill, asking for approval for each one."
       (end-of-line)
       (funcall normal-auto-fill-function)))
 
-  (global-set-key (kbd "M-Q") 'josh/fill-line)
+  (bind-key "M-Q" 'josh/fill-line)
 #+end_src
 ** Switch to scratch buffer
    A quick hotkey for switching to the scratch buffer.
@@ -1553,7 +1554,7 @@ specifies the list of buffers to kill, asking for approval for each one."
     (interactive)
     (switch-to-buffer "*scratch*"))
   
-  (global-set-key (kbd "C-h C-s") 'switch-to-scratch)
+  (bind-key "C-h C-s" 'switch-to-scratch)
 #+end_src
 ** Comment a copy
    Sometimes when I'm debugging something, I'll want to make
@@ -1574,7 +1575,7 @@ specifies the list of buffers to kill, asking for approval for each one."
             (insert selection)
             (comment-region (mark) (point)))))
 
-  (global-set-key (kbd "C-c C") 'jmm/comment-a-copy)
+  (bind-key "C-c C" 'jmm/comment-a-copy)
 #+END_SRC
 ** Find the latest file in a directory
    Decent function for finding the most recent file in a
@@ -1613,12 +1614,12 @@ specifies the list of buffers to kill, asking for approval for each one."
 ** Multiple Cursors
 #+begin_src emacs-lisp
   (require 'multiple-cursors)
-  (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
-  (global-set-key (kbd "C->") 'mc/mark-next-like-this)
-  (global-set-key (kbd "C-<") 'mc/mark-previous-like-this)
-  (global-set-key (kbd "C-M-<") 'mc/mark-all-like-this-dwim)
-  (global-unset-key (kbd "C-<down-mouse-1>"))
-  (global-set-key (kbd "C-<mouse-1>") 'mc/add-cursor-on-click)
+  (bind-key "C-S-c C-S-c" 'mc/edit-lines)
+  (bind-key "C->" 'mc/mark-next-like-this)
+  (bind-key "C-<" 'mc/mark-previous-like-this)
+  (bind-key "C-M-<" 'mc/mark-all-like-this-dwim)
+  (unbind-key "C-<down-mouse-1>")
+  (bind-key "C-<mouse-1>" 'mc/add-cursor-on-click)
 #+end_src
 *** Inserting letters for each cursor
     Basically exactly like ~mc/insert-numbers~ but for letters.
@@ -1758,7 +1759,7 @@ specifies the list of buffers to kill, asking for approval for each one."
                (define-key css-mode-map "\C-c\C-r" 'slime-js-embed-css)))
 #+end_src
 #+begin_src emacs-lisp
-  (global-set-key [f5] 'slime-js-reload)
+  (bind-key [f5] 'slime-js-reload)
   ;; (add-hook 'js-mode-hook
   ;;           (lambda ()
   ;;             (js2-minor-mode 1)

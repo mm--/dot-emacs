@@ -343,10 +343,12 @@ Same thing as above, but also include the next three days agenda.
 	   (org-sort-agenda-notime-is-late nil)
 	   (org-agenda-sorting-strategy '(priority-down user-defined-down))
            (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
-(global-set-key (kbd "<f12>")
-                (lambda ()
-                  (interactive)
-                  (org-agenda nil " ")))
+(defun jmm/org-default-agenda ()
+  "Display my default org agenda"
+  (interactive)
+  (org-agenda nil " "))
+
+(bind-key "<f12>" 'jmm/org-default-agenda)
 #+END_SRC
 
 Other agendas. Like movies to see, things I need to buy, and so on.
@@ -731,7 +733,7 @@ clocking into frequent tasks. (Mostly helps me track bad habits.)
     (helm-other-buffer 'josh/helm-jump-org
                        "*Org Jump*"))
 
-  (global-set-key (kbd "<f9> j") 'josh/helm-org-jump)
+  (bind-key "<f9> j" 'josh/helm-org-jump)
 #+end_src
 
 These functions clock into a task if it exists and creates it using
@@ -757,7 +759,7 @@ These functions clock into a task if it exists and creates it using
     (interactive)
     (josh/org-clock-in2 (helm-comp-read "Clock in to: " (josh/org-helm-candidates))))
 
-  (global-set-key (kbd "<f9> z") 'josh/helm-org-clock-in2)
+  (bind-key "<f9> z" 'josh/helm-org-clock-in2)
 #+END_SRC
 
 ** Setting a timer on the current task
@@ -779,7 +781,7 @@ These functions clock into a task if it exists and creates it using
           (beginning-of-line 1)
           (org-timer-set-timer opt)))))
 
-  (global-set-key (kbd "<f9> p") 'josh/org-current-task-timer)
+  (bind-key "<f9> p" 'josh/org-current-task-timer)
 #+end_src
 ** Quick key for clocking into current task
 
@@ -1373,9 +1375,9 @@ These functions clock into a task if it exists and creates it using
         :buffer "*helm projectile*"
         :prompt "Switch to Org buffer:"))
 
-;; (global-set-key (kbd "C-c o") 'helm-org-buffer)
+;; (bind-key "C-c o" 'helm-org-buffer)
 ;; This is also a good key just for swooping
-(global-set-key (kbd "C-c O") 'helm-multi-swoop-org)
+(bind-key "C-c O" 'helm-multi-swoop-org)
 #+END_SRC
 * Show how old an entry is
    I usually have "Added: [inactive timestamp]" added to most of my
