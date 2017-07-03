@@ -1830,9 +1830,12 @@ With prefix, display only TODO-keyword items."
 
 (defun jmm/org-pdfview-follow-link (link)
   ""
-  (-let [(file page) (s-split "::" link)]
+  (-let* (((file rawloc) (s-split "::" link))
+	  (loc (car (read-from-string rawloc))))
     (find-file-other-window file)
     (unless (derived-mode-p 'pdf-view-mode)
       (pdf-view-mode))
-    (pdf-view-goto-page (string-to-number page))))
+    (cond
+     ((numberp loc) (pdf-view-goto-page loc))
+     ((plist-get loc :annot) (pdf-annot-show-annotation (pdf-info-getannot (plist-get loc :annot)) t)))))
 #+END_SRC

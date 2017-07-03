@@ -2047,8 +2047,18 @@ function splits the window slightly and opens the notes file there.
 (defvar jmm/pdf-annot-type 'highlight)
 
 (defun jmm/pdf-add-annot (color)
-  (kill-new (mapconcat 'identity (pdf-view-active-region-text) "\n"))
-  (pdf-annot-add-markup-annotation (pdf-view-active-region t) jmm/pdf-annot-type color))
+  (let ((regiontext (mapconcat 'identity (pdf-view-active-region-text) "\n")))
+    (kill-new regiontext)
+    (let* ((annot-id (alist-get 'id
+				(pdf-annot-add-markup-annotation (pdf-view-active-region t) jmm/pdf-annot-type color)))
+	   (file (bookmark-buffer-file-name))
+	   (desc (replace-regexp-in-string "\n" " " regiontext))
+	   link)
+      (org-store-link-props :type "pdfview" :annot annot-id :file file)
+      (setq link (format "pdfview:%s::%s" file (list :annot annot-id)))
+      (org-add-link-props :link link :description desc)
+      (push (list link desc) org-stored-links)
+      link)))
 
 (defhydra jmm/pdf-annotate-color-hydra (:exit t)
   "Color"
