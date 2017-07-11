@@ -312,7 +312,7 @@ Same thing as above, but also include the next three days agenda.
    ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
                 (org-agenda-skip-scheduled-if-done t)
                 (org-agenda-span 2)))
-    (todo "NEXT"
+    (tags-todo "-CANCELLED-HOLD/!NEXT"
           ((org-agenda-overriding-header "Unscheduled next tasks")
            (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
 	   (org-agenda-cmp-user-defined 'jmm/org-agenda-sort-next-time)
@@ -321,12 +321,12 @@ Same thing as above, but also include the next three days agenda.
            (org-agenda-skip-function
             (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
                            (bh/skip-projects-and-habits-and-single-tasks))))))
-    (tags-todo "-CANCELLED+WAITING|HOLD/!"
+    (tags-todo "-CANCELLED+WAITING/!"
                ((org-agenda-overriding-header "Unscheduled waiting tasks")
                 (org-agenda-skip-function
                  (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))
                 (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
-    (tags-todo "-CANCELLED/!"
+    (tags-todo "-CANCELLED-HOLD/!"
                ((org-agenda-overriding-header "Stuck Projects")
                 (org-agenda-skip-function 'bh/skip-non-stuck-projects)
                 (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-max-clock-time) ")))
@@ -894,7 +894,7 @@ These functions clock into a task if it exists and creates it using
 #+begin_src emacs-lisp
   (setq org-todo-keywords
          (quote ((sequence "TODO(t)" "NEXT(n!)" "|" "DONE(d)")
-                 (sequence "WAITING(w@/!)" "HOLD(h@/!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
+                 (sequence "WAITING(w@/!)" "HOLD(h!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
 
   (setq org-todo-keyword-faces
         (quote (("TODO" :foreground "red" :weight bold)
