@@ -1001,13 +1001,55 @@ Because dired-jump is pretty useful
    for the right path to copy to.
 
 #+BEGIN_SRC emacs-lisp
-  (use-package dired-ranger
-    :ensure t
-    :bind (:map dired-mode-map
-		("[" . dired-ranger-copy)
-		("]" . dired-ranger-paste)
-		("}" . dired-ranger-move)
-		))
+(use-package dired-ranger
+  :ensure t
+  :bind (:map dired-mode-map
+	      ("[" . dired-ranger-copy)
+	      ("]")
+	      ("] c" . dired-ranger-paste)
+	      ("] h" . jmm/dired-ranger-hardlink)
+	      ("] s" . jmm/dired-ranger-symlink)
+	      ("] r" . jmm/dired-ranger-relsymlink)
+	      ("] m" . dired-ranger-move)
+	      ))
+#+END_SRC
+*** Add more actions for dired ranger
+
+    Sometimes I want to do things other than copy or move
+    files. Sometimes I'd like to symlink, relative symlink, or
+    hardlink files. These functions make that easier to do.
+
+#+BEGIN_SRC emacs-lisp
+(defmacro jmm/make-dired-ranger-action (newfuncname actionname functiontocall char)
+  "Make dired-ranger paste commands, but for other things like
+symlink, hardlink, relsymlink, etc."
+  `(defun ,newfuncname (arg)
+     ,(format "%s the items from copy ring to current directory.
+
+With raw prefix argument \\[universal-argument], do not remove
+the selection from the stack so it can be copied again.
+
+With numeric prefix argument, %s the n-th selection from the
+copy ring." (s-capitalize actionname) (s-downcase actionname))
+     (interactive "P")
+     (let* ((index (if (numberp arg) arg 0))
+	    (data (ring-ref dired-ranger-copy-ring index))
+	    (files (cdr data))
+	    (target-directory (dired-current-directory))
+	    (pasted-files 0))
+       (--each files (when (file-exists-p it)
+		       (,functiontocall it target-directory)
+		       (cl-incf pasted-files)))
+       (dired-ranger--revert-target ,char target-directory files)
+       (unless arg (ring-remove dired-ranger-copy-ring 0))
+       (message (format ,(format "%sed %%d/%%d item%%s from copy ring." (s-capitalize actionname))
+			pasted-files
+			(length files)
+			(if (> (length files) 1) "s" ""))))))
+
+(jmm/make-dired-ranger-action jmm/dired-ranger-hardlink "Hardlink" dired-hardlink ?H)
+(jmm/make-dired-ranger-action jmm/dired-ranger-symlink "Symlink" make-symbolic-link ?S)
+(jmm/make-dired-ranger-action jmm/dired-ranger-relsymlink "Relsymlink" dired-make-relative-symlink ?R)
 #+END_SRC
 
 * Tramp
