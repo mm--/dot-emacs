@@ -57,6 +57,27 @@ loaded ~org-plus-contrib~
   (setq org-agenda-sticky t)
   (setcar (nthcdr 2 org-agenda-time-grid) '(900 1200 1700))
 #+end_src
+** Don't open encrypted files
+
+   You can have encrypted files in your org-agenda. The only problem
+   is that every time you want to generate an agenda, you either need
+   to have the encrypted file open or you need to enter your
+   password. I'd rather only display encrypted org files in my agenda
+   if they're already open, otherwise I just skip them.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-agenda-skip-unopened-encrypted (orig-fun &rest args)
+  "Don't try to open encrypted org files that aren't already open."
+  (let ((res (apply orig-fun args)))
+    (-filter (lambda (file)
+	       (if (s-equals? (f-ext file) "gpg")
+		   (get-file-buffer file)
+		 t))
+	     res)))
+
+(advice-add 'org-agenda-files :around #'jmm/org-agenda-skip-unopened-encrypted)
+#+END_SRC
+
 * Default notes file?
    Note to self, figure out what the difference between this and agenda is.
 
