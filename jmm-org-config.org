@@ -1832,6 +1832,15 @@ With prefix, display only TODO-keyword items."
    This adds ways to store and jump to links for PDF files viewed with
    [[https://github.com/politza/pdf-tools][PDF tools]].
 
+   By default when using `C-c l` to store links, we'll just save the
+   file and page number. If the region is active in the PDF view,
+   we'll store that instead. If it's a text region, store the text as
+   a description. If it's a rectangle region, don't.
+
+   We can also store links to annotations (See [[./jmm-emacs.org][jmm-emacs.org]]), but
+   they're not as stable right now. Especially if you delete
+   annotations, it may affect other links.
+
 #+BEGIN_SRC emacs-lisp
 (org-link-set-parameters "pdfview"
 			 :follow #'jmm/org-pdfview-follow-link
@@ -1843,14 +1852,29 @@ With prefix, display only TODO-keyword items."
     (let* ((page (pdf-view-current-page))
 	   (file (bookmark-buffer-file-name))
 	   desc link)
-      (org-store-link-props :type "pdfview" :page page :file file)
-      (setq desc (format "%s page %s" (s-chop-suffix ".pdf" (buffer-name)) page))
-      (setq link (format "pdfview:%s::%s" file page))
+      (if (pdf-view-active-region-p)
+	  ;; Store the region
+	  (let ((region (pdf-view-active-region))
+		(regiontext (mapconcat 'identity (pdf-view-active-region-text) "\n"))
+		(isrect pdf-view--have-rectangle-region))
+	    (org-store-link-props :type "pdfview" :page page :region region :file file)
+	    (setq desc (if isrect
+			   (format "%s rectangle on page %s" (s-chop-suffix ".pdf" (buffer-name)) page)
+			 regiontext))
+	    (setq link (format "pdfview:%s::%s" file (if isrect
+							 (list :page page :region region :rect t)
+							 (list :page page :region region)))))
+
+	;; Store the page
+	  (progn
+	    (org-store-link-props :type "pdfview" :page page :file file)
+	    (setq desc (format "%s page %s" (s-chop-suffix ".pdf" (buffer-name)) page))
+	    (setq link (format "pdfview:%s::%s" file page))))
       (org-add-link-props :link link :description desc)
       link)))
 
 (defun jmm/org-pdfview-follow-link (link)
-  ""
+  "Follow a pdfview link."
   (-let* (((file rawloc) (s-split "::" link))
 	  (loc (car (read-from-string rawloc))))
     (find-file-other-window file)
@@ -1858,5 +1882,9 @@ With prefix, display only TODO-keyword items."
       (pdf-view-mode))
     (cond
      ((numberp loc) (pdf-view-goto-page loc))
+     ((plist-get loc :region) (progn (pdf-view-goto-page (plist-get loc :page))
+				     (setq pdf-view-active-region (plist-get loc :region))
+				     (pdf-view-display-region pdf-view-active-region (plist-get loc :rect))
+				     (pdf-util-scroll-to-edges (pdf-util-scale-relative-to-pixel (car pdf-view-active-region)))))
      ((plist-get loc :annot) (pdf-annot-show-annotation (pdf-info-getannot (plist-get loc :annot)) t)))))
 #+END_SRC
