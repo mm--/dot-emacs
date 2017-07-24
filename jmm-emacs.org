@@ -2041,20 +2041,31 @@ result into the current buffer."
   "Location of a shell script to run espeak. This script should
   take one argument, the initial words-per-minute (WPM) speed.")
 
+(defun jmm/pdf-view-unfill-text (&optional deactivate default)
+  "Take the PDF active region and unfill text, removing hyphens.
+
+With optional arg DEACTIVATE, deactivate region afterward. With
+argument DEFAULT, unfill this string if the region is not active."
+  (let ((pdf-text (prog1
+		      (if pdf-view-active-region
+			  (mapconcat 'identity
+				     (pdf-view-active-region-text)
+				     " ")
+			default)
+		    (when deactivate (pdf-view-deactivate-region)))))
+    (when pdf-text
+      (->> pdf-text
+	   (replace-regexp-in-string "-\n" "")
+	   (replace-regexp-in-string "\n" " ")))))
+
 (defun jmm/pdf-view-espeak-page (&optional arg)
   "Espeak current PDF page (or current selection) in PDF view.
    Optional ARG takes an WPM speed (i.e. \"4\" becomes 400 WPM)"
   (interactive "P")
   (let* ((wpm (number-to-string (if arg (* arg 100) josh/espeak-speed)))
-	 (pdf-text (mapconcat 'identity
-			      (prog2
-				  (unless pdf-view-active-region (pdf-view-mark-whole-page))
-				  (pdf-view-active-region-text)
-				(pdf-view-deactivate-region))
-			      "\n"))
-	 (fixed-pdf-text (--> (replace-regexp-in-string "-\n" "" pdf-text)
-			      (replace-regexp-in-string "\n" " " it)
-			      (replace-regexp-in-string "\\. \\([A-Z]\\)" ".\n\\1" it)))
+	 (pdf-text (jmm/pdf-view-unfill-text t (progn (unless pdf-view-active-region (pdf-view-mark-whole-page))
+						    (pdf-view-active-region-text))))
+	 (fixed-pdf-text (replace-regexp-in-string "\\. \\([A-Z]\\)" ".\n\\1" pdf-text))
 	 (process (start-process "espeak-process" " *espeak-pdf-view*" jmm/espeak-script wpm)))
     (process-send-string process (concat fixed-pdf-text "\n"))
     (process-send-eof process)))
@@ -2089,12 +2100,12 @@ function splits the window slightly and opens the notes file there.
 (defvar jmm/pdf-annot-type 'highlight)
 
 (defun jmm/pdf-add-annot (color)
-  (let ((regiontext (mapconcat 'identity (pdf-view-active-region-text) "\n")))
+  (let ((regiontext (jmm/pdf-view-unfill-text)))
     (kill-new regiontext)
     (let* ((annot-id (alist-get 'id
 				(pdf-annot-add-markup-annotation (pdf-view-active-region t) jmm/pdf-annot-type color)))
 	   (file (bookmark-buffer-file-name))
-	   (desc (replace-regexp-in-string "\n" " " regiontext))
+	   (desc regiontext)
 	   link)
       (org-store-link-props :type "pdfview" :annot annot-id :file file)
       (setq link (format "pdfview:%s::%s" file (list :annot annot-id)))
@@ -2168,16 +2179,7 @@ but more easily allows you to scale up images."
 This function automatically unfills and re-fills text, eliminating word-wrapping hyphens.
 With optional ARG, quote the string."
   (interactive "P")
-  (let* ((pdf-text (if pdf-view-active-region
-		       (mapconcat 'identity
-				  (prog1
-				      (pdf-view-active-region-text)
-				    (pdf-view-deactivate-region))
-				  " ")
-		     (car kill-ring)))
-	 (fixed-pdf-text (->> pdf-text
-			      (replace-regexp-in-string "-\n" "")
-			      (replace-regexp-in-string "\n" " "))))
+  (let* ((fixed-pdf-text (jmm/pdf-view-unfill-text t (car kill-ring))))
     ;; (save-selected-window
     (other-window 1)
     (when arg (insert "\""))

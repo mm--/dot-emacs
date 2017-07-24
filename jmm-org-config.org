@@ -1855,7 +1855,7 @@ With prefix, display only TODO-keyword items."
       (if (pdf-view-active-region-p)
 	  ;; Store the region
 	  (let ((region (pdf-view-active-region))
-		(regiontext (mapconcat 'identity (pdf-view-active-region-text) "\n"))
+		(regiontext (jmm/pdf-view-unfill-text))
 		(isrect pdf-view--have-rectangle-region))
 	    (org-store-link-props :type "pdfview" :page page :region region :file file)
 	    (setq desc (if isrect
