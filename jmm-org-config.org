@@ -1837,6 +1837,52 @@ With prefix, display only TODO-keyword items."
 
 (bind-key "<f9> o r" 'ap/org-agenda-current-subtree-or-region)
 #+END_SRC
+** Hide planning information
+
+   Most of my headings in org-mode have a ~PROPERTIES~ drawer. Many of
+   them also have ~LOGBOOK~ drawers and scheduling
+   information. Sometimes, when I want an overview of an org-mode
+   file, all these planning, properties, and logbook lines visually
+   clutter my screen. These functions are my first attempt at hiding
+   them when using global cycling.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-end-planning-stuff ()
+  "Return the point where planning, properties, and drawers end."
+  (save-excursion
+    (let (already-jumped-heading)
+      (while (let* ((element (org-element-at-point))
+		    (type (car element))
+		    (jumpto (case type
+			      (headline (unless already-jumped-heading
+					  (progn (setq already-jumped-heading t)
+						 (or (org-element-property :contents-begin element)
+						     (org-element-property :end element)))))
+			      (planning (org-element-property :end element))
+			      (property-drawer (org-element-property :end element))
+			      (drawer (org-element-property :end element))
+			      (t nil))))
+	       (when jumpto
+		 (goto-char jumpto)))
+	t)
+      (point))))
+
+(defun jmm/org-hide-planning-stuff ()
+  "When at a heading, hide planning info"
+  (when (org-at-heading-p)
+      (outline-flag-region (line-end-position) (- (jmm/org-end-planning-stuff) 1) t)))
+
+(defun jmm/org-cycle-hide-scheduled-properties-logbook (state)
+  "Re-hide all drawers after a visibility state change.
+STATE should be one of the symbols listed in the docstring of
+`org-cycle-hook'.  When non-nil, optional argument EXCEPTIONS is
+a list of strings specifying which drawers should not be hidden."
+  (when (and (derived-mode-p 'org-mode)
+	     (memq state '(all)))
+    (org-map-tree 'jmm/org-hide-planning-stuff)))
+
+(add-hook 'org-cycle-hook 'jmm/org-cycle-hide-scheduled-properties-logbook)
+#+END_SRC
 * Links
 ** PDFView links
 
