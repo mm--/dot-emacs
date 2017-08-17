@@ -31,6 +31,7 @@ loaded ~org-plus-contrib~
   (setq org-highest-priority ?A
 	org-lowest-priority ?F
 	org-default-priority ?D)
+  (setq org-agenda-dim-blocked-tasks nil)
   (unbind-key "C-'" org-mode-map)
   :config
   (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
