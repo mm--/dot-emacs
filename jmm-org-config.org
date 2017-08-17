@@ -1588,7 +1588,8 @@ These functions clock into a task if it exists and creates it using
 #+BEGIN_SRC emacs-lisp
 (defun jmm/org-capture-add-created-time ()
   "Add the CREATED property among when capturing a headline"
-  (when (eq major-mode 'org-mode)
+  (when (and (eq major-mode 'org-mode)
+	     (eq (org-capture-get :type) 'entry))
     (josh/org-convert-added-or-add-created)))
 
 (add-hook 'org-capture-mode-hook 'jmm/org-capture-add-created-time)
