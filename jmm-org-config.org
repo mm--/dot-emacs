@@ -77,6 +77,20 @@ loaded ~org-plus-contrib~
 	     res)))
 
 (advice-add 'org-agenda-files :around #'jmm/org-agenda-skip-unopened-encrypted)
+
+(defun jmm/org-id-skip-unopened-encrypted (orig-fun &rest args)
+  "Don't try to open encrypted org files that aren't already open when updating the org-id database."
+  (let ((org-id-files (-filter (lambda (file)
+				       (if (s-equals? (f-ext file) "gpg")
+					   (get-file-buffer file)
+					 t))
+			       org-id-files)))
+    (apply orig-fun args)))
+;; TODO: Maybe we should push the encrypted files back into the id
+;; database afterward, though. This currently just removes them from
+;; the db completely.
+
+(advice-add 'org-id-update-id-locations :around #'jmm/org-id-skip-unopened-encrypted)
 #+END_SRC
 
 * Default notes file?
