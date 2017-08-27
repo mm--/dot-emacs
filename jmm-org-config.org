@@ -669,7 +669,7 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
 ** For exporting latex
 http://blog.karssen.org/2013/08/22/using-bibtex-from-org-mode/
 #+begin_src emacs-lisp
-  (setq org-latex-pdf-process '("latexmk -pdf -bibtex %f"))
+  (setq org-latex-pdf-process '("latexmk -g -f -pdf -bibtex %f"))
 #+end_src
 ** Exporting calendar files
 
