@@ -185,13 +185,14 @@ Make scripts executable
 ** Font
 Set my font
 #+BEGIN_SRC emacs-lisp
-  (defun josh/set-my-font (myfont)
-    (when (and window-system (x-list-fonts myfont))
-      (set-frame-font myfont)
-      (add-to-list 'default-frame-alist
-                   (cons 'font myfont))))
+(defun josh/set-my-font (myfont)
+  (when (and window-system (x-list-fonts myfont))
+    (set-frame-font myfont)
+    (add-to-list 'default-frame-alist
+                 (cons 'font myfont))))
 
-  (josh/set-my-font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
+;; (josh/set-my-font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
+(josh/set-my-font "-PfEd-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
 #+END_SRC
 * Keybindings
 
@@ -1456,16 +1457,16 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+end_src
 
 #+BEGIN_SRC emacs-lisp
-  (defun journal-stuff ()
-    "A bunch of commands used when writing a daily journal."
-    (interactive)
-    (insert (replace-regexp-in-string "\.txt" "" (buffer-name))
-            "\n"
-            "(Written ")
-    (org-time-stamp '(16))
-    (insert ")\n\n")
-    (text-scale-set -2)
-    (txt-stuff))
+(defun journal-stuff ()
+  "A bunch of commands used when writing a daily journal."
+  (interactive)
+  (insert (replace-regexp-in-string "\.txt" "" (buffer-name))
+          "\n"
+          "(Written ")
+  (ignore-errors (org-time-stamp '(16)))
+  (insert ")\n\n")
+  (text-scale-set -2)
+  (txt-stuff))
 #+END_SRC
 
 ** Starting an Xterm in current directory
