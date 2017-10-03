@@ -1727,7 +1727,7 @@ specifies the list of buffers to kill, asking for approval for each one."
 ** Ace Jump Mode
 #+begin_src emacs-lisp
   (use-package ace-jump-mode
-               :ensure t
+               :disabled
                :bind (("C-0" . ace-jump-mode)
                       ("C-x C-SPC" . ace-jump-mode-pop-mark))
                :init (progn
@@ -1759,16 +1759,17 @@ specifies the list of buffers to kill, asking for approval for each one."
    some newer features. I haven't really gotten around to using it
    instead of ace-jump-mode yet, but I'm trying to see what it has to offer.
 #+BEGIN_SRC emacs-lisp
-  (use-package avy
-    :bind (("C-'" . avy-goto-char-timer)
-	   ("C-:" . avy-goto-char-2)
-	   ("M-g w" . avy-goto-word-1)
-	   :map isearch-mode-map
-	   ("C-'" . avy-isearch))
-    :init (setq avy-keys (number-sequence ?a ?z)
-		avy-style 'at-full
-		avy-background t
-		avy-timeout-seconds 0.3))
+(use-package avy
+  :bind* (("C-'" . avy-goto-char-timer)
+	  ("C-0" . avy-goto-word-1))
+  :bind (("C-:" . avy-goto-char-2)
+	 ("M-g w" . avy-goto-word-1)
+	 :map isearch-mode-map
+	 ("C-'" . avy-isearch))
+  :init (setq avy-keys (number-sequence ?a ?z)
+	      avy-style 'at-full
+	      avy-background t
+	      avy-timeout-seconds 0.3))
 #+END_SRC
 
 * Other modes
