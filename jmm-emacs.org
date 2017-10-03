@@ -1847,6 +1847,8 @@ specifies the list of buffers to kill, asking for approval for each one."
   :ensure t
   :diminish projectile-mode
   :bind-keymap ("C-c p" . projectile-command-map)
+  :bind (:map projectile-command-map
+	      ("x x" . jmm/projectile-start-xterm))
   :config
   (progn
     (projectile-global-mode)
@@ -1862,6 +1864,14 @@ specifies the list of buffers to kill, asking for approval for each one."
   :config
   (helm-projectile-toggle 1))
 #+end_src
+*** Start xterm in projectile root
+#+BEGIN_SRC emacs-lisp
+(defun jmm/projectile-start-xterm ()
+  "Start an xterm in the projectile root"
+  (interactive)
+  (start-xterm (projectile-project-root)))
+#+END_SRC
+
 ** Yasnippet
    So I can have recursive snippets.
 #+begin_src emacs-lisp
