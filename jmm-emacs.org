@@ -1337,7 +1337,7 @@ Make an easy way to find files in open dired buffers
    Helm-org-rifle is a really nice way to swoop through org-mode
 #+BEGIN_SRC emacs-lisp
   (use-package helm-org-rifle
-                 :bind (("C-c R" . helm-org-rifle-org-directory)
+                 :bind (("C-c R" . helm-org-rifle-occur)
                         ("C-c r" . helm-org-rifle)))
 #+END_SRC
 * Magit
