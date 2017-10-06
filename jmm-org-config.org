@@ -986,8 +986,9 @@ These functions clock into a task if it exists and creates it using
 	 (ledger . t)
 	 (org . t)
 	 (latex . t)
-	 (sh . t)
+	 (shell . t)
 	 (dot . t)
+	 (plantuml . t)
 	 (sql . t))))
 
 (setq org-edit-src-content-indentation 0
