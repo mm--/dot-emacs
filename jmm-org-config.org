@@ -1568,7 +1568,11 @@ These functions clock into a task if it exists and creates it using
 * Use speed keys
    [[http://orgmode.org/manual/Speed-keys.html][Speed keys]] make it really quick to do things like sorting headlines.
 #+BEGIN_SRC emacs-lisp
-  (setq org-use-speed-commands t)
+(setq org-use-speed-commands t)
+(setq org-speed-commands-user
+      '(("d" . jmm/org-edna-hydra/body)
+	("m" . (progn (josh/org-toggle-marked-tag)
+		      (org-speed-move-safe 'org-next-visible-heading)))))
 #+END_SRC
 * Org expiry
    Use org-expiry to make a "created" property.
