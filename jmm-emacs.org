@@ -1336,10 +1336,51 @@ Make an easy way to find files in open dired buffers
 ** helm-org-rifle
    Helm-org-rifle is a really nice way to swoop through org-mode
 #+BEGIN_SRC emacs-lisp
-  (use-package helm-org-rifle
-                 :bind (("C-c R" . helm-org-rifle-occur)
-                        ("C-c r" . helm-org-rifle)))
+(use-package helm-org-rifle
+               :bind (("C-c R" . helm-org-rifle-occur)
+                      ("C-c r" . helm-org-rifle)
+		      :map helm-org-rifle-map
+		      ("C-c C-l" . jmm/helm-org-rifle-insert-link-map-action)
+		      ("C-c l" . jmm/helm-org-rifle-copy-link-map-action)))
 #+END_SRC
+*** Link to things with helm-org-rifle
+    Helm-org-rifle is a great way to find entries, and I find it much
+    faster than using an agenda search. Often, I want to add
+    references from one entry to another. These functions allow
+    copying and directly inserting links from helm-org-rifle.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/helm-org-rifle-insert-link (candidate)
+  "Insert a link to the current CANDIDATE in the current buffer."
+  (-let (((buffer . pos) candidate))
+    (helm-attrset 'new-buffer nil)  ; Prevent the buffer from being cleaned up
+    (insert (with-current-buffer buffer
+	      (save-excursion
+		(goto-char pos)
+		(org-store-link t))))))
+
+(defun jmm/helm-org-rifle-insert-link-map-action ()
+  "Exit Helm buffer and call `jmm/helm-org-rifle-insert-link' with selected candidate."
+  (interactive)
+  (with-helm-alive-p
+    (helm-exit-and-execute-action 'jmm/helm-org-rifle-insert-link)))
+
+(defun jmm/helm-org-rifle-copy-link (candidate)
+  "Copy a link to the current CANDIDATE."
+  (-let (((buffer . pos) candidate))
+    (helm-attrset 'new-buffer nil)  ; Prevent the buffer from being cleaned up
+    (with-current-buffer buffer
+      (save-excursion
+	(goto-char pos)
+	(call-interactively 'org-store-link)))))
+
+(defun jmm/helm-org-rifle-copy-link-map-action ()
+  "Exit Helm buffer and call `jmm/helm-org-rifle-copy-link' with selected candidate."
+  (interactive)
+  (with-helm-alive-p
+    (helm-exit-and-execute-action 'jmm/helm-org-rifle-copy-link)))
+#+END_SRC
+
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
 #+BEGIN_SRC emacs-lisp
