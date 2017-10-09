@@ -28,6 +28,7 @@ loaded ~org-plus-contrib~
   (setq org-catch-invisible-edits 'smart)
   (setq org-id-link-to-org-use-id 'create-if-interactive-and-no-custom-id)
   (setq org-clock-out-remove-zero-time-clocks t)
+  (setq org-clock-history-length 30)
   (setq org-highest-priority ?A
 	org-lowest-priority ?F
 	org-default-priority ?D)
@@ -36,6 +37,8 @@ loaded ~org-plus-contrib~
   :config
   (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
   (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
+  (add-to-list 'org-tag-faces '("vague" :foreground "DodgerBlue" :weight bold))
+  (add-to-list 'org-tag-faces '("breakdown" :foreground "RoyalBlue" :weight bold))
   (require 'org-screenshot)
   ;; (require 'org-depend) 		;Replace with org-edna
   (require 'org-expiry)
@@ -535,11 +538,11 @@ In the future I should make this more nuanced.
 #+BEGIN_SRC emacs-lisp
 (setq org-tag-persistent-alist '(("task" . ?t) ("drill" . ?d)
 				 ("IGNORE" . ?i)
-                                 ("IFBORED" . ?b)
+                                 ("breakdown" . ?b) ("IFBORED" . ?B)
 				 ("CANCELLED" . ?C)
                                  ("work" . ?w) ("home" . ?h)
                                  ("REWARD" . ?R) ("SHOPPING" . ?s)
-                                 ("PESARAN" . ?p) ("erlich" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
+                                 ("paper" . ?p) ("erlich" . ?e) ("NEURO" . ?n) ("nyu" . ?y)
                                  ("vague" . ?v) ("lookup" . ?l)
                                  ("CODING" . ?c)
                                  ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("goal" . ?g) ("lifegoal" . ?G)))
