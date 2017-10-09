@@ -1631,6 +1631,35 @@ Also show amount of effort"
 
 (add-hook 'org-capture-mode-hook 'jmm/org-capture-add-created-time)
 #+END_SRC
+* Other org tag stuff
+** "vague since" property
+   I use a "vague" tag to mark tasks that are too general, or don't have a specific measurable outcome.
+
+   Ideally, I should go through my "vague" tasks and clean them up,
+   either by adding specifics, or possibly just deleting the task
+
+   I'd like to know how long a task has been "vague" for, so this
+   function adds a timestamp when something is marked "vague".
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-vague-since ()
+  "Run during `org-after-tags-change-hook'.
+If we have a \"vague\" tag and no \"VAGUE_SINCE\" property, add one.
+If we don't have a \"vague\" tag but do have a \"VAGUE_SINCE\" property, delete it."
+  (let ((current-headline (or (and (org-at-heading-p)
+                                   (point))
+                              (save-excursion (org-back-to-heading)))))
+    (if (member "vague" (org-get-tags-at current-headline))
+	(unless (org-entry-get current-headline "VAGUE_SINCE")
+	  (org-entry-put current-headline "VAGUE_SINCE" (jmm/org-current-inactive-timestamp)))
+      (org-entry-delete current-headline "VAGUE_SINCE"))))
+
+(defun jmm/org-current-inactive-timestamp ()
+  "From `org-expiry-insert-created'"
+  (let ((timestr (format-time-string (cdr org-time-stamp-formats))))
+    (concat "[" (substring timestr 1 -1) "]")))
+
+(add-hook 'org-after-tags-change-hook 'jmm/org-vague-since)
+#+END_SRC
 * Marking headings with a tag
    Sometimes I want to perform an action in bulk on a bunch of
    entries. For example, I might want to refile a bunch of headings or
