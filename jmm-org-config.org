@@ -1497,30 +1497,34 @@ These functions clock into a task if it exists and creates it using
    How old is this task from when it was changed to a "next" task? Or
    when was it added? Take the more recent of the two.
 #+BEGIN_SRC emacs-lisp
-  (defun josh/org-get-next-time ()
-    "Get the time we turned this task into a 'next' task"
-    (save-excursion
-      (org-back-to-heading t)
-      (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
-        (if (re-search-forward "State \"NEXT\".*\\(\\[.*\\]\\)" subtree-end t)
-            (match-string 1)))))
+(defun josh/org-get-next-time ()
+  "Get the time we turned this task into a 'next' task"
+  (save-excursion
+    (org-back-to-heading t)
+    (let* ((subtree-end (save-excursion (org-end-of-subtree t))))
+      (if (re-search-forward "State \"NEXT\".*\\(\\[.*\\]\\)" subtree-end t)
+          (match-string 1)))))
 
-  (defun josh/absolute-time-or-0 (x)
-    (if x (org-time-string-to-absolute x) 0))
+(defun josh/absolute-time-or-0 (x)
+  (if x (org-time-string-to-absolute x) 0))
 
-  (defun josh/org-format-next-time ()
-    "How long has an unscheduled 'next' task been waiting? Take the more recent of the added or changed-to-next date."
-    (format "[%s]"
-            (let* ((josh-added-time (josh/org-get-added-time))
-                   (josh-next-time  (josh/org-get-next-time))
-                   (josh-waiting-time (when (or josh-added-time josh-next-time)
-                                        (max (josh/absolute-time-or-0 josh-added-time)
-                                             (josh/absolute-time-or-0 josh-next-time)))))
-              (if josh-waiting-time
-                  (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
-                                    josh-waiting-time))
-                "??"))))
-
+(defun josh/org-format-next-time ()
+  "How long has an unscheduled 'next' task been waiting? Take the more recent of the added or changed-to-next date.
+Also show amount of effort"
+  (format "[%s|%s]"
+          (let* ((josh-added-time (josh/org-get-added-time))
+                 (josh-next-time  (josh/org-get-next-time))
+                 (josh-waiting-time (when (or josh-added-time josh-next-time)
+                                      (max (josh/absolute-time-or-0 josh-added-time)
+                                           (josh/absolute-time-or-0 josh-next-time)))))
+            (if josh-waiting-time
+                (format "%3dd" (- (calendar-absolute-from-gregorian (calendar-current-date))
+                                  josh-waiting-time))
+              "??"))
+	  (let ((effort (org-get-at-eol 'effort-minutes 1)))
+            (if effort
+                (josh/minutes-to-hhmm effort)
+	      "    "))))
 #+END_SRC
 
 * Show when the last time I've made progress on a project
