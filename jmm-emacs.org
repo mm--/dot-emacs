@@ -1162,7 +1162,20 @@ For example, if mail to your school account is user 0,
     (browse-url (concat (format "https://mail.google.com/mail/u/%d/?ibxr=0#search/" userid)
 			(url-hexify-string (format "rfc822msgid:%s" msgid))))))
 #+END_SRC
+** Store Org mode links to sent messages
 
+Sometimes when sending reply emails, I want to track the email in Org mode.
+This function stores an Org mode link to the email (viewed in notmuch), any time I send an email.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/message-send-store-notmuch-link ()
+  "Store an org mode notmuch link to the message after sending."
+  (let ((link (concat "notmuch:id:" (substring (message-fetch-field "message-id") 1 -1)))
+	(subject (message-fetch-field "subject")))
+    (push (list link subject) org-stored-links)))
+
+(add-hook 'message-sent-hook 'jmm/message-send-store-notmuch-link)
+#+END_SRC
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
   to use Gnus to read RSS, but elfeed is nice in that it doesn't block
