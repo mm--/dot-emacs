@@ -942,7 +942,15 @@ These functions clock into a task if it exists and creates it using
 
 (bind-key "<f9> J" 'jmm/helm-org-jump-project)
 #+END_SRC
+** Org-recent-headings
 
+   alphapapa's [[https://github.com/alphapapa/org-recent-headings][org-recent-headings]] package makes it pretty easy to
+   jump to recently used headings.
+#+BEGIN_SRC emacs-lisp
+(use-package org-recent-headings
+  :config (org-recent-headings-mode)
+  :bind (("<f9> h" . org-recent-headings-helm)))
+#+END_SRC
 * Refiling to other places
    This is so we're able to refile to other files
 #+begin_src emacs-lisp
