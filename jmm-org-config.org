@@ -211,12 +211,22 @@ loaded ~org-plus-contrib~
 
    A a function to make testing capture templates easier.
 #+BEGIN_SRC emacs-lisp
-(defun josh/add-to-capture (template)
-  (let ((key (car template)))
-    (setq org-capture-templates
-	  (delete-if (lambda (x) (equal (car x) key)) org-capture-templates))
-    (add-to-list 'org-capture-templates
-		 template)))
+(defun jmm/add-to-org-capture (template)
+  "Add a template, or a list of templates, to `org-capture-templates'.
+When template doesn't have a cdr, delete it."
+  (if (listp (car template))		;We're dealing with a list of templates
+      (-map 'jmm/add-to-capture template)
+    (let* ((key (car template))
+	   (parentkey (when (> (length key) 1) (substring key 0 -1))))
+      (-if-let (template-index (--find-index (equal (car it) key) org-capture-templates)) ;It already exists in templates, just replace
+	  (setq org-capture-templates (if (cdr template)
+					  (-replace-at template-index template org-capture-templates)
+					(-remove-at template-index org-capture-templates)))
+	(unless (and parentkey (--find-index (equal (car it) parentkey) org-capture-templates))
+	  (jmm/add-to-capture (list parentkey (format "Dummy entry for %s" parentkey))))
+	(-if-let (parent-index (--find-index (equal (car it) parentkey) org-capture-templates))
+	    (setq org-capture-templates (-insert-at (1+ parent-index) template org-capture-templates))
+	  (error "Parent key %s still doesn't exist" parentkey))))))
 #+END_SRC
 ** Get the title of a URL
     Used for a capture template. I want my links to also have a sort of description
