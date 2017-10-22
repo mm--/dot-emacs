@@ -222,11 +222,13 @@ When template doesn't have a cdr, delete it."
 	  (setq org-capture-templates (if (cdr template)
 					  (-replace-at template-index template org-capture-templates)
 					(-remove-at template-index org-capture-templates)))
-	(unless (and parentkey (--find-index (equal (car it) parentkey) org-capture-templates))
+	(when (and parentkey (not (--find-index (equal (car it) parentkey) org-capture-templates)))
 	  (jmm/add-to-org-capture (list parentkey (format "Dummy entry for %s" parentkey))))
-	(-if-let (parent-index (--find-index (equal (car it) parentkey) org-capture-templates))
-	    (setq org-capture-templates (-insert-at (1+ parent-index) template org-capture-templates))
-	  (error "Parent key %s still doesn't exist" parentkey))))))
+	(setq org-capture-templates
+	      (-insert-at (-if-let (parent-index (and parentkey (--find-index (equal (car it) parentkey) org-capture-templates)))
+			      (1+ parent-index)
+			    0)
+			  template org-capture-templates))))))
 #+END_SRC
 ** Get the title of a URL
     Used for a capture template. I want my links to also have a sort of description
