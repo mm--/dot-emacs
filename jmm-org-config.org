@@ -21,6 +21,8 @@ loaded ~org-plus-contrib~
 	 ("M-T" . josh/org-convert-added-to-created-property)
 	 ("M-N" . josh/org-convert-added-or-add-created)
 	 ("M-M" . josh/org-toggle-marked-tag)
+	 :map org-agenda-mode-map
+	 ("M-P" . josh/org-agenda-lock-to-parent-project)
 	 )
   :mode ("\\.org\\'" . org-mode)
   :init
@@ -542,7 +544,36 @@ In the future I should make this more nuanced.
     (cond ((< ta tb) -1)
 	  ((< tb ta) +1))))
 #+END_SRC
+** Setting a restriction lock to a parent project
+   Sometimes I want to narrow my org agenda view to just look at one project.
+   Setting a restriction lock for the project does this, and also makes agenda generation much faster.
+   This function finds the parent project of a task and sets a restriction lock to the project.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-goto-parent-project ()
+  "Go to parent project using `bh/is-project-p' and `bh/is-subproject-p'."
+  (save-restriction
+    (widen)
+    (let ((start (point))
+	  (found))
+      (while (progn (and (not found)
+			 (or (and (bh/is-project-p)
+				  (not (bh/is-subproject-p))
+				  (setq found t))
+			     (org-up-heading-safe)))))
+      (unless found
+	(goto-char start))
+      found)))
 
+(defun jmm/org-agenda-lock-to-parent-project ()
+  "In the org mode agenda, lock the restriction to the current project."
+  (interactive)
+  (save-window-excursion
+    (org-agenda-goto)
+    (if (jmm/org-goto-parent-project)
+	(org-agenda-set-restriction-lock)
+      (user-error "No parent project found.")))
+  (org-agenda-redo-all))
+#+END_SRC
 * Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
    don't want to have the hotkeys for each of these tags repeatedly in
