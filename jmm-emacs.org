@@ -1059,8 +1059,8 @@ copy ring." (s-capitalize actionname) (s-downcase actionname))
 #+end_src
 ** Proxies. Allow sudo
 #+begin_src emacs-lisp
-(set-default 'tramp-default-proxies-alist nil)
-(add-to-list 'tramp-default-proxies-alist '((and (string-match system-name (tramp-file-name-host (car target-alist))) "DONTMATCHMEPLEASE") "\\`root\\'" "/ssh:%h:"))
+;; (set-default 'tramp-default-proxies-alist nil)
+;; (add-to-list 'tramp-default-proxies-alist '((and (string-match system-name (tramp-file-name-host (car target-alist))) "DONTMATCHMEPLEASE") "\\`root\\'" "/ssh:%h:"))
 #+end_src
 
 ** Kill Tramp buffers
