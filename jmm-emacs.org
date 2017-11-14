@@ -2323,4 +2323,15 @@ It also provides functions for swapping and moving windows, which is super helpf
   :config
   (setq dumb-jump-selector 'helm))
 #+END_SRC
+** goto-last-change
+
+   ~goto-last-change~ is a simple, but pretty handy, function. I find
+   myself occasionally scrolling off screen, and forgetting where I
+   last was. ~goto-last-change~ helps me go back to where I was last editing.
+
+#+BEGIN_SRC emacs-lisp
+(use-package goto-last-change
+  :ensure
+  :bind (("C-x C-'" . goto-last-change)))
+#+END_SRC
 
