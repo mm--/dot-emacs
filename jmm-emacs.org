@@ -988,13 +988,27 @@ Because dired-jump is pretty useful
    I'm messing around with git-annex, and it's nice to be able to view
    locked files by their name and not as a giant symlink in dired.
 #+BEGIN_SRC emacs-lisp
-  (use-package git-annex
-    :config
-    (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
-    (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
-    (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
-    (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files)
-    (define-key git-annex-dired-map "t" 'jmm/dired-git-annex-tag))
+(use-package git-annex
+  :config
+  (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
+  (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
+  (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
+  (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files)
+  (define-key git-annex-dired-map "t" 'jmm/dired-git-annex-tag)
+  ;; git-annex.el kinda clobbers dired-marked-face and dired-flagged-face
+  ;; This fixes that
+  (eval-after-load "dired"
+    '(progn
+       (add-to-list 'dired-font-lock-keywords
+		    (list "^[*].+ -> .*\\.git/annex/"
+			  '("\\(.+\\)\\( -> .+\\)" (dired-move-to-filename) nil
+			    (1 dired-marked-face)
+			    (2 git-annex-dired-annexed-invisible))))
+       (add-to-list 'dired-font-lock-keywords
+		    (list "^[D].+ -> .*\\.git/annex/"
+			  '("\\(.+\\)\\( -> .+\\)" (dired-move-to-filename) nil
+			    (1 dired-flagged-face)
+			    (2 git-annex-dired-annexed-invisible)))))))
 #+END_SRC
 *** Make it easy to add metadata tags in git-annex
 
