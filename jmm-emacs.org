@@ -993,8 +993,62 @@ Because dired-jump is pretty useful
     (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
     (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
     (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
-    (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files))
+    (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files)
+    (define-key git-annex-dired-map "t" 'jmm/dired-git-annex-tag))
 #+END_SRC
+*** Make it easy to add metadata tags in git-annex
+
+    Git-annex has a pretty cool ability to tag files and filter
+    directory views based on metadata. It's kind of a pain to tag
+    files, though, so here's a function that adds some autocompletion
+    to tagging file.
+
+#+BEGIN_SRC emacs-lisp
+(defvar-local jmm/git-annex-directory-tags nil
+  "Current git-annex tags set in the directory, as a list.")
+
+(defun jmm/dired-git-annex-current-tags (file-list &optional intersection)
+  "Get current git-annex tag for each file in FILE-LIST. With
+  optional argument INTERSECTION, only show tags all files share in common."
+  (let* ((metadata (with-output-to-string
+		    (with-current-buffer
+			standard-output
+		      (apply #'process-file "git" nil t nil "annex" "metadata" "--json" file-list))))
+	 (json-array-type 'list)
+	 (jsonout (-map 'json-read-from-string (split-string metadata "\n" t))))
+    (-reduce (if intersection '-intersection '-union) (--map (cdr (assoc 'tag (cdr (assoc 'fields it)))) jsonout))))
+
+(defun jmm/dired-git-annex-tag (file-list tags &optional arg)
+  "Add git-annex TAGS to each file in FILE-LIST.
+Used as an interactive command, prompt for a list of tags for all
+files, showing the current tags all files currently have in common."
+  (interactive
+   (let* ((files (dired-get-marked-files t current-prefix-arg))
+	  (shared-tags (jmm/dired-git-annex-current-tags files t))
+	  ;; Cache directory tags
+	  (current-tags (or jmm/git-annex-directory-tags
+			    (setq jmm/git-annex-directory-tags
+				  (or (jmm/dired-git-annex-current-tags '("--all")) '("")))))
+	  (crm-separator " ")
+	  (crm-local-completion-map
+	   (let ((map (make-sparse-keymap)))
+	     (set-keymap-parent map crm-local-completion-map)
+	     (define-key map " " 'self-insert-command)
+	     map))
+	  (tags (completing-read-multiple
+		 "Tags: " (--map (concat it crm-separator) current-tags)
+		 nil nil
+		 (when shared-tags (mapconcat 'identity shared-tags " ")))))
+     (setq jmm/git-annex-directory-tags (-union tags jmm/git-annex-directory-tags))
+     (list files tags current-prefix-arg)))
+  (let ((args (cl-loop for x in tags
+		       append (list "-t" x))))
+    (-each file-list
+      (lambda (file)
+	(apply #'call-process "git" nil nil nil "annex" "metadata" (append args (list file)))))
+    (message (format "Tagged %d file(s)" (length file-list)))))
+#+END_SRC
+
 ** Dired ranger
    dired-ranger (see [[https://github.com/Fuco1/dired-hacks][dired-hacks]]) adds some really convenient ways to
    copy and paste files between buffers. It's a lot easier than
