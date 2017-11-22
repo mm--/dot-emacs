@@ -2046,7 +2046,7 @@ a list of strings specifying which drawers should not be hidden."
 	  (let ((region (pdf-view-active-region))
 		(regiontext (jmm/pdf-view-unfill-text))
 		(isrect pdf-view--have-rectangle-region))
-	    (org-store-link-props :type "pdfview" :page page :region region :file file)
+	    (org-store-link-props :type "pdfview" :page page :region region :file file :text regiontext)
 	    (setq desc (if isrect
 			   (format "%s rectangle on page %s" (s-chop-suffix ".pdf" (buffer-name)) page)
 			 regiontext))
