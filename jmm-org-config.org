@@ -98,6 +98,19 @@ loaded ~org-plus-contrib~
 (advice-add 'org-id-update-id-locations :around #'jmm/org-id-skip-unopened-encrypted)
 #+END_SRC
 
+Also worth noting, if you have encrypted ~.org.gpg~ files and you
+archive tasks in a separate ~_archive~ file, the archive file will be
+in cleartext. You probably don't want this. The solution here is to
+set ~.org.gpg_archive~ files to be encrypted by ~epa~.
+
+#+BEGIN_SRC emacs-lisp
+;; It's better to actually set this through Custom, so you don't have
+;; to call `epa-file-name-regexp-update'.
+;; (setq epa-file-name-regexp "\\.gpg\\(~\\|\\.~[0-9]+~\\|_archive\\)?\\'")
+;; (epa-file-name-regexp-update)
+#+END_SRC
+
+
 * Default notes file?
    Note to self, figure out what the difference between this and agenda is.
 
