@@ -87,47 +87,48 @@ Enable all the disabled commands
 #+end_src
 
 #+begin_src emacs-lisp
-  ;; I don't like having to type "yes"
-  (fset 'yes-or-no-p 'y-or-n-p)
+;; I don't like having to type "yes"
+(fset 'yes-or-no-p 'y-or-n-p)
 
-  (transient-mark-mode 1)
-  (column-number-mode 1)
-  (show-paren-mode 1)
-  (menu-bar-mode -1)
-  (tool-bar-mode 0)
-  (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
-  (blink-cursor-mode 0)
+(transient-mark-mode 1)
+(column-number-mode 1)
+(show-paren-mode 1)
+(menu-bar-mode -1)
+(tool-bar-mode 0)
+(ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
+(blink-cursor-mode 0)
 
-  (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
-  (set-register ?d '(file . "~/Downloads/"))
-  (set-register ?l '(file . "~/org/josh-ledger.dat"))
-  (set-register ?n '(file . "~/org/neuroecon.org"))
-  (set-register ?o '(file . "~/org/gtd-test.org"))
+(set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
+(set-register ?d '(file . "~/Downloads/"))
+(set-register ?l '(file . "~/org/josh-ledger.dat"))
+(set-register ?n '(file . "~/org/neuroecon.org"))
+(set-register ?o '(file . "~/org/gtd-test.org"))
 
-  (server-start)
+(server-start)
 
-  (setq visible-bell 0)                   ;Set visible bell on.
-  (setq ring-bell-function 'ignore)       ;Visible bell.
+(setq visible-bell 0)                   ;Set visible bell on.
+(setq ring-bell-function 'ignore)       ;Visible bell.
 
-  (setq frame-title-format "Emacs - %b")
-  (setq set-mark-command-repeat-pop t)
-  (require 'uniquify)
-  (setq uniquify-buffer-name-style 'forward)
-  (winner-mode 1)
-  (setq focus-follows-mouse t)
-  (setq mouse-autoselect-window t) ;Sloppy focus
-  (setq inhibit-splash-screen t)
-  (setq Man-notify-method 'pushy)
-  (set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
-  (setq visual-line-fringe-indicators '(nil right-curly-arrow))
+(setq frame-title-format "Emacs - %b")
+(setq set-mark-command-repeat-pop t)
+(require 'uniquify)
+(setq uniquify-buffer-name-style 'forward)
+(winner-mode 1)
+(setq focus-follows-mouse t)
+(setq mouse-autoselect-window t) ;Sloppy focus
+(setq inhibit-splash-screen t)
+(setq Man-notify-method 'pushy)
+(set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
+(setq visual-line-fringe-indicators '(nil right-curly-arrow))
+(setq mouse-yank-at-point t)
 
-  (setq history-length 1000)
-  (setq history-delete-duplicates t)
+(setq history-length 1000)
+(setq history-delete-duplicates t)
 
-  (setq browse-url-browser-function 'browse-url-generic
-        browse-url-generic-program "chromium")
-  (setq shr-external-browser 'browse-url-generic) ;For eww
-  (setq epg-gpg-program "gpg2")
+(setq browse-url-browser-function 'browse-url-generic
+      browse-url-generic-program "firefox")
+(setq shr-external-browser 'browse-url-generic) ;For eww
+(setq epg-gpg-program "gpg2")
 #+end_src
 
 Make scripts executable
