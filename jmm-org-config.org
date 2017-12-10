@@ -1019,7 +1019,7 @@ These functions clock into a task if it exists and creates it using
 #+begin_src emacs-lisp
   (setq org-todo-keywords
          (quote ((sequence "TODO(t)" "NEXT(n!)" "|" "DONE(d)")
-                 (sequence "WAITING(w@/!)" "HOLD(h!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
+                 (sequence "WAITING(w!)" "HOLD(h!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)"))))
 
   (setq org-todo-keyword-faces
         (quote (("TODO" :foreground "red" :weight bold)
