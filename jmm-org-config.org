@@ -1703,26 +1703,28 @@ Also show amount of effort"
    either by adding specifics, or possibly just deleting the task
 
    I'd like to know how long a task has been "vague" for, so this
-   function adds a timestamp when something is marked "vague".
+   function adds a timestamp when something is marked "vague" or "breakdown".
 #+BEGIN_SRC emacs-lisp
-(defun jmm/org-vague-since ()
+(defun jmm/org-add-tag-added-time-property ()
   "Run during `org-after-tags-change-hook'.
-If we have a \"vague\" tag and no \"VAGUE_SINCE\" property, add one.
+For example, if we have a \"vague\" tag and no \"VAGUE_SINCE\" property, add one.
 If we don't have a \"vague\" tag but do have a \"VAGUE_SINCE\" property, delete it."
-  (let ((current-headline (or (and (org-at-heading-p)
+  (let* ((current-headline (or (and (org-at-heading-p)
                                    (point))
-                              (save-excursion (org-back-to-heading)))))
-    (if (member "vague" (org-get-tags-at current-headline))
-	(unless (org-entry-get current-headline "VAGUE_SINCE")
-	  (org-entry-put current-headline "VAGUE_SINCE" (jmm/org-current-inactive-timestamp)))
-      (org-entry-delete current-headline "VAGUE_SINCE"))))
+                               (save-excursion (org-back-to-heading))))
+	 (current-tags (org-get-tags-at current-headline)))
+    (cl-loop for (tag property) in '(("vague" "VAGUE_SINCE") ("breakdown" "BREAKDOWN_SINCE"))
+	     do (if (member tag current-tags)
+		    (unless (org-entry-get current-headline property)
+		      (org-entry-put current-headline property (jmm/org-current-inactive-timestamp)))
+		  (org-entry-delete current-headline property)))))
 
 (defun jmm/org-current-inactive-timestamp ()
   "From `org-expiry-insert-created'"
   (let ((timestr (format-time-string (cdr org-time-stamp-formats))))
     (concat "[" (substring timestr 1 -1) "]")))
 
-(add-hook 'org-after-tags-change-hook 'jmm/org-vague-since)
+(add-hook 'org-after-tags-change-hook 'jmm/org-add-tag-added-time-property)
 #+END_SRC
 * Marking headings with a tag
    Sometimes I want to perform an action in bulk on a bunch of
