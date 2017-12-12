@@ -1867,6 +1867,19 @@ This allows for easier readability of targets."
 			 (point-marker)))
 	  ids))
 #+END_SRC
+** Add tags without obliterating already set tags
+   Org Edna's ~tag!~ action sets tags but doesn't keep the ones already set.
+   This adds the ability to add multiple tags while keeping the tags you already have.
+
+#+BEGIN_SRC emacs-lisp
+(defun org-edna-action/add-tags! (last-entry tags)
+  "Add TAGS without deleting already set tags.
+TAGS is a string with multiple tags separated by a colon."
+  (ignore last-entry)
+  (mapc (lambda (tag) (org-toggle-tag tag 'on))
+	(if (stringp tags) (split-string tags ":" t) tags)))
+#+END_SRC
+
 ** A hydra for setting some common triggers
 
    It's a bit of a pain to set Org Edna triggers with
