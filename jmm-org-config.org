@@ -1943,6 +1943,44 @@ the newly set value. Open the PROPERTIES drawer."
 
 (bind-key "<f9> d" 'jmm/org-edna-hydra/body)
 #+END_SRC
+** Infinitely clone subtrees with Org Edna
+
+   Often I have recurring tasks of the form "Do 30 minutes of
+   X". Rather than just have this as a single repeating item, I use
+   subtree clones so I can shift the scheduled time of each individual
+   instance. When I get to the end of the list of clones, I usually
+   need to make more. These functions allow Org Edna to automatically
+   make more clones and schedule them.
+
+   You'd set a ~TRIGGER~ property to something like
+   ~self clone!(5 "+1d") rest-of-siblings todo!(TODO) refresh-created! next-n-siblings(4) delete-property!("TRIGGER")~,
+   which clones 5 subtrees. Yeah, it's a bit complicated but it seems to work okay.
+
+#+BEGIN_SRC emacs-lisp
+(defun org-edna-action/clone! (last-entry n &optional shift)
+  "Clone an entry N times with optional SHIFT.
+See `org-clone-subtree-with-time-shift'."
+  (ignore last-entry)
+  (org-clone-subtree-with-time-shift n shift))
+
+(defun org-edna-action/refresh-created! (last-entry)
+  (ignore last-entry)
+  (org-expiry-insert-created t))
+
+(defun org-edna-finder/next-n-siblings (n)
+  (org-with-wide-buffer
+   (let ((self (and (ignore-errors (org-back-to-heading t)) (point)))
+         (markers)
+	 (i 0))
+     ;; Go from this heading forward n times
+     (while (and (org-get-next-sibling)
+		 (< i n))
+       (unless (equal (point) self)
+         (push (point-marker) markers))
+       (setq i (1+ i)))
+     (nreverse markers))))
+#+END_SRC
+
 * Other useful functions
 ** Org agenda current subtree or region
 
