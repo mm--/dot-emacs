@@ -1880,6 +1880,18 @@ TAGS is a string with multiple tags separated by a colon."
 	(if (stringp tags) (split-string tags ":" t) tags)))
 #+END_SRC
 
+   In a similar vein, this function works like ~chain!~ but doesn't
+   obliterate a property if it's already set.
+
+#+BEGIN_SRC emacs-lisp
+(defun org-edna-action/chain-maybe! (last-entry property)
+  "Like `org-edna-action/chain!' but don't replace the property if it exists."
+  (when-let* ((old-prop (org-entry-get last-entry property))
+	      (current-entry-has-no-prop (not (org-entry-get nil property))))
+    (org-entry-put nil property old-prop)))
+#+END_SRC
+
+
 ** A hydra for setting some common triggers
 
    It's a bit of a pain to set Org Edna triggers with
