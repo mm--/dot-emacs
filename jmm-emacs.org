@@ -1594,22 +1594,22 @@ specifies the list of buffers to kill, asking for approval for each one."
 
 ** Starting an Xterm in current directory
 #+begin_src emacs-lisp
-  (defun start-xterm (&optional dirpath)
-      "Start a new xterm in the current directory. SSH if necessary"
-      (interactive)
-      (let ((path (if dirpath dirpath (expand-file-name (or (and (eq major-mode 'dired-mode)
-                                                                 (dired-current-directory))
-                                                            default-directory)))))
-        "Return the local portion of a path.
+(defun start-xterm (&optional dirpath)
+    "Start a new xterm in the current directory. SSH if necessary"
+    (interactive)
+    (let ((path (if dirpath dirpath (expand-file-name (or (and (eq major-mode 'dired-mode)
+                                                               (dired-current-directory))
+                                                          default-directory)))))
+      "Return the local portion of a path.
 
-    If PATH is local, return it unaltered.
-    If PATH is remote, return the remote diretory portion of the path."
-        (if (tramp-tramp-file-p path)
-            (let ((loc (elt (tramp-dissect-file-name path) 3))
-                  (host (elt (tramp-dissect-file-name path) 2)))
-              (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
-          (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd \"%s\"; zsh" path)))))
-  (bind-key "<f9> x" 'start-xterm)
+  If PATH is local, return it unaltered.
+  If PATH is remote, return the remote diretory portion of the path."
+      (if (tramp-tramp-file-p path)
+          (let ((loc (tramp-file-name-localname (tramp-dissect-file-name path)))
+                (host (tramp-file-name-host (tramp-dissect-file-name path))))
+            (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
+        (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd \"%s\"; zsh" path)))))
+(bind-key "<f9> x" 'start-xterm)
 #+end_src
 
 ** Copy the path
