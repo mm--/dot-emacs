@@ -964,17 +964,20 @@ These functions clock into a task if it exists and creates it using
             subtree-end))))
     (save-excursion (org-end-of-subtree t))))
 
+(defvar jmm/org-projects-cache '())
 (defun jmm/org-helm-project-candidates ()
-    (interactive)
-    (org-map-entries
-     (lambda ()
-       (cons (format "%s: %s"
-		     (s-left 13 (s-pad-left 13 " " (buffer-name)))
-		     (buffer-substring (line-beginning-position) (line-end-position)))
-	     (point-marker)))
-     "/TODO"
-     'agenda
-     'jmm/skip-non-projects))
+  (interactive)
+  (or jmm/org-projects-cache
+      (setq jmm/org-projects-cache
+	    (org-map-entries
+	     (lambda ()
+	       (cons (format "%s: %s"
+			     (s-left 13 (s-pad-left 13 " " (buffer-name)))
+			     (buffer-substring (line-beginning-position) (line-end-position)))
+		     (point-marker)))
+	     "/TODO"
+	     'agenda
+	     'jmm/skip-non-projects))))
 
 (defun jmm/org-jump-to-marker (place)
   (switch-to-buffer (marker-buffer place))
@@ -990,9 +993,11 @@ These functions clock into a task if it exists and creates it using
       (action . (("Jump to"
                   . jmm/org-jump-to-marker)))))
 
-(defun jmm/helm-org-jump-project ()
-  "Use helm to clock into a task"
-  (interactive)
+(defun jmm/helm-org-jump-project (&optional arg)
+  "Use helm to jump to a project. With optional ARG, clear the cache."
+  (interactive "P")
+  (when arg
+    (setq jmm/org-projects-cache nil))
   (helm-other-buffer 'jmm/helm-jump-org-project
 		     "*Org Jump*"))
 
