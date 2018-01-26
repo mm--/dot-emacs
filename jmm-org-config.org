@@ -2060,7 +2060,8 @@ With prefix, display only TODO-keyword items."
 			      (drawer (org-element-property :end element))
 			      (t nil))))
 	       (when jumpto
-		 (goto-char jumpto)))
+		 (goto-char jumpto)
+		 (not (= jumpto (point-max)))))
 	t)
       (point))))
 
