@@ -2414,4 +2414,12 @@ It also provides functions for swapping and moving windows, which is super helpf
   :diminish which-key-mode
   :config (which-key-mode))
 #+END_SRC
+** SQL
+
+   In ~sql-interactive-mode~, don't wrap lines.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'sql-interactive-mode-hook
+	  (lambda ()
+	    (toggle-truncate-lines 1)))
+#+END_SRC
 
