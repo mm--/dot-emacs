@@ -1176,9 +1176,14 @@ copy ring." (s-capitalize actionname) (s-downcase actionname))
 #+END_SRC
 
   Here's some stuff related to sending email (although not directly related to notmuch).
+  I'm currently using [[http://msmtp.sourceforge.net/][msmtp]] to automatically handle sending email from different accounts.
+
 #+BEGIN_SRC emacs-lisp
-(require 'smtpmail)
-(setq message-send-mail-function 'message-smtpmail-send-it)
+(setq send-mail-function 'sendmail-send-it
+      sendmail-program "/usr/bin/msmtp"
+      mail-specify-envelope-from t
+      message-sendmail-envelope-from 'header
+      mail-envelope-from 'header)
 
 (require 'starttls)
 ;; use org structures and tables in message mode
