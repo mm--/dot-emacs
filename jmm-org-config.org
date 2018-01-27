@@ -689,7 +689,8 @@ Also, change the default cloze delimiters, as the defaults weren't working well 
 	    (setq org-drill-hint-separator "||")
 	    (setq org-drill-left-cloze-delimiter "<[")
 	    (setq org-drill-right-cloze-delimiter "]>")
-	    (setq org-drill-learn-fraction 0.25)))
+	    (setq org-drill-learn-fraction 0.25)
+	    (setq org-drill--lapse-very-overdue-entries-p t)))
 #+end_src
 
 ** org-preview-latex-fragment
