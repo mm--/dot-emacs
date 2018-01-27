@@ -157,6 +157,7 @@ set ~.org.gpg_archive~ files to be encrypted by ~epa~.
 	("ne" "NYU Events" entry (file+headline "nyu.org" "NYU Events Calendar") "* %?\n%^t\n")
 	("nc" "CNS Events" entry (file+headline "nyu.org" "CNS Events") "* %?\n%^t\n")
 	("nd" "Service disruption" entry (file+headline "nyu.org" "Service disruption") "* %?\n%^t\n")
+	("ns" "NYU Shanghai Events" entry (file+headline "nyu.org" "NYU Shanghai Calendar") "* %?\n%^t\n")
         ("M" "Someday/Maybe" entry (file+headline "someday-maybe.org" "Someday/Maybe")
          "* %?\n  Added: %U")
         ("m" "Someday/Maybe lists")
@@ -186,6 +187,10 @@ set ~.org.gpg_archive~ files to be encrypted by ~epa~.
         ("em" "Erlich maybe" entry (file+headline "erlich.org" "Erlich maybe")
          "* %?\n  Added: %U")
         ("j" "Journal Stuff")
+	("ja" "Journal task today" entry (file+datetree "journal.org")
+         "* TODO %?  :task:\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
+	("je" "Journal event today" entry (file+datetree "journal.org")
+         "* %?\n%^t\n")
         ("jr" "Journal Resume" entry (file+datetree "~/org/journal.org")
          "* %?\n%U\n" :clock-in t :clock-resume t)
         ("jc" "Journal Clock-In" entry (file+datetree "~/org/journal.org")
@@ -1062,7 +1067,8 @@ These functions clock into a task if it exists and creates it using
 	 (shell . t)
 	 (dot . t)
 	 (plantuml . t)
-	 (sql . t))))
+	 (sql . t)
+	 (clojure . t))))
 
 (setq org-edit-src-content-indentation 0
       org-src-tab-acts-natively t
@@ -1760,6 +1766,7 @@ If we don't have a \"vague\" tag but do have a \"VAGUE_SINCE\" property, delete 
   :init
   (setq org-ref-bibtex-hydra-key-binding (kbd "C-c C-j"))
   (setq reftex-default-bibliography '("~/org-ref/references.bib"))
+  (setq org-ref-show-citation-on-enter nil)
   ;; see org-ref for use of these variables
   (setq org-ref-bibliography-notes "~/org-ref/notes.org"
 	org-ref-default-bibliography (file-expand-wildcards "~/org-ref/*.bib")
