@@ -21,6 +21,7 @@ loaded ~org-plus-contrib~
 	 ("M-T" . josh/org-convert-added-to-created-property)
 	 ("M-N" . josh/org-convert-added-or-add-created)
 	 ("M-M" . josh/org-toggle-marked-tag)
+	 ("C-x n p" . jmm/org-narrow-to-parent-project)
 	 :map org-agenda-mode-map
 	 ("M-P" . josh/org-agenda-lock-to-parent-project)
 	 )
@@ -592,6 +593,19 @@ In the future I should make this more nuanced.
       (user-error "No parent project found.")))
   (org-agenda-redo-all))
 #+END_SRC
+
+Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to the current project.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-narrow-to-parent-project ()
+  "Like `org-narrow-to-subtree' but for the current project tree."
+  (interactive)
+  (save-excursion
+    (if (jmm/org-goto-parent-project)
+	(org-narrow-to-subtree)
+      (user-error "No parent project found."))))
+#+END_SRC
+
 * Org persistent tags
    Some tags that I might use a lot. (Or maybe I don't, but I just
    don't want to have the hotkeys for each of these tags repeatedly in
