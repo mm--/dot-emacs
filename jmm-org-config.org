@@ -2088,7 +2088,7 @@ With prefix, display only TODO-keyword items."
 			      (t nil))))
 	       (when jumpto
 		 (goto-char jumpto)
-		 (not (= jumpto (point-max)))))
+		 (< jumpto (point-max))))
 	t)
       (point))))
 
