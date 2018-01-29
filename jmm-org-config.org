@@ -1724,7 +1724,7 @@ If we don't have a \"vague\" tag but do have a \"VAGUE_SINCE\" property, delete 
   (let* ((current-headline (or (and (org-at-heading-p)
                                    (point))
                                (save-excursion (org-back-to-heading))))
-	 (current-tags (org-get-tags-at current-headline)))
+	 (current-tags (org-get-tags-at current-headline t)))
     (cl-loop for (tag property) in '(("vague" "VAGUE_SINCE") ("breakdown" "BREAKDOWN_SINCE"))
 	     do (if (member tag current-tags)
 		    (unless (org-entry-get current-headline property)
