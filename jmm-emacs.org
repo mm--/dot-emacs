@@ -2427,4 +2427,14 @@ It also provides functions for swapping and moving windows, which is super helpf
 	  (lambda ()
 	    (toggle-truncate-lines 1)))
 #+END_SRC
+** buffer-move
 
+   [[https://www.emacswiki.org/emacs/buffer-move.el][Buffer-move]] makes it easy to swap windows.
+
+#+BEGIN_SRC emacs-lisp
+(use-package buffer-move
+  :bind (("<C-S-up>" . buf-move-up)
+	 ("<C-S-down>" . buf-move-down)
+	 ("<C-S-left>" . buf-move-left)
+	 ("<C-S-right>" . buf-move-right)))
+#+END_SRC
