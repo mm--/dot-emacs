@@ -21,6 +21,7 @@ loaded ~org-plus-contrib~
 	 ("M-T" . josh/org-convert-added-to-created-property)
 	 ("M-N" . josh/org-convert-added-or-add-created)
 	 ("M-M" . josh/org-toggle-marked-tag)
+	 ("M-H" . jmm/org-hide-planning-parent-project)
 	 ("C-x n p" . jmm/org-narrow-to-parent-project)
 	 :map org-agenda-mode-map
 	 ("M-P" . josh/org-agenda-lock-to-parent-project)
@@ -2107,6 +2108,13 @@ a list of strings specifying which drawers should not be hidden."
     (org-map-tree 'jmm/org-hide-planning-stuff)))
 
 (add-hook 'org-cycle-hook 'jmm/org-cycle-hide-scheduled-properties-logbook)
+
+(defun jmm/org-hide-planning-parent-project ()
+  "Hide planning info for project."
+  (interactive)
+  (save-excursion
+    (when (or (jmm/org-goto-parent-project) (org-up-heading-safe))
+      (org-map-tree 'jmm/org-hide-planning-stuff))))
 #+END_SRC
 * Links
 ** PDFView links
