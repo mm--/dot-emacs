@@ -95,6 +95,7 @@ Enable all the disabled commands
 (show-paren-mode 1)
 (menu-bar-mode -1)
 (tool-bar-mode 0)
+(scroll-bar-mode 0)
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
 (blink-cursor-mode 0)
 
