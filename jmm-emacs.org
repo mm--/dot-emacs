@@ -756,6 +756,17 @@ of erc-modified-channels-alist"
 (setq-default c-basic-offset 8)
 (setq c-default-style "gnu")
 #+end_src
+* Clojure
+
+#+BEGIN_SRC emacs-lisp
+(use-package cider
+  :init
+  (setq cider-cljs-lein-repl
+      "(do (require 'figwheel-sidecar.repl-api)
+           (figwheel-sidecar.repl-api/start-figwheel!)
+           (figwheel-sidecar.repl-api/cljs-repl))"))
+#+END_SRC
+
 * Shells
 #+begin_src emacs-lisp
 (defun run-half-shell ()
@@ -2017,53 +2028,53 @@ specifies the list of buffers to kill, asking for approval for each one."
 #+END_SRC
 ** Smartparens
 #+BEGIN_SRC emacs-lisp
-  (use-package smartparens
-               :ensure t
-               :config
-               :disabled t
-               (progn (require 'smartparens-config)
-                      (smartparens-global-mode t)
+(use-package smartparens
+             :ensure t
+             :config
+             (progn (require 'smartparens-config)
+                    (smartparens-global-mode t)
+		    (fset 'my-wrap-with-paren "\C-](")
 
-                      (show-smartparens-global-mode t)
+                    (show-smartparens-global-mode t))
 
-                      (define-key sp-keymap (kbd "C-M-f") 'sp-forward-sexp)
-                      (define-key sp-keymap (kbd "C-M-b") 'sp-backward-sexp)
+	     ;; Mostly just the default bindings
+	     :bind (:map smartparens-mode-map
+			 ("C-M-f" . sp-forward-sexp)
+			 ("C-M-b" . sp-backward-sexp)
 
-                      (define-key sp-keymap (kbd "C-M-d") 'sp-down-sexp)
-                      (define-key sp-keymap (kbd "C-M-a") 'sp-backward-down-sexp)
-                      (define-key sp-keymap (kbd "C-S-a") 'sp-beginning-of-sexp)
-                      (define-key sp-keymap (kbd "C-S-d") 'sp-end-of-sexp)
+			 ("C-M-d" . sp-down-sexp)
+			 ("C-M-a" . sp-backward-down-sexp)
+			 ("C-S-a" . sp-beginning-of-sexp)
+			 ("C-S-d" . sp-end-of-sexp)
+			 
+			 ("C-M-e" . sp-up-sexp)
+			 ("C-M-u" . sp-backward-up-sexp)
+			 ("C-M-t" . sp-transpose-sexp)
+			 ("C-M-n" . sp-next-sexp)
+			 ("C-M-p" . sp-previous-sexp)
 
-                      (define-key sp-keymap (kbd "C-M-e") 'sp-up-sexp)
-                      (define-key emacs-lisp-mode-map (kbd ")") 'sp-up-sexp)
-                      (define-key sp-keymap (kbd "C-M-u") 'sp-backward-up-sexp)
-                      (define-key sp-keymap (kbd "C-M-t") 'sp-transpose-sexp)
+			 ("C-M-k" . sp-kill-sexp)
+			 ("C-M-w" . sp-copy-sexp)
+			 ;; ("M-<delete>" . sp-unwrap-sexp)
+			 ;; I usually use backword kill
+			 ;; ("M-<backspace>" . sp-backward-unwrap-sexp)
+			 ("C-<right>" . sp-forward-slurp-sexp)
+			 ("C-<left>" . sp-forward-barf-sexp)
+			 ("C-M-<left>" . sp-backward-slurp-sexp)
+			 ("C-M-<right>" . sp-backward-barf-sexp)
 
-                      (define-key sp-keymap (kbd "C-M-n") 'sp-next-sexp)
-                      (define-key sp-keymap (kbd "C-M-p") 'sp-previous-sexp)
+			 ("M-D" . sp-splice-sexp)
+			 ("C-M-<delete>" . sp-splice-sexp-killing-forward)
+			 ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
+			 ("C-S-<backspace>" . sp-splice-sexp-killing-around)
 
-                      (define-key sp-keymap (kbd "C-M-k") 'sp-kill-sexp)
-                      (define-key sp-keymap (kbd "C-M-w") 'sp-copy-sexp)
-
-                      (define-key sp-keymap (kbd "M-<delete>") 'sp-unwrap-sexp)
-                      (define-key sp-keymap (kbd "M-<backspace>") 'sp-backward-unwrap-sexp)
-
-                      (define-key sp-keymap (kbd "C-<right>") 'sp-forward-slurp-sexp)
-                      (define-key sp-keymap (kbd "C-<left>") 'sp-forward-barf-sexp)
-                      (define-key sp-keymap (kbd "C-M-<left>") 'sp-backward-slurp-sexp)
-                      (define-key sp-keymap (kbd "C-M-<right>") 'sp-backward-barf-sexp)
-
-                      (define-key sp-keymap (kbd "M-D") 'sp-splice-sexp)
-                      (define-key sp-keymap (kbd "C-M-<delete>") 'sp-splice-sexp-killing-forward)
-                      (define-key sp-keymap (kbd "C-M-<backspace>") 'sp-splice-sexp-killing-backward)
-                      (define-key sp-keymap (kbd "C-S-<backspace>") 'sp-splice-sexp-killing-around)
-
-                      (define-key sp-keymap (kbd "C-]") 'sp-select-next-thing-exchange)
-                      (define-key sp-keymap (kbd "C-<left_bracket>") 'sp-select-previous-thing)
-                      (define-key sp-keymap (kbd "C-M-]") 'sp-select-next-thing)
-
-                      (define-key sp-keymap (kbd "M-F") 'sp-forward-symbol)
-                      (define-key sp-keymap (kbd "M-B") 'sp-backward-symbol)))
+			 ("C-]" . sp-select-next-thing-exchange)
+			 ("C-<left_bracket>" . sp-select-previous-thing)
+			 ("C-M-]" . sp-select-next-thing)
+			 ("C-(" . my-wrap-with-paren)
+			 
+			 ("M-F" . sp-forward-symbol)
+			 ("M-B" . sp-backward-symbol)))
 #+END_SRC
 ** Ag
 #+BEGIN_SRC emacs-lisp
