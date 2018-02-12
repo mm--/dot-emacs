@@ -242,7 +242,6 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Autocompletion, Hippie expand
 
 #+begin_src emacs-lisp
-(bind-key "M-<return>" 'complete-tag) ;;bind complete-tag.
 (bind-key "M-?" 'hippie-expand)
 #+end_src
 
