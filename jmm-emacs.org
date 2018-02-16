@@ -914,8 +914,8 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 ** Dired-X
 Because dired-jump is pretty useful
 #+begin_src emacs-lisp
-(add-hook 'dired-load-hook
-	  (function (lambda () (load "dired-x"))))
+(use-package dired-jump
+  :bind (("C-x C-j" . dired-jump)))
 #+end_src
 
 ** Copying remote file paths
