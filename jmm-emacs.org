@@ -2449,3 +2449,15 @@ It also provides functions for swapping and moving windows, which is super helpf
 	 ("<C-S-left>" . buf-move-left)
 	 ("<C-S-right>" . buf-move-right)))
 #+END_SRC
+** Company
+
+   Company provides pretty decent completion.
+#+BEGIN_SRC emacs-lisp
+(use-package company
+  :init (global-company-mode 1)
+
+  :config
+  (define-key company-active-map (kbd "C-n") 'company-select-next)
+  (define-key company-active-map (kbd "C-p") 'company-select-previous))
+#+END_SRC
+
