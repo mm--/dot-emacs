@@ -921,31 +921,31 @@ Because dired-jump is pretty useful
 ** Copying remote file paths
    Sometimes I want to get the remote file path name, in order to make it easier to rsync and scp.
 #+BEGIN_SRC emacs-lisp
-  (defun josh/dired-copy-remote-filename ()
-    "Copy the file names of marked files in a way that's easy to
-  paste into a terminal. Hopefully understandable by rsync or scp."
-    (interactive)
-    ;; Get the default directory's host name
-    (concat default-directory)
-    (let ((string 
-           (mapconcat 'identity
-                      (mapcar (lambda (path)
-                                (if (tramp-tramp-file-p path)
-                                    (let* ((dissect (tramp-dissect-file-name path))
-                                           (user (elt dissect 1))
-                                           (host (elt dissect 2))
-                                           (loc (elt dissect 3)))
-                                      (concat (if user (concat user "@")) host ":" "\"" (shell-quote-argument loc) "\"")
-                                      )
-                                  (concat "\"" (shell-quote-argument path) "\"")))
-                              (dired-get-marked-files))
-                      " ")))
-      (kill-new string)
-      (x-set-selection 'PRIMARY string)   ;So I can middle click paste it into xterm
-      (message "%s" string)))
+(defun josh/dired-copy-remote-filename ()
+  "Copy the file names of marked files in a way that's easy to
+paste into a terminal. Hopefully understandable by rsync or scp."
+  (interactive)
+  ;; Get the default directory's host name
+  (concat default-directory)
+  (let ((string
+         (mapconcat 'identity
+                    (mapcar (lambda (path)
+                              (if (tramp-tramp-file-p path)
+                                  (let* ((dissect (tramp-dissect-file-name path))
+                                         (user (tramp-file-name-user dissect))
+                                         (host (tramp-file-name-host dissect))
+                                         (loc (tramp-file-name-localname dissect)))
+                                    (concat (if user (concat user "@")) host ":" "\"" (shell-quote-argument loc) "\"")
+                                    )
+                                (concat "\"" (shell-quote-argument path) "\"")))
+                            (dired-get-marked-files))
+                    " ")))
+    (kill-new string)
+    (x-set-selection 'PRIMARY string)   ;So I can middle click paste it into xterm
+    (message "%s" string)))
 
-  (eval-after-load 'dired
-                       '(define-key dired-mode-map (kbd "W") 'josh/dired-copy-remote-filename))
+(eval-after-load 'dired
+                     '(define-key dired-mode-map (kbd "W") 'josh/dired-copy-remote-filename))
 #+END_SRC
 
 ** Opening files with xdg-open
