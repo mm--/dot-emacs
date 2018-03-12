@@ -1482,9 +1482,11 @@ Make an easy way to find files in open dired buffers
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
 #+BEGIN_SRC emacs-lisp
-  (use-package magit
-    :bind (("C-x g" . magit-status)
-	   ("C-x M-g" . magit-dispatch-popup)))
+(use-package magit
+  :bind (("C-x g" . magit-status)
+	 ("C-x M-g" . magit-dispatch-popup)
+	 :map dired-mode-map
+	 ("C-c C-l" . magit-dired-log)))
 #+END_SRC
 
 * Flycheck
