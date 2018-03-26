@@ -757,13 +757,33 @@ of erc-modified-channels-alist"
 #+end_src
 * Clojure
 
+  CIDER is one of the best environments I've worked in. Give it (and
+  Clojure) a try it you haven't already.
+
 #+BEGIN_SRC emacs-lisp
 (use-package cider
+  :ensure t
   :init
+  ;; Handy stuff for starting up figwheel
   (setq cider-cljs-lein-repl
       "(do (require 'figwheel-sidecar.repl-api)
            (figwheel-sidecar.repl-api/start-figwheel!)
-           (figwheel-sidecar.repl-api/cljs-repl))"))
+           (figwheel-sidecar.repl-api/cljs-repl))")
+  :hook ((clojure-mode . clojure-refactor-hook-fn)
+	 (clojure-mode . aggressive-indent-mode)))
+#+END_SRC
+** clj-refactor
+
+   Some handy refactoring things for Clojure. A lot of it is already in Clojure-mode
+#+BEGIN_SRC emacs-lisp
+(use-package clj-refactor
+  :ensure t
+  :after cider)
+
+(defun clojure-refactor-hook-fn ()
+  (clj-refactor-mode 1)
+  (yas-minor-mode 1)
+  (clj-add-keybindings-with-prefix "C-c C-m"))
 #+END_SRC
 
 * Shells
