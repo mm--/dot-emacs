@@ -2185,15 +2185,15 @@ a list of strings specifying which drawers should not be hidden."
    ~org-open-at-point~, which allows me to set specific browser
    programs and arguments for opening a link.
 
-   For example, using ~C-u C-c C-o~, I can open a link in Chromium's
-   incognito mode. With ~C-u 2 C-c C-o~ I can open with Firefox's
-   normal mode. And with ~C-u 3 C-c C-o~ I can open with Firefox's
-   private mode.
+   For example, using ~C-u C-c C-o~, I can open a link in Firefox's
+   private mode. With ~C-u 2 C-c C-o~ I can open with Chromium's
+   normal mode. And with ~C-u 3 C-c C-o~ I can open with Chromium's
+   incognito mode.
 
 #+BEGIN_SRC emacs-lisp
-(defvar jmm/browse-url-generic-alternate '(("chromium" "--incognito")
-					   ("firefox")
-					   ("firefox" "--private-window"))
+(defvar jmm/browse-url-generic-alternate '(("firefox" "--private-window")
+					   ("chromium")
+					   ("chromium" "--incognito"))
   "A list of programs and arguments to set
   `browse-url-generic-program' and
   `browse-url-generic-args'.")
