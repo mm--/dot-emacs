@@ -823,7 +823,7 @@ of erc-modified-channels-alist"
 (defun clojure-refactor-hook-fn ()
   (clj-refactor-mode 1)
   (yas-minor-mode 1)
-  (clj-add-keybindings-with-prefix "C-c C-m"))
+  (cljr-add-keybindings-with-prefix "C-c C-m"))
 #+END_SRC
 
 * Shells
