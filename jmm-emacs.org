@@ -986,15 +986,25 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 
 ** Playing files with mpv
 #+BEGIN_SRC emacs-lisp
-  (defun josh/open-with-mpv ()
-    (interactive)
-    (let ((thefiles (dired-get-marked-files))
-          (process-connection-type nil))
-      (apply 'start-process "" nil "mpvappendscrobble" thefiles)
-      (message (format "Played %i files" (length thefiles)))))
+(defvar jmm/mpv-program-alternates
+  '(("mpvappendscrobble")
+    ("mpv" "--audio-pitch-correction"))
+  "Different media players and arguments to pass to them")
 
-  (add-hook 'dired-mode-hook '(lambda ()
-                                (local-set-key (kbd "J") 'josh/open-with-mpv)))
+(defun josh/open-with-mpv (arg)
+  (interactive "P")
+  (let* ((thefiles (dired-get-marked-files))
+         (process-connection-type nil)
+	 (argind (cond ((not arg) 0)
+		   ((listp arg) (floor (log (car arg) 4)))
+		   ((numberp arg) arg)
+		   (t 0)))
+	 (mpvprog (nth argind jmm/mpv-program-alternates)))
+    (apply 'start-process "" nil (append mpvprog thefiles))
+    (message (format "Played %i files" (length thefiles)))))
+
+(add-hook 'dired-mode-hook '(lambda ()
+                              (local-set-key (kbd "J") 'josh/open-with-mpv)))
 #+END_SRC
 ** git-annex
    I'm messing around with git-annex, and it's nice to be able to view
