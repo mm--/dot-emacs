@@ -974,7 +974,7 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 ** Dired-X
 Because dired-jump is pretty useful
 #+begin_src emacs-lisp
-(use-package dired-jump
+(use-package dired-x
   :bind (("C-x C-j" . dired-jump)))
 #+end_src
 
@@ -1155,6 +1155,7 @@ files, showing the current tags all files currently have in common."
 
 #+BEGIN_SRC emacs-lisp
 (use-package dired-ranger
+  :after (dired)
   :ensure t
   :bind (:map dired-mode-map
 	      ("[" . dired-ranger-copy)
