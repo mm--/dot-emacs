@@ -11,12 +11,12 @@
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
 	ace-jump-move
-	avy-goto-char
 	comment-dwim
 	dabbrev-expand
 	delete-horizontal-space
 	delete-indentation
 	dired-flag-file-deletion
+	dired-mark
 	dired-maybe-insert-subdir
 	dired-next-line
 	dired-previous-line
@@ -36,6 +36,7 @@
 	insert-register
 	jmm/org-add-tag
 	jmm/org-edna-hydra/body
+	jmm/org-edna-hydra/lambda-n-and-exit
 	josh/org-convert-added-or-add-created
 	josh/org-toggle-marked-tag
 	kill-region
@@ -46,6 +47,7 @@
 	matlab-electric-comment
 	matlab-forward-sexp
 	org-beginning-of-line
+	org-comment-dwim
 	org-ctrl-c-ctrl-c
 	org-cut-special
 	org-cycle
@@ -58,10 +60,14 @@
 	org-metaright
 	org-open-line
 	org-previous-visible-heading
+	org-schedule
 	org-self-insert-command
 	org-set-tags-command
 	org-shiftdown
+	org-shiftleft
 	org-shiftmetaleft
+	org-shiftmetaright
+	org-shiftright
 	org-shiftup
 	org-time-stamp-inactive
 	org-transpose-words
@@ -79,15 +85,28 @@
 	sgml-close-tag
 	sgml-slash
 	skewer-css-eval-current-rule
+	sp-backward-sexp
+	sp-backward-unwrap-sexp
+	sp-forward-barf-sexp
+	sp-forward-sexp
+	sp-forward-slurp-sexp
+	sp-kill-sexp
+	sp-splice-sexp
+	sp-splice-sexp-killing-around
+	sp-splice-sexp-killing-backward
+	sp-transpose-sexp
 	transpose-sexps
 	transpose-words
 	unfill-paragraph
 	wdired-capitalize-word
 	wdired-downcase-word
+	wdired-next-line
+	wdired-previous-line
 	wdired-toggle-bit
 	wdired-upcase-word
 	yaml-electric-backspace
 	yaml-electric-dash-and-dot
+	yas-expand
 	))
 
 (setq mc/cmds-to-run-once
@@ -103,6 +122,11 @@
 	ajmc/add-single-cursor
 	ajmc/keyboard-reset
 	avy-goto-char-2
+	avy-goto-char-timer
+	avy-goto-word-1
+	avy-mc-goto-word-1
+	avy-mc-goto-word-1-multiple
+	avy-mc-test-goto-word-1
 	describe-key
 	dumb-jump-back
 	end-of-buffer
@@ -122,6 +146,7 @@
 	orgtbl-hijacker-command-25
 	orgtbl-hijacker-command-5
 	revert-buffer
+	text-scale-adjust
 	undefined
 	wdired-exit
 	wdired-finish-edit
