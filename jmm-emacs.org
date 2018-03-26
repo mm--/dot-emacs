@@ -8,6 +8,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   Here I set up where to find my Elisp files, and the repositories for
   packages.
 #+begin_src emacs-lisp
+(setq use-package-verbose t)
 (add-to-list 'load-path "~/elisp")
 (add-to-list 'load-path "~/.emacs.d/elisp")
 (setq gc-cons-threshold 64000000)
@@ -211,6 +212,28 @@ Set my font
 (define-key (current-global-map) [remap imenu] 'helm-imenu)
 ;; Replaced with helm
 #+end_src
+** Keybindings to load org
+   Again, most of my org-mode configuration is [[./jmm-org-config.org][here]], but for some dumb
+   reason I'm trying to get my emacs startup time fast (which is dumb
+   because I just keep a daemon running and use ~emacsclient~ 🤷), so
+   I don't load my org config until org is actually loaded. These are
+   some keybindings I use to load org.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org
+  :ensure org-plus-contrib
+  :bind (("C-c c" . org-capture)
+	 ("C-c a" . org-agenda)
+	 ("C-c l" . org-store-link)
+	 ("C-c L" . org-insert-link-global)
+	 ("C-c o" . org-open-at-point-global)
+	 ("<f12>" . jmm/org-default-agenda)
+	 ("<f9> i" .  jmm/org-export-ical-stuff)
+	 ("<f9> j" . josh/helm-org-jump)
+	 ("<f9> z" . josh/helm-org-clock-in2)
+	 ("<f9> J" . jmm/helm-org-jump-project))
+  :mode ("\\.org\\'" . org-mode))
+#+END_SRC
 
 * Autosaves and backups
 
