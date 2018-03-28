@@ -2547,4 +2547,11 @@ It also provides functions for swapping and moving windows, which is super helpf
 	 ("C-n" . company-select-next)
 	 ("C-p" . company-select-previous)))
 #+END_SRC
+** Docker
+
+#+BEGIN_SRC emacs-lisp
+(use-package dockerfile-mode
+  :ensure t
+  :mode ("Dockerfile\\'" . dockerfile-mode))
+#+END_SRC
 
