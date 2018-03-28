@@ -1,7 +1,7 @@
 # Josh's Emacs Config
 
 Hey there! This repository contains my Emacs configuration file (see
-`jmm-emacs.org`). My org-mode configuration is located in [`jmm-org-config.org`](./jmm-org-config.org)
+[`jmm-emacs.org`](./jmm-emacs.org)). My org-mode configuration is located in [`jmm-org-config.org`](./jmm-org-config.org)
 
 Most of the documentation is included in the Emacs configuration itself, it's much like Sacha Chua's Emacs configuration.
 
