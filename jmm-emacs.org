@@ -1990,7 +1990,31 @@ specifies the list of buffers to kill, asking for approval for each one."
   :init (setq avy-keys (number-sequence ?a ?z)
 	      avy-style 'at-full
 	      avy-background t
-	      avy-timeout-seconds 0.3))
+	      avy-timeout-seconds 0.3)
+  :config
+  (add-to-list 'avy-dispatch-alist
+	       '(?M . jmm/avy-action-add-mc)))
+#+END_SRC
+
+You can add a multiple cursor by customizing
+~avy-dispatch-alist~. Here I define a function that adds a multiple
+cursor to an avy candidate. The way you use it is as follows: Use your
+favorite avy jump technique (~avy-goto-char-timer~ or
+~avy-goto-word-1~ for example), and before pressing the candidate key,
+press capital ~M~. Then press the candidate key. This will leave your
+cursor in place but add a multiple cursor to the candidate location.
+
+One caveat is that you /need/ to have multiple candidates to use
+~avy-dispatch-alist~. If there's only one candidate, you'll
+immediately jump to it without giving you a chance to activate the ~M~
+dispatch action.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/avy-action-add-mc (pt)
+  "Add multiple cursor at PT."
+  (save-excursion
+    (goto-char pt)
+    (mc/create-fake-cursor-at-point)
+    (mc/maybe-multiple-cursors-mode)))
 #+END_SRC
 
 * Other modes
