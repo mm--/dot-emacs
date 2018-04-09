@@ -2579,3 +2579,19 @@ It also provides functions for swapping and moving windows, which is super helpf
   :mode ("Dockerfile\\'" . dockerfile-mode))
 #+END_SRC
 
+** YAML
+#+BEGIN_SRC emacs-lisp
+(use-package yaml-mode
+  :ensure t
+  :mode ("\\.\\(e?ya?\\|ra\\)ml\\'" . yaml-mode))
+#+END_SRC
+
+** Eyebrowse
+
+   [[https://github.com/wasamasa/eyebrowse][Eyebrowse]] seems like a decent way to manage window configurations.
+
+#+BEGIN_SRC emacs-lisp
+(use-package eyebrowse
+  :config
+  (eyebrowse-mode t))
+#+END_SRC
