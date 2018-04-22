@@ -46,6 +46,7 @@ loaded ~org-plus-contrib~
   :defer t
   :bind (:map org-agenda-mode-map
 	      ("M-P" . josh/org-agenda-lock-to-parent-project))
+  :hook ((org-agenda-mode . hl-line-mode))
   :config
   (require 'org-clock))
 #+END_SRC
