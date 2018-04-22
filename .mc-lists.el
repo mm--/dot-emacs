@@ -46,6 +46,9 @@
 	markdown-exdent-or-delete
 	matlab-electric-comment
 	matlab-forward-sexp
+	org-agenda-bulk-mark
+	org-agenda-bulk-unmark-all
+	org-agenda-previous-line
 	org-beginning-of-line
 	org-comment-dwim
 	org-ctrl-c-ctrl-c
