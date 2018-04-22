@@ -1386,6 +1386,7 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 (require 'helm-config)
 (bind-key "C-c h" 'helm-mini)
 (use-package helm-mode
+  :diminish helm-mode
   :bind (("M-x" . helm-M-x)
 	 ("C-x b" . helm-buffers-list)
 	 ("C-x C-f" . helm-find-files)
@@ -2563,6 +2564,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 #+BEGIN_SRC emacs-lisp
 (use-package company
   :if (not noninteractive)
+  :diminish company-mode
   :ensure t
   :defer 3
   :init (global-company-mode 1)
