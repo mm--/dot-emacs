@@ -286,13 +286,6 @@ When template doesn't have a cdr, delete it."
       (quote
        (("w" todo "WAITING")
         ("W" todo-tree "WAITING")
-        ("H" "Office and Home Lists"
-         ((agenda)
-          (tags-todo "OFFICE")
-          (tags-todo "HOME")
-          (tags-todo "COMPUTER")
-          (tags-todo "DVD")
-          (tags-todo "READING")))
         ("b" "Things to do if bored"
          tags "IFBORED"
          ((org-agenda-skip-function '(org-agenda-skip-entry-if 'todo 'done)))
@@ -305,14 +298,6 @@ When template doesn't have a cdr, delete it."
                       (org-agenda-sorting-strategy
                        (quote ((agenda time-up priority-down tag-up) )))
                       (org-deadline-warning-days 0)))))
-        ("z" "ZPM (hipster PDA)"
-         ((agenda "" ((org-agenda-span 33)
-                      (org-habit-show-habits nil)
-                      (org-agenda-show-log nil)
-                      (org-agenda-start-with-clockreport-mode nil)
-                      (org-agenda-sorting-strategy
-                       (quote ((agenda time-up priority-down tag-up) )))
-                      ))))
 	;; Agenda of tasks that are labeled "TODO" but don't have any schedule or deadline.
 	("u" "Unscheduled" todo "TODO"
 	 ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
@@ -320,13 +305,7 @@ When template doesn't have a cdr, delete it."
 	  (org-agenda-overriding-header "Unscheduled tasks: ")))
         ("U" "Unscheduled NoDeadline" alltodo ""
          ((org-agenda-skip-function
-           '(org-agenda-skip-entry-if 'scheduled 'deadline))))
-        ("d" agenda "" ((org-agenda-span 1)) ("~/agendas-org/day-agenda.html"))
-        ("k" agenda "" ((org-agenda-span 7)) ("~/agendas-org/week-agenda.html"))
-        ("X" agenda "" ((org-agenda-span 3)
-                        ;; (org-agenda-start-with-log-mode t)
-                        (org-agenda-start-with-clockreport-mode t)) ("~/org/newtab/agenda.html"))
-        )))
+           '(org-agenda-skip-entry-if 'scheduled 'deadline)))))))
 #+end_src
 
 An agenda which shows which papers I should read.
@@ -404,12 +383,14 @@ A projects-related agenda. View next tasks, waiting, and stuck projects.
 
 Same thing as above, but also include the next three days agenda.
 #+BEGIN_SRC emacs-lisp
-(org-add-agenda-custom-command
- '(" " "Default agenda"
-   ((agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
+(defvar jmm/agenda-two-span
+  '(agenda "" ((org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-show-effort-and-clocked) ")
                 (org-agenda-skip-scheduled-if-done t)
                 (org-agenda-span 2)))
-    (tags-todo "-CANCELLED-HOLD/!NEXT"
+  "An agenda for the next couple days that shows effort and clocked time.")
+
+(defvar jmm/agenda-unscheduled-next
+  '(tags-todo "-CANCELLED-HOLD/!NEXT"
           ((org-agenda-overriding-header "Unscheduled next tasks")
            (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-next-time) ")
 	   (org-agenda-cmp-user-defined 'jmm/org-agenda-sort-next-time)
@@ -418,32 +399,60 @@ Same thing as above, but also include the next three days agenda.
            (org-agenda-skip-function
             (lambda () (or (org-agenda-skip-entry-if 'scheduled 'deadline)
                            (bh/skip-projects-and-habits-and-single-tasks))))))
-    (tags-todo "-CANCELLED+WAITING/!"
-               ((org-agenda-overriding-header "Unscheduled waiting tasks")
-                (org-agenda-skip-function
-                 (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))
-                (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
-    (tags-todo "-CANCELLED-HOLD/!"
+  "An agenda that shows unscheduled NEXT tasks.")
+
+(defvar jmm/agenda-unscheduled-waiting
+  '(tags-todo "-CANCELLED+WAITING/!"
+              ((org-agenda-overriding-header "Unscheduled waiting tasks")
+               (org-agenda-skip-function
+                (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))
+               (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
+  "An agenda that shows waiting tasks, and how long they've been waiting for.")
+
+(defvar jmm/agenda-stuck-projects
+  '(tags-todo "-CANCELLED-HOLD/!"
                ((org-agenda-overriding-header "Stuck Projects")
                 (org-agenda-skip-function 'bh/skip-non-stuck-projects)
                 (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-max-clock-time) ")))
-    (tags "REFILE"
+  "An agenda that shows stuck projects")
+
+(defvar jmm/agenda-refile-stuff
+  '(tags "REFILE"
           ((org-agenda-hide-tags-regexp "REFILE")
 	   (org-agenda-overriding-header "Refile:")))
-    (todo "TODO"
-          ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
-                                                    ;; (bh/skip-projects-and-habits)
-                                                    (josh/skip-project-to-next-heading)
-                                                    (org-agenda-skip-entry-if 'scheduled 'deadline))))
-           (org-agenda-overriding-header "Unscheduled tasks: ")
-	   (org-agenda-cmp-user-defined 'jmm/org-agenda-sort-created-time)
-	   (org-sort-agenda-notime-is-late nil)
-	   (org-agenda-sorting-strategy '(priority-down user-defined-down))
-           (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) "))))))
+  "Agenda that shows things to refile.")
+
+(defvar jmm/agenda-unscheduled-tasks
+  '(todo "TODO"
+         ((org-agenda-skip-function (lambda () (or (zin/org-agenda-skip-tag "task" t)
+                                                   ;; (bh/skip-projects-and-habits)
+                                                   (josh/skip-project-to-next-heading)
+                                                   (org-agenda-skip-entry-if 'scheduled 'deadline))))
+          (org-agenda-overriding-header "Unscheduled tasks: ")
+	  (org-agenda-cmp-user-defined 'jmm/org-agenda-sort-created-time)
+	  (org-sort-agenda-notime-is-late nil)
+	  (org-agenda-sorting-strategy '(priority-down user-defined-down))
+          (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-age-from-added) ")))
+  "An agenda that shows unscheduled tasks and how old they are.")
+
+(org-add-agenda-custom-command
+ `("  " "Default agenda"
+   (,jmm/agenda-two-span
+    ,jmm/agenda-unscheduled-next
+    ,jmm/agenda-unscheduled-waiting
+    ,jmm/agenda-stuck-projects
+    ,jmm/agenda-refile-stuff
+    ,jmm/agenda-unscheduled-tasks)))
+
+(org-add-agenda-custom-command `(" d" "Scheduled agenda" (,jmm/agenda-two-span)))
+(org-add-agenda-custom-command `(" u" "Unscheduled things" (,jmm/agenda-unscheduled-next ,jmm/agenda-unscheduled-waiting ,jmm/agenda-unscheduled-tasks)))
+(org-add-agenda-custom-command `(" r" "Stuck projects" (,jmm/agenda-stuck-projects ,jmm/agenda-unscheduled-waiting)))
+(org-add-agenda-custom-command `(" r" "Refile things" (,jmm/agenda-refile-stuff)))
+
 (defun jmm/org-default-agenda ()
   "Display my default org agenda"
   (interactive)
-  (org-agenda nil " "))
+  (org-agenda nil "  "))
 #+END_SRC
 
 Other agendas. Like movies to see, things I need to buy, and so on.
