@@ -122,7 +122,7 @@ Enable all the disabled commands
 (setq mouse-autoselect-window t) ;Sloppy focus
 (setq inhibit-splash-screen t)
 (setq Man-notify-method 'pushy)
-;;(set-default-font "-misc-fixed-medium-r-normal-*-13-*-*-*-*-*-*-*")
+;;(set-frame-font "-misc-fixed-medium-r-normal-*-11-*-*-*-*-*-*-*")
 (setq visual-line-fringe-indicators '(nil right-curly-arrow))
 (setq mouse-yank-at-point t)
 
