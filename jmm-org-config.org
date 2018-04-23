@@ -463,7 +463,7 @@ Other agendas. Like movies to see, things I need to buy, and so on.
       (org-agenda-overriding-header "Shopping stuff: "))))
 
 (org-add-agenda-custom-command
-   '("v" "Movies" tags "+movie-TODO=\"DONE\"-TODO=\"CANCELLED\""
+   '("v" "Movies" tags-todo "+movie"
      ((org-agenda-hide-tags-regexp "movie")
       (org-agenda-overriding-header "Movies to see: "))))
 #+END_SRC
