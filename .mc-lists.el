@@ -11,6 +11,7 @@
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
 	ace-jump-move
+	clojure-align
 	comment-dwim
 	dabbrev-expand
 	delete-horizontal-space
