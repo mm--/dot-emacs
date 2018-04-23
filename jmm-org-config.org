@@ -625,7 +625,7 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
 				 ("IGNORE" . ?i)
                                  ("breakdown" . ?b) ("IFBORED" . ?B)
 				 ("CANCELLED" . ?C)
-                                 ("work" . ?w) ("home" . ?h)
+                                 ("WAITING" . ?w) ("home" . ?h)
                                  ("REWARD" . ?R) ("SHOPPING" . ?s)
                                  ("paper" . ?p) ("erlich" . ?e) ("@net" . ?n) ("nyu" . ?y)
 				 ("event" . ?E)
