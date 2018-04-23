@@ -446,7 +446,7 @@ Same thing as above, but also include the next three days agenda.
 
 (org-add-agenda-custom-command `(" d" "Scheduled agenda" (,jmm/agenda-two-span)))
 (org-add-agenda-custom-command `(" u" "Unscheduled things" (,jmm/agenda-unscheduled-next ,jmm/agenda-unscheduled-waiting ,jmm/agenda-unscheduled-tasks)))
-(org-add-agenda-custom-command `(" r" "Stuck projects" (,jmm/agenda-stuck-projects ,jmm/agenda-unscheduled-waiting)))
+(org-add-agenda-custom-command `(" s" "Stuck projects" (,jmm/agenda-stuck-projects ,jmm/agenda-unscheduled-waiting)))
 (org-add-agenda-custom-command `(" r" "Refile things" (,jmm/agenda-refile-stuff)))
 
 (defun jmm/org-default-agenda ()
