@@ -98,8 +98,9 @@ Enable all the disabled commands
 (column-number-mode 1)
 (show-paren-mode 1)
 (menu-bar-mode -1)
-(tool-bar-mode 0)
-(scroll-bar-mode 0)
+;; I'll set this in customize, so by default it doesn't take it away.
+;; (tool-bar-mode 0)
+;; (scroll-bar-mode 0)
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
 (blink-cursor-mode 0)
 
