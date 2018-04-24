@@ -24,7 +24,8 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 
 #+BEGIN_SRC emacs-lisp
 (setq package-enable-at-startup nil)
-(package-initialize t)
+(unless (>= emacs-major-version 27)
+  (package-initialize))
 (when (not package-archive-contents)
   (package-refresh-contents))
 (defvar my-packages '(ess
