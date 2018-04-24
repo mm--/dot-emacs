@@ -105,9 +105,6 @@ Enable all the disabled commands
 
 (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
 (set-register ?d '(file . "~/Downloads/"))
-(set-register ?l '(file . "~/org/josh-ledger.dat"))
-(set-register ?n '(file . "~/org/neuroecon.org"))
-(set-register ?o '(file . "~/org/gtd-test.org"))
 
 (server-start)
 
