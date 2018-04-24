@@ -454,7 +454,7 @@ Same thing as above, but also include the next three days agenda.
 (defun jmm/org-default-agenda ()
   "Display my default org agenda"
   (interactive)
-  (org-agenda nil "  "))
+  (org-agenda nil " d"))
 #+END_SRC
 
 Other agendas. Like movies to see, things I need to buy, and so on.
