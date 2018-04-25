@@ -45,6 +45,7 @@
 	ledger-magic-tab
 	ledger-post-align-xact
 	markdown-exdent-or-delete
+	markdown-outdent-or-delete
 	matlab-electric-comment
 	matlab-forward-sexp
 	org-agenda-bulk-mark
