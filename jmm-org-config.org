@@ -2111,6 +2111,23 @@ a list of strings specifying which drawers should not be hidden."
     (when (or (jmm/org-goto-parent-project) (org-up-heading-safe))
       (org-map-tree 'jmm/org-hide-planning-stuff))))
 #+END_SRC
+** Expand org-mode when using ediff
+   I use [[https://github.com/orgzly/orgzly-android][orgzly]] a lot these days, so I often need to sync org-mode
+   changes between my phone and computer. For this I use
+   ~ediff-directories~.
+
+   Normally my org-mode files are started folded, but when ediffing I
+   want to see everything. This adds that. (Based off [[https://emacs.stackexchange.com/a/21336][this answer]] in
+   Stack Overflow)
+#+BEGIN_SRC emacs-lisp
+(defun jmm/ediff-expand-all ()
+  "Show everything in ediff when opening org files."
+  (when (eq major-mode 'org-mode)
+    (outline-show-all)))
+
+(add-hook 'ediff-prepare-buffer-hook #'jmm/ediff-expand-all)
+#+END_SRC
+
 * Links
 ** PDFView links
 
