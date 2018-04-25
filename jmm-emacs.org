@@ -810,6 +810,10 @@ of erc-modified-channels-alist"
            (figwheel-sidecar.repl-api/cljs-repl))")
   :hook ((clojure-mode . clojure-refactor-hook-fn)
 	 (clojure-mode . aggressive-indent-mode)))
+
+(use-package aggressive-indent
+  :ensure t
+  :after cider)
 #+END_SRC
 ** clj-refactor
 
