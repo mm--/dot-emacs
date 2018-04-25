@@ -586,42 +586,6 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   (add-hook 'comint-output-filter-functions
             'comint-truncate-buffer)
 #+end_src
-** Polymode/Rmarkdown
-   I'm experimenting with writing code in Rmarkdown, mostly because
-   I'll write a bunch of R code, and then totally forget what it does
-   or why I wrote it. Also, also, I want to generate nice reports. :D
-
-  The way polymode renders Rmarkdown right now is a big weird. I think
-  it just uses knitr. So here's some code from kwstat in uses
-  https://github.com/vspinu/polymode/issues/30 that uses rmarkdown.
-#+BEGIN_SRC emacs-lisp
-  (use-package polymode
-    :mode ("\\.Rmd" . poly-markdown+r-mode)
-    :config
-    (define-key polymode-mode-map (kbd "M-n r") 'ess-render-rmarkdown))
-
-  (defun ess-render-rmarkdown ()
-    "Compile R markdown (.Rmd). Should work for any output type."
-    (interactive)
-    ;; Check if attached R-session
-    (condition-case nil
-        (ess-get-process)
-      (error
-       (ess-switch-process)))
-    (let* ((rmd-buf (current-buffer)))
-      (save-excursion
-        (let* ((sprocess (ess-get-process ess-current-process-name))
-               (sbuffer (process-buffer sprocess))
-               (buf-coding (symbol-name buffer-file-coding-system))
-               (buffer-file-name-html (concat (file-name-sans-extension buffer-file-name) ".html"))
-               (R-cmd
-                (format "library(rmarkdown); rmarkdown::render(\"%s\"); print(\"%s\")"
-                        buffer-file-name buffer-file-name-html)))
-          (message "Running rmarkdown on %s" buffer-file-name)
-          (ess-execute R-cmd 'buffer nil nil)
-          (switch-to-buffer rmd-buf)
-          (ess-show-buffer (buffer-name sbuffer) nil)))))
-#+END_SRC
 * ERC
 I don't really use ERC anymore.
 #+begin_src emacs-lisp
@@ -2601,4 +2565,23 @@ It also provides functions for swapping and moving windows, which is super helpf
   :ensure t
   :config
   (eyebrowse-mode t))
+#+END_SRC
+** Markdown mode
+   I'm using markdown mode to edit markdown and Rmarkdown files.
+
+#+BEGIN_SRC emacs-lisp
+(use-package markdown-mode
+  :mode (("\\.Rmd" . markdown-mode)
+	 ("\\.markdown\\'" . markdown-mode)
+	 ("\\.md\\'" . markdown-mode))
+  :ensure t)
+#+END_SRC
+
+When editing code indirectly (with ~edit-indirect-region~, which
+~markdown-mode~ calls), display it in the same window. I don't want it
+obscuring other windows.
+
+#+BEGIN_SRC emacs-lisp
+(add-to-list 'display-buffer-alist
+	     `("^\\*edit-indirect" . (,#'display-buffer-same-window)))
 #+END_SRC
