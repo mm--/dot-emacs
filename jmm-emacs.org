@@ -1038,7 +1038,6 @@ paste into a terminal. Hopefully understandable by rsync or scp."
    locked files by their name and not as a giant symlink in dired.
 #+BEGIN_SRC emacs-lisp
 (use-package git-annex
-  :defer 10
   :config
   (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
   (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
@@ -1047,18 +1046,17 @@ paste into a terminal. Hopefully understandable by rsync or scp."
   (define-key git-annex-dired-map "t" 'jmm/dired-git-annex-tag)
   ;; git-annex.el kinda clobbers dired-marked-face and dired-flagged-face
   ;; This fixes that
-  (eval-after-load "dired"
-    '(progn
-       (add-to-list 'dired-font-lock-keywords
-		    (list "^[*].+ -> .*\\.git/annex/"
-			  '("\\(.+\\)\\( -> .+\\)" (dired-move-to-filename) nil
-			    (1 dired-marked-face)
-			    (2 git-annex-dired-annexed-invisible))))
-       (add-to-list 'dired-font-lock-keywords
-		    (list "^[D].+ -> .*\\.git/annex/"
-			  '("\\(.+\\)\\( -> .+\\)" (dired-move-to-filename) nil
-			    (1 dired-flagged-face)
-			    (2 git-annex-dired-annexed-invisible))))))
+  (progn
+    (add-to-list 'dired-font-lock-keywords
+		 (list "^[*].+ -> .*\\.git/annex/"
+		       '("\\(.+\\)\\( -> .+\\)" (dired-move-to-filename) nil
+			 (1 dired-marked-face)
+			 (2 git-annex-dired-annexed-invisible))))
+    (add-to-list 'dired-font-lock-keywords
+		 (list "^[D].+ -> .*\\.git/annex/"
+		       '("\\(.+\\)\\( -> .+\\)" (dired-move-to-filename) nil
+			 (1 dired-flagged-face)
+			 (2 git-annex-dired-annexed-invisible)))))
   :after (dired))
 #+END_SRC
 *** Make it easy to add metadata tags in git-annex
