@@ -830,6 +830,21 @@ of erc-modified-channels-alist"
 
 (bind-key "C-x 4 s" 'run-half-shell)
 #+end_src
+** Shell pop
+   [[https://github.com/kyagi/shell-pop-el][Shell pop]] is kinda handy for shells. I still mostly just use xterms
+   (see the `start-xterm` function), but maybe I'll switch to `ansi-term` in Emacs.
+#+BEGIN_SRC emacs-lisp
+(use-package shell-pop
+  :if window-system
+  :unless noninteractive
+  :bind ("C-c t" . shell-pop)
+  :init
+  (setq shell-pop-shell-type '("ansi-term" "*ansi-term*"
+			       (lambda ()
+				 (ansi-term shell-pop-term-shell))))
+  (setq shell-pop-universal-key "C-c t"))
+#+END_SRC
+
 * Encryption
 #+begin_src emacs-lisp
 (require 'epa-file)			;So we can encrypt authinfo
