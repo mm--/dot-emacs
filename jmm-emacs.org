@@ -2562,9 +2562,18 @@ It also provides functions for swapping and moving windows, which is super helpf
 
 #+BEGIN_SRC emacs-lisp
 (use-package eyebrowse
+  :if (not noninteractive)
   :ensure t
+  :bind-keymap ("C-c w" . eyebrowse-mode-map)
+  :init
+  ;; So we don't override "refile" for org-mode
+  (setq eyebrowse-keymap-prefix (kbd "C-c w"))
+  ;; Switch to scratch buffer for a new workspace
+  (setq eyebrowse-new-workspace t)
   :config
-  (eyebrowse-mode t))
+  (eyebrowse-mode t)
+  ;; Se we defer loading, we'll need to initialize all frames when we first call it.
+  (--each (with-selected-frame it (eyebrowse-init)) (frame-list)))
 #+END_SRC
 ** Markdown mode
    I'm using markdown mode to edit markdown and Rmarkdown files.
