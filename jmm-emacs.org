@@ -1836,7 +1836,26 @@ specifies the list of buffers to kill, asking for approval for each one."
     (fill-paragraph nil region)))
 (define-key global-map (kbd "C-M-q") 'unfill-paragraph)
 #+END_SRC
+** Jump to a key's definition
+   I use ~C-h k~ a lot to find out more about what an Emacs keybinding
+   does. Sometimes I'm interested in just directly jumping to the
+   definition of the command, instead of reading in the `*Help*`
+   buffer and clicking the link to the definition (which opens a
+   separate window, which also annoys me).
 
+   This command, bound to ~C-h C-k~ prompts for a keybinding and jumps
+   directly to its definition. You can pop back with ~M-,~.
+#+BEGIN_SRC emacs-lisp
+;; FIXME: This doesn't seem to work in other modes.
+(defun jmm/jump-to-key-definition (&optional key-list)
+  "Kind of like `describe-key', but just jump directly to the
+definition without bringing up a help buffer."
+  (interactive (list (help--read-key-sequence)))
+  (let ((key-to-check (car (-map #'car key-list))))
+    (xref-find-definitions (nth 1 (help--analyze-key key-to-check nil)))))
+
+(bind-key "C-h C-k" 'jmm/jump-to-key-definition)
+#+END_SRC
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
