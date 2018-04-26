@@ -149,8 +149,8 @@ Make scripts executable
 
 ** Dealing with the clipboard
 #+begin_src emacs-lisp
-(setq x-select-enable-clipboard t) ; as above
-(setq interprogram-paste-function 'x-cut-buffer-or-selection-value)
+(setq select-enable-clipboard t) ; as above
+(setq interprogram-paste-function #'gui-selection-value)
 (setq select-enable-primary t)
 #+end_src
 ** Windmove
@@ -185,7 +185,6 @@ Make scripts executable
 * Theme/Appearance
 #+begin_src emacs-lisp
 (when window-system
-  (add-to-list 'custom-theme-load-path "~/elisp/zenburn-emacs/")
   (load-theme 'zenburn))
 #+end_src
 ** Font
@@ -289,7 +288,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
   (unless old
     (he-init-string (he-dict-command-beg) (point))
     (setq he-expand-list (sort
-			  (all-completions he-search-string (mapcar 'list (lookup-words (concat old "*") ispell-complete-word-dict)))
+			  (all-completions he-search-string (mapcar 'list (ispell-lookup-words (concat old "*") ispell-complete-word-dict)))
 			  'string-lessp)))
   (while (and he-expand-list
               (he-string-member (car he-expand-list) he-tried-table))
@@ -615,10 +614,10 @@ I don't really use ERC anymore.
 of erc-modified-channels-alist"
   (interactive)
   (let ((blinkify nil))
-    (mapcar (lambda (el)
-	      (when (string-match "erc-current-nick-face" (face-name (nthcdr 2 el)))
-		(setq blinkify t)))
-	    erc-modified-channels-alist)
+    (mapc (lambda (el)
+	    (when (string-match "erc-current-nick-face" (face-name (nthcdr 2 el)))
+	      (setq blinkify t)))
+	  erc-modified-channels-alist)
     (erc-tray-change-state blinkify)))
 (when window-system
   (add-hook 'erc-track-list-changed-hook 'erc-tray-update-state))
@@ -768,12 +767,11 @@ of erc-modified-channels-alist"
 	 ("\\.\\(clj\\|dtm\\|edn\\)\\'" . clojure-mode))
   :init
   ;; Handy stuff for starting up figwheel
-  (setq cider-cljs-lein-repl
+  (setq cider-default-cljs-repl
       "(do (require 'figwheel-sidecar.repl-api)
            (figwheel-sidecar.repl-api/start-figwheel!)
            (figwheel-sidecar.repl-api/cljs-repl))")
-  :hook ((clojure-mode . clojure-refactor-hook-fn)
-	 (clojure-mode . aggressive-indent-mode)))
+  :hook ((clojure-mode . aggressive-indent-mode)))
 
 (use-package aggressive-indent
   :ensure t
@@ -783,14 +781,15 @@ of erc-modified-channels-alist"
 
    Some handy refactoring things for Clojure. A lot of it is already in Clojure-mode
 #+BEGIN_SRC emacs-lisp
-(use-package clj-refactor
-  :ensure t
-  :after cider)
-
 (defun clojure-refactor-hook-fn ()
   (clj-refactor-mode 1)
   (yas-minor-mode 1)
   (cljr-add-keybindings-with-prefix "C-c C-m"))
+
+(use-package clj-refactor
+  :ensure t
+  :after cider
+  :hook (clojure-mode . clojure-refactor-hook-fn))
 #+END_SRC
 
 * Shells
@@ -883,45 +882,44 @@ Sometimes IMAP freezes, so I like to be able to kill it.
    pretty useful for RSS feeds when I'm interested in an article and
    want to read more.
 #+BEGIN_SRC emacs-lisp
-  (defun josh/get-link-info-at-point ()
-    "Return a cons of the link's text and url"
-    (let* ((widget (widget-at (point)))
-           (start (widget-get widget :from))
-           (end (widget-get widget :to)))
-      (cons (if start
-                (buffer-substring-no-properties start end))
-            (widget-get widget :value))))
+(defun josh/get-link-info-at-point ()
+  "Return a cons of the link's text and url"
+  (let* ((widget (widget-at (point)))
+         (start (widget-get widget :from))
+         (end (widget-get widget :to)))
+    (cons (if start
+              (buffer-substring-no-properties start end))
+          (widget-get widget :value))))
 
-  (defun josh/get-all-links ()
-    "Return a list of links in the buffer"
-    (let (links)
-      (save-excursion
-        (goto-char (point-min))
-        (while (progn
-                 (let ((skip (text-property-any (point) (point-max) 'help-echo nil)))
-                   (if (or (eobp)
-                           (not (setq skip (text-property-not-all skip (point-max)
-                                                                  'help-echo nil))))
-                       nil
-                     (progn
-                       (goto-char skip)
-                       (setq links (cons (josh/get-link-info-at-point) links)))))))
-      links)))
-
-  (defun josh/gnus-follow-link ()
-    "Find the link named \"link\" and follow it in the browser"
-    (interactive)
+(defun josh/get-all-links ()
+  "Return a list of links in the buffer"
+  (let (links)
     (save-excursion
-      (set-buffer gnus-article-buffer)
-      (let ((link
-             (-filter (lambda (x) (and (stringp (car x)) (string-match "link" (car x))))
-                      (josh/get-all-links))))
-        (if link
-            (funcall shr-external-browser (cdar link))))))
+      (goto-char (point-min))
+      (while (progn
+               (let ((skip (text-property-any (point) (point-max) 'help-echo nil)))
+                 (if (or (eobp)
+                         (not (setq skip (text-property-not-all skip (point-max)
+                                                                'help-echo nil))))
+                     nil
+                   (progn
+                     (goto-char skip)
+                     (setq links (cons (josh/get-link-info-at-point) links)))))))
+    links)))
 
-  (add-hook 'gnus-summary-mode-hook
-            (lambda ()
-              (local-set-key (kbd "v") 'josh/gnus-follow-link)))
+(defun josh/gnus-follow-link ()
+  "Find the link named \"link\" and follow it in the browser"
+  (interactive)
+  (with-current-buffer gnus-article-buffer
+    (let ((link
+           (-filter (lambda (x) (and (stringp (car x)) (string-match "link" (car x))))
+                    (josh/get-all-links))))
+      (if link
+          (funcall shr-external-browser (cdar link))))))
+
+(add-hook 'gnus-summary-mode-hook
+          (lambda ()
+            (local-set-key (kbd "v") 'josh/gnus-follow-link)))
 #+END_SRC
 * Dired
 ** Listing switches
@@ -952,8 +950,6 @@ Because dired-jump is pretty useful
   "Copy the file names of marked files in a way that's easy to
 paste into a terminal. Hopefully understandable by rsync or scp."
   (interactive)
-  ;; Get the default directory's host name
-  (concat default-directory)
   (let ((string
          (mapconcat 'identity
                     (mapcar (lambda (path)
@@ -968,7 +964,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
                             (dired-get-marked-files))
                     " ")))
     (kill-new string)
-    (x-set-selection 'PRIMARY string)   ;So I can middle click paste it into xterm
+    (gui-set-selection 'PRIMARY string)   ;So I can middle click paste it into xterm
     (message "%s" string)))
 
 (eval-after-load 'dired
