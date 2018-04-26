@@ -767,7 +767,6 @@ let's only export org-mode agenda files that are newer than their
 ~.ics~ counterparts.
 
 #+BEGIN_SRC emacs-lisp
-
 (defun jmm/org-should-export-new-ics ()
   "Should we export a new icalendar .ics file for the current buffer?
 We do this if either
@@ -806,6 +805,12 @@ we're considering exporting."
 		       output-files)))))
       (message "All icalendar files are already up to date"))))
 #+END_SRC
+
+Add our ~org-export-async-init-file~, without which exporting doesn't work so good :/
+#+BEGIN_SRC emacs-lisp
+(setq org-export-async-init-file "~/.emacs.d/org-async-init.el")
+#+END_SRC
+
 
 * Clocking
 ** Easier method to clock into some frequent habits
@@ -1030,12 +1035,40 @@ These functions clock into a task if it exists and creates it using
   :bind (("<f9> h" . org-recent-headings-helm)))
 #+END_SRC
 * Refiling to other places
-   This is so we're able to refile to other files
+   This is so we're able to refile to other files.
+   You also might be interested in my blog post "[[http://mollermara.com/blog/Fast-refiling-in-org-mode-with-hydras/][Fast refiling in org-mode with hydras]]".
 #+begin_src emacs-lisp
   (setq org-refile-targets (quote ((nil :maxlevel . 9)
                                    (org-agenda-files :maxlevel . 9)
                                    (("~/org/lookup.org") :maxlevel . 1))))
 #+end_src
+
+   Just to make things a bit easier, I only want to refile to
+   headlines with children. Also, cache this to make getting targets
+   faster.
+
+   If I need to refile to a headline without a child, I'll generally
+   just cut the subtree, find the new parent with ~helm-org-rifle~,
+   and paste it there. Most easy/quick refiling is explained in my
+   blog post though.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-is-valid-refile-target ()
+  "Is this headline a valid refile target?
+I normally don't refile to \"DONE\" headlines, or headlines without
+  children.
+Return t if it's a valid target, otherwise return nil."
+  ;; Skip returns the opposite of what we want.
+  ;; Is it not DONE?
+  (and (not (org-agenda-skip-entry-if 'todo 'done))
+      ;; And does it have a child?
+      (save-excursion
+	(save-match-data
+	  (org-goto-first-child)))))
+
+(setq org-refile-target-verify-function #'jmm/org-is-valid-refile-target)
+(setq org-refile-use-cache t)
+#+END_SRC
+
 * Better task states
    From http://doc.norang.ca/org-mode.html
 #+begin_src emacs-lisp
@@ -1063,6 +1096,14 @@ These functions clock into a task if it exists and creates it using
               ("DONE" ("WAITING") ("CANCELLED") ("HOLD") ("IFBORED")))))
 #+end_src
 * Babel
+  Org babel is a /fantastic/ library for literate programming.
+  Probably the best, really. There are so many language integrations.
+** Install some commonly used packages
+   Here I install some packages that provide code support for languages I commonly use with babel.
+#+BEGIN_SRC emacs-lisp
+(use-package ob-ipython
+  :ensure t)
+#+END_SRC
 ** Babel languages and settings
 #+begin_src emacs-lisp
 (org-babel-do-load-languages
