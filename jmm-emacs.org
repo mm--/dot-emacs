@@ -2591,6 +2591,12 @@ When editing code indirectly (with ~edit-indirect-region~, which
 obscuring other windows.
 
 #+BEGIN_SRC emacs-lisp
-(add-to-list 'display-buffer-alist
-	     `("^\\*edit-indirect" . (,#'display-buffer-same-window)))
+(use-package edit-indirect
+  :after markdown-mode
+  :init
+  (add-to-list 'display-buffer-alist
+	       `("^\\*edit-indirect" . (,#'display-buffer-same-window)))
+  :config
+  ;; Conflicts with ESS
+  (unbind-key "C-c C-c" edit-indirect-mode-map))
 #+END_SRC
