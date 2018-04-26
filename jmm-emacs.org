@@ -202,6 +202,30 @@ Set my font
 ;; (josh/set-my-font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
 (josh/set-my-font "-PfEd-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
 #+END_SRC
+** Telephone Line
+   My default modeline was making it hard to see my [[https://github.com/wasamasa/eyebrowse][eyebrowse]]
+   workspace when I was clocked in to something. [[https://github.com/dbordak/telephone-line][Telephone line]] looks
+   decent.
+
+#+BEGIN_SRC emacs-lisp
+(use-package telephone-line
+  :ensure t
+  :if window-system
+  :defer 1
+  :init
+  (setq telephone-line-lhs
+	'((accent . (telephone-line-vc-segment
+                     telephone-line-process-segment))
+          (nil    . (telephone-line-minor-mode-segment
+                     telephone-line-buffer-segment))))
+  (setq telephone-line-rhs
+	'((nil    . (telephone-line-misc-info-segment))
+          (accent . (telephone-line-major-mode-segment))
+          (evil   . (telephone-line-airline-position-segment))))
+  :config
+  (telephone-line-mode 1))
+#+END_SRC
+
 * Keybindings
 
 #+begin_src emacs-lisp
