@@ -49,6 +49,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       js2-mode
                       flycheck
                       use-package
+		      diminish
                       ))
 
 (dolist (p my-packages)
