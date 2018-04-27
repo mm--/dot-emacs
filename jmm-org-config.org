@@ -999,7 +999,7 @@ These functions clock into a task if it exists and creates it using
 			     (s-left 13 (s-pad-left 13 " " (buffer-name)))
 			     (buffer-substring (line-beginning-position) (line-end-position)))
 		     (point-marker)))
-	     "/TODO"
+	     "/!"
 	     'agenda
 	     'jmm/skip-non-projects))))
 
