@@ -2629,7 +2629,7 @@ It also provides functions for swapping and moving windows, which is super helpf
   :config
   (eyebrowse-mode t)
   ;; Se we defer loading, we'll need to initialize all frames when we first call it.
-  (--each (with-selected-frame it (eyebrowse-init)) (frame-list)))
+  (--each (frame-list) (with-selected-frame it (eyebrowse-init))))
 #+END_SRC
 ** Markdown mode
    I'm using markdown mode to edit markdown and Rmarkdown files.
