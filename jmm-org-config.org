@@ -621,7 +621,7 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
 				 ("event" . ?E)
                                  ("vague" . ?v) ("lookup" . ?l)
                                  ("CODING" . ?c)
-                                 ("SHORTTERM" . ?S) ("LONGTERM" . ?L) ("goal" . ?g) ("lifegoal" . ?G)))
+                                 ("goal" . ?g)))
 
 (add-to-list 'org-tags-exclude-from-inheritance "IGNORE")
 #+END_SRC
