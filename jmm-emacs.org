@@ -983,8 +983,48 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 Because dired-jump is pretty useful
 #+begin_src emacs-lisp
 (use-package dired-x
-  :bind (("C-x C-j" . dired-jump)))
+  :init
+  (setq dired-bind-jump nil)
+  :commands (dired-jump))
 #+end_src
+** Jump to dired buffer
+   This is similar to ~dired-jump~, but it'll try to find the file in
+   a dired buffer that's already open (most usefully when the file is
+   listed in a subdirectory of a dired buffer). Otherwise it just
+   calls ~~dired-jump~.
+#+BEGIN_SRC emacs-lisp
+(autoload 'get-buffers-matching-mode "helm-swoop")
+(defun jmm/dired-jump ()
+  "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir."
+  (interactive)
+  (let* ((file (or buffer-file-name
+		   (and (eq major-mode 'dired-mode) (directory-file-name (dired-current-directory)))
+		   default-directory))
+	 (dir (if file (file-name-directory file) default-directory))
+	 ;; TODO: Sort this based on specificity or recency
+	 (updir (car (-filter (lambda (buf)
+				(with-current-buffer buf
+				  (member dir (-map 'car dired-subdir-alist))))
+			      (get-buffers-matching-mode 'dired-mode)))))
+    (if updir
+	(progn
+	  (switch-to-buffer updir)
+	  ;; This part's taken from dired-jump's definition in dired-x
+	  (when file
+	    (or (dired-goto-file file)
+		;; If we didn't succeed (maybe the line was killed?)
+		;; refresh and try again
+		(progn
+		  (dired-insert-subdir (file-name-directory file))
+		  (dired-goto-file file))
+		;; I've never used omitting, but it's here for completeness
+		;; Toggle omitting, if it is on, and try again.
+		(when dired-omit-mode
+		  (dired-omit-mode)
+		  (dired-goto-file file)))))
+      (dired-jump))))
+(bind-key "C-x C-j" 'jmm/dired-jump)
+#+END_SRC
 
 ** Copying remote file paths
    Sometimes I want to get the remote file path name, in order to make it easier to rsync and scp.
@@ -1480,17 +1520,18 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 Set up hotkeys and stuff for helm-swoop
 #+BEGIN_SRC emacs-lisp
 (use-package helm-swoop
-             :bind (("M-i" . helm-swoop)
-                    ("M-I" . helm-swoop-back-to-last-point)
-                    ("C-c M-i" . helm-multi-swoop)
-		    ("C-c d" . helm-multi-swoop-dired)
-                    ("C-x M-i" . helm-multi-swoop-all)
-		    :map isearch-mode-map
-		    ;; When doing isearch, hand the word over to helm-swoop
-		    ("M-i" . helm-swoop-from-isearch)
-		    :map helm-swoop-map
-		    ;; From helm-swoop to helm-multi-swoop-all
-		    ("M-i" . helm-multi-swoop-all-from-helm-swoop)))
+  :ensure t
+  :bind (("M-i" . helm-swoop)
+         ("M-I" . helm-swoop-back-to-last-point)
+         ("C-c M-i" . helm-multi-swoop)
+	 ("C-c d" . helm-multi-swoop-dired)
+         ("C-x M-i" . helm-multi-swoop-all)
+	 :map isearch-mode-map
+	 ;; When doing isearch, hand the word over to helm-swoop
+	 ("M-i" . helm-swoop-from-isearch)
+	 :map helm-swoop-map
+	 ;; From helm-swoop to helm-multi-swoop-all
+	 ("M-i" . helm-multi-swoop-all-from-helm-swoop)))
 #+END_SRC
 
 Make an easy way to find files in open dired buffers
