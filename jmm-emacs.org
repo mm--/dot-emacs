@@ -23,11 +23,11 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   Install packages if they aren't already.
 
 #+BEGIN_SRC emacs-lisp
+;; TODO: Move this bootstrapping stuff into its own file
 ;; (setq package-enable-at-startup nil)
-(unless (>= emacs-major-version 27)
-  (package-initialize))
-(when noninteractive
-  (package-initialize))
+;; Forget the warning in Emacs 27. Initialize it anyway for now.
+(package-initialize)
+
 ;; TODO: This is being called in weird places, like when emacs is run
 ;; asynchronously. I either need to (package-initialize) or skip this
 ;; step completely.
@@ -55,7 +55,8 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       use-package
 		      diminish
                       ))
-
+;; TODO move elsewhere.
+(setq save-abbrevs 'silently)
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
@@ -853,6 +854,7 @@ of erc-modified-channels-alist"
 (use-package shell-pop
   :if window-system
   :unless noninteractive
+  :ensure t
   :bind ("C-c t" . shell-pop)
   :init
   (setq shell-pop-shell-type '("ansi-term" "*ansi-term*"
@@ -1132,6 +1134,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
    locked files by their name and not as a giant symlink in dired.
 #+BEGIN_SRC emacs-lisp
 (use-package git-annex
+  :ensure t
   :config
   (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
   (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
@@ -1563,15 +1566,17 @@ Make an easy way to find files in open dired buffers
 ** helm-descbinds
    Describe bindings.
 #+BEGIN_SRC emacs-lisp
-  (use-package helm-descbinds
-    :defer t
-    :bind (("C-h b" . helm-descbinds)
-           ("C-h w" . helm-descbinds)))
+(use-package helm-descbinds
+  :ensure t
+  :defer t
+  :bind (("C-h b" . helm-descbinds)
+         ("C-h w" . helm-descbinds)))
 #+END_SRC
 ** helm-org-rifle
    Helm-org-rifle is a really nice way to swoop through org-mode
 #+BEGIN_SRC emacs-lisp
 (use-package helm-org-rifle
+  :ensure t
   :after (org)
   :bind (("C-c R" . helm-org-rifle-occur)
          ("C-c r" . helm-org-rifle)
@@ -1621,6 +1626,7 @@ Make an easy way to find files in open dired buffers
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
 #+BEGIN_SRC emacs-lisp
 (use-package magit
+  :ensure t
   :bind (("C-x g" . magit-status)
 	 ("C-x M-g" . magit-dispatch-popup)
 	 :map dired-mode-map
@@ -2071,8 +2077,9 @@ definition without bringing up a help buffer."
 
 ** Expand Region
 #+begin_src emacs-lisp
-  (use-package expand-region
-               :bind ("C-=" . er/expand-region))
+(use-package expand-region
+  :ensure t
+  :bind ("C-=" . er/expand-region))
 #+end_src
 ** Ace Jump Mode
 #+begin_src emacs-lisp
@@ -2403,6 +2410,7 @@ result into the current buffer."
    to do things such as incremental search, highlighting, and clicking
    on links.
 #+BEGIN_SRC emacs-lisp
+;; TODO: Automatically install?
 (use-package pdf-tools
   :mode ("\\.[pP][dD][fF]\\'" . pdf-view-mode)
   :init
@@ -2744,10 +2752,10 @@ It also provides functions for swapping and moving windows, which is super helpf
 
 #+BEGIN_SRC emacs-lisp
 (use-package markdown-mode
+  :ensure t
   :mode (("\\.Rmd" . markdown-mode)
 	 ("\\.markdown\\'" . markdown-mode)
-	 ("\\.md\\'" . markdown-mode))
-  :ensure t)
+	 ("\\.md\\'" . markdown-mode)))
 #+END_SRC
 
 When editing code indirectly (with ~edit-indirect-region~, which
