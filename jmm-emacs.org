@@ -28,6 +28,9 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   (package-initialize))
 (when noninteractive
   (package-initialize))
+;; TODO: This is being called in weird places, like when emacs is run
+;; asynchronously. I either need to (package-initialize) or skip this
+;; step completely.
 (when (not package-archive-contents)
   (package-refresh-contents))
 (defvar my-packages '(ess
@@ -46,6 +49,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 		      dash
                       helm-projectile
                       helm-swoop
+		      hydra
                       js2-mode
                       flycheck
                       use-package
@@ -110,7 +114,10 @@ Enable all the disabled commands
 (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
 (set-register ?d '(file . "~/Downloads/"))
 
-(unless noninteractive
+(use-package server
+  :unless noninteractive
+  :defer 1
+  :config
   (server-start))
 
 (setq visible-bell 0)                   ;Set visible bell on.
@@ -118,9 +125,17 @@ Enable all the disabled commands
 
 (setq frame-title-format "Emacs - %b")
 (setq set-mark-command-repeat-pop t)
-(require 'uniquify)
-(setq uniquify-buffer-name-style 'forward)
-(winner-mode 1)
+(use-package uniquify
+  :defer 2
+  :init
+  (setq uniquify-buffer-name-style 'forward))
+
+(use-package winner
+  :unless noninteractive
+  :defer 1
+  :config
+  (winner-mode 1))
+
 (setq focus-follows-mouse t)
 (setq mouse-autoselect-window t) ;Sloppy focus
 (setq inhibit-splash-screen t)
@@ -1974,8 +1989,16 @@ definition without bringing up a help buffer."
 	      (browse-url-generic-args (cdr jmm/browse-url-alt)))
 	 (apply orig-fun args))
      (apply orig-fun args)))
-
  #+END_SRC
+
+ Here's an example of using it on ~shr~ links.
+#+BEGIN_SRC emacs-lisp
+(use-package shr
+  :defer t
+  :config
+  (advice-add 'shr-browse-url :around #'jmm/org-open-link-alternate-browser))
+#+END_SRC
+
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
@@ -2291,16 +2314,18 @@ dispatch action.
 #+END_SRC
 ** Ag
 #+BEGIN_SRC emacs-lisp
-  (use-package helm-ag
-    :bind ("<f9> a" . helm-ag))
+(use-package helm-ag
+  :ensure t
+  :bind ("<f9> a" . helm-ag))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
-  (use-package ag
-    :bind ("<f9> A" . ag-project-at-point)
-    :init
-    (progn
-      (setq ag-highlight-search t)))
+(use-package ag
+  ;; TODO: Perhaps :ensure-system-package or :when ag is installed
+  :bind ("<f9> A" . ag-project-at-point)
+  :init
+  (progn
+    (setq ag-highlight-search t)))
 #+END_SRC
 ** Wgrep
    Wgrep is pretty cool. It's like wdired, but for grep (duh),
@@ -2739,3 +2764,12 @@ obscuring other windows.
   ;; Conflicts with ESS
   (unbind-key "C-c C-c" edit-indirect-mode-map))
 #+END_SRC
+** Resize-window
+
+   Trying out ~[[https://github.com/dpsutton/resize-window][resize-window]]~ for resizing.
+#+BEGIN_SRC emacs-lisp
+(use-package resize-window
+  :ensure t
+  :bind (("C-c ;" . resize-window)))
+#+END_SRC
+

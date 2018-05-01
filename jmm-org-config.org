@@ -1103,7 +1103,11 @@ Return t if it's a valid target, otherwise return nil."
    Here I install some packages that provide code support for languages I commonly use with babel.
 #+BEGIN_SRC emacs-lisp
 (use-package ob-ipython
-  :ensure t)
+  :ensure t
+  :defer t
+  :commands
+  (org-babel-execute:ipython
+   org-babel-expand-body:ipython))
 #+END_SRC
 ** Babel languages and settings
 #+begin_src emacs-lisp
@@ -1113,7 +1117,6 @@ Return t if it's a valid target, otherwise return nil."
 	 (ditaa . t)
 	 (R . t)
 	 (python . t)
-	 (ipython .t)
 	 (ledger . t)
 	 (org . t)
 	 (latex . t)
