@@ -1413,7 +1413,8 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 	       :config
 	       (define-key elfeed-search-mode-map (kbd "C-x C-s") 'josh/save-elfeed)
 	       (define-key elfeed-show-mode-map "I" 'elfeed-toggle-images)
-	       (define-key elfeed-show-mode-map "i" 'elfeed-temporarily-inhibit-images))
+	       (define-key elfeed-show-mode-map "i" 'elfeed-temporarily-inhibit-images)
+	       (advice-add 'elfeed-show-visit :around #'jmm/org-open-link-alternate-browser))
 #+END_SRC
 
 * Sawfish
@@ -1934,6 +1935,47 @@ definition without bringing up a help buffer."
 
 (bind-key "C-h C-k" 'jmm/jump-to-key-definition)
 #+END_SRC
+** Opening links with other browsers
+
+    Occasionally I want to open org-mode (or other) links in
+    incognito/private mode or my non-default browser. Here I define a
+    function that's usable as advice to ~org-open-at-point~, which
+    allows me to set specific browser programs and arguments for
+    opening a link.
+
+    For example, using ~C-u C-c C-o~, I can open a link in Firefox's
+    private mode. With ~C-u 2 C-c C-o~ I can open with Chromium's
+    normal mode. And with ~C-u 3 C-c C-o~ I can open with Chromium's
+    incognito mode.
+
+    This is also useful with other things that open links, like ~elfeed~.
+
+ #+BEGIN_SRC emacs-lisp
+ (defvar jmm/browse-url-generic-alternate '(("firefox" "--private-window")
+					    ("chromium")
+					    ("chromium" "--incognito"))
+   "A list of programs and arguments to set
+   `browse-url-generic-program' and
+   `browse-url-generic-args'.")
+
+ (defun jmm/org-open-link-alternate-browser (orig-fun &rest args)
+   "With a prefix arg, set `browse-url-generic-program' and
+ `browse-url-generic-args' to use different settings in `jmm/browse-url-generic-alternate'.
+
+ With universal prefix, use first option in
+ `jmm/browse-url-generic-alternate'. With a number argument, use
+ the nth option in `jmm/browse-url-generic-alternate'.
+
+ Handy for opening in other browsers or incognito/private mode."
+   (if (car args)
+       (let* ((jmm/browse-url-alt (if (listp (car args)) (car jmm/browse-url-generic-alternate)
+				    (elt jmm/browse-url-generic-alternate (- (car args) 1))))
+	      (browse-url-generic-program (car jmm/browse-url-alt))
+	      (browse-url-generic-args (cdr jmm/browse-url-alt)))
+	 (apply orig-fun args))
+     (apply orig-fun args)))
+
+ #+END_SRC
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors

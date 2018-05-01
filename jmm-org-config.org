@@ -34,6 +34,7 @@ loaded ~org-plus-contrib~
   (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
   (add-to-list 'org-tag-faces '("vague" :foreground "DodgerBlue" :weight bold))
   (add-to-list 'org-tag-faces '("breakdown" :foreground "RoyalBlue" :weight bold))
+  (advice-add 'org-open-at-point :around #'jmm/org-open-link-alternate-browser)
   (require 'org-screenshot)
   ;; (require 'org-depend) 		;Replace with org-edna
   (require 'org-expiry)
@@ -2232,41 +2233,10 @@ a list of strings specifying which drawers should not be hidden."
      ((plist-get loc :annot) (pdf-annot-show-annotation (pdf-info-getannot (plist-get loc :annot)) t)))))
 #+END_SRC
 ** Opening links with other browsers
+   
 
-   Occasionally I want to open org-mode links in incognito/private
-   mode or my non-default browser. Here I add advice to
-   ~org-open-at-point~, which allows me to set specific browser
-   programs and arguments for opening a link.
-
-   For example, using ~C-u C-c C-o~, I can open a link in Firefox's
-   private mode. With ~C-u 2 C-c C-o~ I can open with Chromium's
-   normal mode. And with ~C-u 3 C-c C-o~ I can open with Chromium's
-   incognito mode.
 
 #+BEGIN_SRC emacs-lisp
-(defvar jmm/browse-url-generic-alternate '(("firefox" "--private-window")
-					   ("chromium")
-					   ("chromium" "--incognito"))
-  "A list of programs and arguments to set
-  `browse-url-generic-program' and
-  `browse-url-generic-args'.")
 
-(defun jmm/org-open-link-alternate-browser (orig-fun &rest args)
-  "With a prefix arg, set `browse-url-generic-program' and
-`browse-url-generic-args' to use different settings in `jmm/browse-url-generic-alternate'.
 
-With universal prefix, use first option in
-`jmm/browse-url-generic-alternate'. With a number argument, use
-the nth option in `jmm/browse-url-generic-alternate'.
-
-Handy for opening in other browsers or incognito/private mode."
-  (if (car args)
-      (let* ((jmm/browse-url-alt (if (listp (car args)) (car jmm/browse-url-generic-alternate)
-				   (elt jmm/browse-url-generic-alternate (- (car args) 1))))
-	     (browse-url-generic-program (car jmm/browse-url-alt))
-	     (browse-url-generic-args (cdr jmm/browse-url-alt)))
-	(apply orig-fun args))
-    (apply orig-fun args)))
-
-(advice-add 'org-open-at-point :around #'jmm/org-open-link-alternate-browser)
 #+END_SRC
