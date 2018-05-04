@@ -1988,7 +1988,7 @@ definition without bringing up a help buffer."
  the nth option in `jmm/browse-url-generic-alternate'.
 
  Handy for opening in other browsers or incognito/private mode."
-   (if (car args)
+   (if (car current-prefix-arg)
        (let* ((jmm/browse-url-alt (if (listp (car args)) (car jmm/browse-url-generic-alternate)
 				    (elt jmm/browse-url-generic-alternate (- (car args) 1))))
 	      (browse-url-generic-program (car jmm/browse-url-alt))
