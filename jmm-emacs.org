@@ -2323,7 +2323,14 @@ dispatch action.
 #+BEGIN_SRC emacs-lisp
 (use-package helm-ag
   :ensure t
-  :bind ("<f9> a" . helm-ag))
+  :bind ("<f9> a" . helm-ag)
+  :config
+  (advice-add 'helm-ag--persistent-action :after #'jmm/helm-ag-org-reveal))
+
+(defun jmm/helm-ag-org-reveal (&rest args)
+  "Use `org-reveal' when using `helm-ag'"
+  (when (eq major-mode 'org-mode)
+    (org-reveal)))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
