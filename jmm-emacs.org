@@ -2677,6 +2677,8 @@ It also provides functions for swapping and moving windows, which is super helpf
   :ensure
   :defer 5
   :diminish which-key-mode
+  :init
+  (setq which-key-use-C-h-commands nil)
   :config (which-key-mode))
 #+END_SRC
 ** SQL
