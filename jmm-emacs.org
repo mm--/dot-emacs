@@ -2789,4 +2789,16 @@ obscuring other windows.
   :ensure t
   :bind (("C-c ;" . resize-window)))
 #+END_SRC
+** org-bookmark-heading
+
+   Great way to add headings to bookmarks.  I'm putting this here
+   instead of my org-config for now since I might try to use
+   ~org-bookmark-jump~ before it's loaded.
+#+BEGIN_SRC emacs-lisp
+(use-package org-bookmark-heading
+  :ensure t
+  :init
+  (autoload #'org-bookmark-jump "org-bookmark-heading" nil)
+  :after (org))
+#+END_SRC
 
