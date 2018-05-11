@@ -1331,8 +1331,9 @@ copy ring." (s-capitalize actionname) (s-downcase actionname))
 	   :map notmuch-show-mode-map
 	   ("b" . josh/notmuch-send-html-to-browser)
 	   ("B" . notmuch-show-resend-message)
-	   ("o" . jmm/notmuch-show-open-in-gmail)
-	   ))
+	   ("o" . jmm/notmuch-show-open-in-gmail))
+    :config
+    (add-to-list 'notmuch-show-insert-text/plain-hook 'jmm/notmuch-wash-tracking-links))
 (use-package org-notmuch
   :after (notmuch))
 #+END_SRC
@@ -1412,6 +1413,29 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 
 (add-hook 'message-sent-hook 'jmm/message-send-store-notmuch-link)
 #+END_SRC
+** Wash out annoyingly long links from ~text/plain~
+
+   A lot of mailing lists will put long tracking links in the
+   ~plain/text~ part of their mail. These are long because they're
+   meant for tracking/analytics. I find them to be visually too
+   cluttering, and don't tend to click on them anyway. This just
+   silently removes them.
+
+#+BEGIN_SRC emacs-lisp
+(defcustom jmm/tracking-link-regexps
+  '("links.ealert" "click.engage.frontiersin.com")
+  "Regular expressions for annoyingly long tracking links."
+  :type '(repeat string))
+
+;; TODO: Add a button or something to show where it would be?
+(defun jmm/notmuch-wash-tracking-links (msg depth)
+  "Hide tracking links."
+  (goto-char (point-min))
+  (while (re-search-forward goto-address-url-regexp nil t)
+    (when (--some-p (string-match-p it (match-string 0)) jmm/tracking-link-regexps)
+      (replace-match "" nil t))))
+#+END_SRC
+
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
   to use Gnus to read RSS, but elfeed is nice in that it doesn't block
