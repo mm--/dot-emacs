@@ -413,6 +413,13 @@ Same thing as above, but also include the next three days agenda.
                (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-waiting-time) ")))
   "An agenda that shows waiting tasks, and how long they've been waiting for.")
 
+(defvar jmm/agenda-unscheduled-events
+  '(tags-todo "+event/!"
+              ((org-agenda-overriding-header "Unscheduled waiting tasks")
+               (org-agenda-skip-function
+                (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))))
+  "An agenda that shows events that are weirdly not scheduled.")
+
 (defvar jmm/agenda-stuck-projects
   '(tags-todo "-CANCELLED-HOLD/!"
                ((org-agenda-overriding-header "Stuck Projects")
@@ -449,7 +456,7 @@ Same thing as above, but also include the next three days agenda.
     ,jmm/agenda-unscheduled-tasks)))
 
 (org-add-agenda-custom-command `(" d" "Scheduled agenda" (,jmm/agenda-two-span)))
-(org-add-agenda-custom-command `(" u" "Unscheduled things" (,jmm/agenda-unscheduled-next ,jmm/agenda-unscheduled-waiting ,jmm/agenda-unscheduled-tasks)))
+(org-add-agenda-custom-command `(" u" "Unscheduled things" (,jmm/agenda-unscheduled-next ,jmm/agenda-unscheduled-waiting ,jmm/agenda-unscheduled-events ,jmm/agenda-unscheduled-tasks)))
 (org-add-agenda-custom-command `(" s" "Stuck projects" (,jmm/agenda-stuck-projects ,jmm/agenda-unscheduled-waiting)))
 (org-add-agenda-custom-command `(" r" "Refile things" (,jmm/agenda-refile-stuff)))
 
