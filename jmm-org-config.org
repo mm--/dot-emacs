@@ -1033,8 +1033,11 @@ These functions clock into a task if it exists and creates it using
    jump to recently used headings.
 #+BEGIN_SRC emacs-lisp
 (use-package org-recent-headings
+  :ensure t
   :config (org-recent-headings-mode)
-  :bind (("<f9> h" . org-recent-headings-helm)))
+  :bind (("<f9> h" . org-recent-headings-helm))
+  :after org
+  :demand t)
 #+END_SRC
 * Refiling to other places
    This is so we're able to refile to other files.
