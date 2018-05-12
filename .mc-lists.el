@@ -11,6 +11,8 @@
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
 	ace-jump-move
+	c-electric-delete-forward
+	c-electric-slash
 	clojure-align
 	comment-dwim
 	dabbrev-expand
@@ -44,6 +46,7 @@
 	kill-sexp
 	ledger-magic-tab
 	ledger-post-align-xact
+	markdown-cycle
 	markdown-exdent-or-delete
 	markdown-outdent-or-delete
 	matlab-electric-comment
@@ -133,6 +136,7 @@
 	avy-mc-goto-word-1-multiple
 	avy-mc-test-goto-word-1
 	describe-key
+	dired-toggle-read-only
 	dumb-jump-back
 	end-of-buffer
 	eval-expression
