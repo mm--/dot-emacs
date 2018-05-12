@@ -611,7 +611,9 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
   (interactive)
   (save-excursion
     (if (jmm/org-goto-parent-project)
-	(org-narrow-to-subtree)
+	(progn
+	  (outline-show-all)
+	  (org-narrow-to-subtree))
       (user-error "No parent project found."))))
 #+END_SRC
 
