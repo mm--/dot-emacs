@@ -2019,16 +2019,16 @@ definition without bringing up a help buffer."
 
  (defun jmm/org-open-link-alternate-browser (orig-fun &rest args)
    "With a prefix arg, set `browse-url-generic-program' and
- `browse-url-generic-args' to use different settings in `jmm/browse-url-generic-alternate'.
+  `browse-url-generic-args' to use different settings in `jmm/browse-url-generic-alternate'.
 
- With universal prefix, use first option in
- `jmm/browse-url-generic-alternate'. With a number argument, use
- the nth option in `jmm/browse-url-generic-alternate'.
+  With universal prefix, use first option in
+  `jmm/browse-url-generic-alternate'. With a number argument, use
+  the nth option in `jmm/browse-url-generic-alternate'.
 
- Handy for opening in other browsers or incognito/private mode."
-   (if (car current-prefix-arg)
-       (let* ((jmm/browse-url-alt (if (listp (car args)) (car jmm/browse-url-generic-alternate)
-				    (elt jmm/browse-url-generic-alternate (- (car args) 1))))
+  Handy for opening in other browsers or incognito/private mode."
+   (if current-prefix-arg
+       (let* ((jmm/browse-url-alt (if (listp current-prefix-arg) (car jmm/browse-url-generic-alternate)
+				    (elt jmm/browse-url-generic-alternate (- current-prefix-arg 1))))
 	      (browse-url-generic-program (car jmm/browse-url-alt))
 	      (browse-url-generic-args (cdr jmm/browse-url-alt)))
 	 (apply orig-fun args))
