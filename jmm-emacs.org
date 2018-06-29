@@ -1155,6 +1155,9 @@ paste into a terminal. Hopefully understandable by rsync or scp."
   (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
   (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files)
   (define-key git-annex-dired-map "t" 'jmm/dired-git-annex-tag)
+  (bind-keys :map git-annex-dired-map
+	     ("*")
+	     ("* u" . jmm/dired-mark-git-annex-unavailable-files))
   ;; git-annex.el kinda clobbers dired-marked-face and dired-flagged-face
   ;; This fixes that
   (progn
@@ -1221,6 +1224,23 @@ files, showing the current tags all files currently have in common."
       (lambda (file)
 	(apply #'call-process "git" nil nil nil "annex" "metadata" (append args (list file)))))
     (message (format "Tagged %d file(s)" (length file-list)))))
+#+END_SRC
+*** Mark unavailable files
+
+    Add a function that marks unavailable files.
+
+    When you use this in combination with ~dired-do-kill-lines~ (by
+    default bound to ~k~), it's easy to hide files that aren't present
+    in the current annex repository.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/dired-mark-git-annex-unavailable-files ()
+  "Mark git-annex files that are not present."
+  (interactive)
+  (dired-mark-if
+   (and (looking-at-p ".* -> \\(.*\\.git/annex/.+\\)")
+	(not (file-exists-p (file-truename (dired-get-filename t)))))
+   "unavailable file"))
 #+END_SRC
 
 ** Dired ranger
