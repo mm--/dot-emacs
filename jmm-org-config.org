@@ -16,7 +16,7 @@ loaded ~org-plus-contrib~
 	 ("M-T" . josh/org-convert-added-to-created-property)
 	 ("M-N" . josh/org-convert-added-or-add-created)
 	 ("M-M" . josh/org-toggle-marked-tag)
-	 ("M-H" . jmm/org-hide-planning-parent-project)
+	 ("M-H" . jmm/org-hide-visible-properties-drawer)
 	 ("C-x n p" . jmm/org-narrow-to-parent-project))
   :init
   (setq org-indirect-buffer-display 'current-window)
@@ -2124,6 +2124,13 @@ With prefix, display only TODO-keyword items."
    clutter my screen. These functions are my first attempt at hiding
    them when using global cycling.
 
+   ~jmm/org-hide-visible-properties-drawer~ is my second attempt at
+   hiding planning information. It only hides ~PROPERTIES~ and
+   ~LOGBOOK~ and by default only hides visible drawers on the
+   screen. This makes it much faster than
+   ~jmm/org-cycle-hide-scheduled-properties-logbook~ which doesn't
+   check whether elements are visible.
+
 #+BEGIN_SRC emacs-lisp
 (defun jmm/org-end-planning-stuff ()
   "Return the point where planning, properties, and drawers end."
@@ -2133,13 +2140,13 @@ With prefix, display only TODO-keyword items."
 		    (type (car element))
 		    (jumpto (case type
 			      (headline (unless already-jumped-heading
-					  (progn (setq already-jumped-heading t)
-						 (or (org-element-property :contents-begin element)
-						     (org-element-property :end element)))))
+					  (or (org-element-property :contents-begin element)
+					      (org-element-property :end element))))
 			      (planning (org-element-property :end element))
 			      (property-drawer (org-element-property :end element))
 			      (drawer (org-element-property :end element))
 			      (t nil))))
+	       (setq already-jumped-heading t)
 	       (when jumpto
 		 (goto-char jumpto)
 		 (< jumpto (point-max))))
@@ -2151,16 +2158,49 @@ With prefix, display only TODO-keyword items."
   (when (org-at-heading-p)
       (outline-flag-region (line-end-position) (- (jmm/org-end-planning-stuff) 1) t)))
 
+(defun jmm/org-hide-visible-properties-drawer (&optional wholebuffer)
+  "Hide visible \"properties\" and \"logbook\" information in the current window.
+With optional argument WHOLEBUFFER, hide properties for the entire
+buffer, not just the visible part in the window.
+
+Unlike `jmm/org-hide-planning-stuff' this doesn't hide planning
+stuff like scheduled and closed times.
+
+This also assumes that a logbook drawer doesn't exist without a
+properties drawer, which is usually the case for me.
+"
+  (interactive "P")
+  (save-excursion
+    (goto-char (if wholebuffer (point-min) (window-start)))
+    (while (re-search-forward org-property-drawer-re
+			      ;; We re-evaluate window-end every time because it can change
+			      (if wholebuffer (point-max) (window-end (selected-window) t))
+			      t)
+      (unless (get-char-property (1- (match-beginning 0)) 'invisible)
+	(let ((planstart (match-beginning 0))
+	      (planend (jmm/org-end-planning-stuff)))
+	  (outline-flag-region (1- planstart) (1- planend) t)
+	  (goto-char planend))))))
+
 (defun jmm/org-cycle-hide-scheduled-properties-logbook (state)
-  "Re-hide all drawers after a visibility state change.
+  "Re-hide all planning information and drawers after a visibility state change.
+
 STATE should be one of the symbols listed in the docstring of
-`org-cycle-hook'.  When non-nil, optional argument EXCEPTIONS is
-a list of strings specifying which drawers should not be hidden."
+`org-cycle-hook'."
   (when (and (derived-mode-p 'org-mode)
 	     (memq state '(all)))
     (org-map-tree 'jmm/org-hide-planning-stuff)))
 
-(add-hook 'org-cycle-hook 'jmm/org-cycle-hide-scheduled-properties-logbook)
+(defun jmm/org-cycle-hide-properties-logbook (state)
+  "Re-hide all drawers after a visibility state change.
+STATE should be one of the symbols listed in the docstring of
+`org-cycle-hook'."
+  (when (and (derived-mode-p 'org-mode)
+	     (memq state '(all)))
+    (jmm/org-hide-visible-properties-drawer)))
+
+;; Not sure if this works correctly
+;; (add-hook 'org-cycle-hook 'jmm/org-cycle-hide-properties-logbook)
 
 (defun jmm/org-hide-planning-parent-project ()
   "Hide planning info for project."
