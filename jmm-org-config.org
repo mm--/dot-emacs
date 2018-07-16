@@ -420,6 +420,12 @@ Same thing as above, but also include the next three days agenda.
                 (lambda () (org-agenda-skip-entry-if 'scheduled 'deadline)))))
   "An agenda that shows events that are weirdly not scheduled.")
 
+(defvar jmm/agenda-non-stuck-projects
+  '(tags-todo "-CANCELLED/!"
+              ((org-agenda-overriding-header "\"Non stuck\" Projects")
+               (org-agenda-skip-function 'bh/skip-non-projects)
+	       (org-agenda-prefix-format " %i %-12:c%?-12t% s%(josh/org-format-max-clock-time) "))))
+
 (defvar jmm/agenda-stuck-projects
   '(tags-todo "-CANCELLED-HOLD/!"
                ((org-agenda-overriding-header "Stuck Projects")
@@ -458,6 +464,7 @@ Same thing as above, but also include the next three days agenda.
 (org-add-agenda-custom-command `(" d" "Scheduled agenda" (,jmm/agenda-two-span)))
 (org-add-agenda-custom-command `(" u" "Unscheduled things" (,jmm/agenda-unscheduled-next ,jmm/agenda-unscheduled-waiting ,jmm/agenda-unscheduled-events ,jmm/agenda-unscheduled-tasks)))
 (org-add-agenda-custom-command `(" s" "Stuck projects" (,jmm/agenda-stuck-projects ,jmm/agenda-unscheduled-waiting)))
+(org-add-agenda-custom-command `(" p" "Projects" (,jmm/agenda-non-stuck-projects ,jmm/agenda-stuck-projects)))
 (org-add-agenda-custom-command `(" r" "Refile things" (,jmm/agenda-refile-stuff)))
 
 (defun jmm/org-default-agenda ()
