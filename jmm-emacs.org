@@ -378,8 +378,21 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 
 * Spelling
 
+  Spellchecking on Emacs, or just Linux in general, is terrible. Like,
+  really terrible. Reasons:
+  - Spelling suggestions often don't make sense because "edit
+    distance" isn't a good metric for figuring out what word you were
+    trying to spell. Edit distance is fast, but that's it. It doesn't
+    take into account the frequency of suggested words.
+  - Most spell checkers don't take into account context. For example
+    "less then" is marked correct even though you meant "less than".
+
+  I was using ~hunspell~, but it [[https://github.com/hunspell/hunspell/issues/504][seems to have a problem with apostrophes]]. ~aspell~ doesn't.
+
 #+begin_src emacs-lisp
-(setq-default ispell-program-name "hunspell")
+;; TODO: Check if the specified ispell program is installed.
+;; (setq-default ispell-program-name "hunspell")
+(setq-default ispell-program-name "aspell")
 (setq-default ispell-grep-command "grep")
 (setq-default ispell-grep-options "-iE")
 (setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
