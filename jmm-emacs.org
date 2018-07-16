@@ -1038,10 +1038,12 @@ Because dired-jump is pretty useful
    calls ~~dired-jump~.
 #+BEGIN_SRC emacs-lisp
 (autoload 'get-buffers-matching-mode "helm-swoop")
-(defun jmm/dired-jump ()
-  "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir."
-  (interactive)
-  (let* ((file (or buffer-file-name
+(defun jmm/dired-jump (&optional killbuffer)
+  "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir.
+With optional argument KILLBUFFER, also kill the current buffer."
+  (interactive "P")
+  (let* ((old-buffer (current-buffer))
+	 (file (or buffer-file-name
 		   (and (eq major-mode 'dired-mode) (directory-file-name (dired-current-directory)))
 		   default-directory))
 	 (dir (if file (file-name-directory file) default-directory))
@@ -1066,7 +1068,8 @@ Because dired-jump is pretty useful
 		(when dired-omit-mode
 		  (dired-omit-mode)
 		  (dired-goto-file file)))))
-      (dired-jump))))
+      (dired-jump))
+    (when killbuffer (kill-buffer old-buffer))))
 (bind-key "C-x C-j" 'jmm/dired-jump)
 #+END_SRC
 
