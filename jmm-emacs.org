@@ -1556,7 +1556,9 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 	 ("M-g s" . helm-do-grep)
 	 ("M-g b" . helm-resume)
 	 ("C-c SPC" . helm-all-mark-rings)
-	 ("C-c b" . helm-bookmarks))
+	 ("C-c b" . helm-bookmarks)
+	 :map helm-bookmark-map
+	 ("C-c s" . jmm/helm-bookmark-run-set-bookmark))
   :init
   (setq helm-ff-newfile-prompt-p nil)
   :config
@@ -1716,7 +1718,31 @@ Make an easy way to find files in open dired buffers
   (with-helm-alive-p
     (helm-exit-and-execute-action 'jmm/helm-org-rifle-copy-link)))
 #+END_SRC
+** helm-bookmarks
 
+   Sometimes I have bookmarks that are frequently updated. For
+   example, if I'm reading a really long PDF I'll have a bookmark for
+   my current location. I add a hotkey ~C-c s~ for setting a candidate
+   bookmark to the current location.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/helm-bookmark-set-bookmark (candidate)
+  (let (non-essential)
+    ;; Honestly I don't know what non-essential is doing here, or if
+    ;; it's even... *cough* essential here.
+    (bookmark-set candidate)))
+
+(defun jmm/helm-bookmark-run-set-bookmark ()
+  "Reset a bookmark to current location."
+  (interactive)
+  (with-helm-alive-p
+    (helm-exit-and-execute-action 'jmm/helm-bookmark-set-bookmark)))
+;; TODO: Also don't know what this is doing or if it's needed. I'm
+;; just using what I saw for other helm bookmark actions.
+(put 'jmm/helm-bookmark-run-set-bookmark 'helm-only t)
+
+;; (bind-key "C-c s" 'jmm/helm-bookmark-run-set-bookmark helm-bookmark-map)
+#+END_SRC
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
 #+BEGIN_SRC emacs-lisp
