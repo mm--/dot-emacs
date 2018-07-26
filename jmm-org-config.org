@@ -2317,3 +2317,16 @@ STATE should be one of the symbols listed in the docstring of
 
 
 #+END_SRC
+* Attachments
+** Attaching the last downloaded file
+
+   Easy function for attaching the last download to the current headline.
+#+BEGIN_SRC emacs-lisp
+;; TODO: Require or autoload org-attach-attach
+(defun jmm/org-attach-link-last-downloaded ()
+  "Attach the last downloaded file by hardlinking."
+  (interactive)
+  (let ((org-attach-method 'ln))
+    (org-attach-attach (josh/latest-file jmm/downloads-directory "[:alpha:]"))))
+#+END_SRC
+
