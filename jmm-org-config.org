@@ -54,7 +54,21 @@ loaded ~org-plus-contrib~
   :config
   (require 'org-clock))
 #+END_SRC
+** Set up ~org-crypt~
 
+   ~org-crypt~ is handy if your todo list sometimes contains sensitive
+   information, like information about your taxes, etc.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-crypt
+  :after org
+  :init
+  (add-to-list 'org-tags-exclude-from-inheritance "crypt")
+  (setq org-crypt-disable-auto-save t)
+  :config
+  (progn
+    (org-crypt-use-before-save-magic)))
+#+END_SRC
 * Setup my agenda file
    Read from "org-agendas" where the agenda files are.
    Set the default span to a day view.
