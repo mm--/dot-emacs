@@ -66,6 +66,7 @@
 	org-kill-line
 	org-metaleft
 	org-metaright
+	org-metaup
 	org-open-line
 	org-previous-visible-heading
 	org-schedule
@@ -87,6 +88,7 @@
 	paredit-open-round
 	paredit-wrap-round
 	phi-search-backward
+	picture-self-insert
 	reindent-then-newline-and-indent
 	scroll-left
 	scroll-right

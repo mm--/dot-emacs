@@ -34,6 +34,7 @@ loaded ~org-plus-contrib~
   (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
   (add-to-list 'org-tag-faces '("vague" :foreground "DodgerBlue" :weight bold))
   (add-to-list 'org-tag-faces '("breakdown" :foreground "RoyalBlue" :weight bold))
+  (add-to-list 'org-tag-faces '("blocked" :foreground "yellow" :weight bold))
   (advice-add 'org-open-at-point :around #'jmm/org-open-link-alternate-browser)
   (advice-add 'org-open-at-point-global :around #'jmm/org-open-link-alternate-browser)
   (require 'org-screenshot)
@@ -169,8 +170,6 @@ set ~.org.gpg_archive~ files to be encrypted by ~epa~.
 	 "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
         ("L" "Lookup link" entry (file+headline "lookup.org" "Lookup")
          "* [[%c][%(www-get-page-title (current-kill 0))]]\n  Added: %U\n  - %c")
-        ("s" "Shopping" entry (file+headline "gtd-test.org" "Shopping")
-         "* %?\n  Added: %U")
         ("N" "Neuroecon" entry (file+headline "neuroecon.org" "Neuroecon")
          "* %?\n%i\n  Added: %U")
 	("n" "NYU")
@@ -386,17 +385,17 @@ An agenda which shows which papers I should read.
 
 A projects-related agenda. View next tasks, waiting, and stuck projects.
 #+BEGIN_SRC emacs-lisp
-  (org-add-agenda-custom-command
-   '("P" "Projects and Next Tasks"
-     ((tags-todo "-CANCELLED/!NEXT"
-                 ((org-agenda-overriding-header "Next tasks")
-                  (org-agenda-skip-function 'bh/skip-projects-and-habits-and-single-tasks)))
-      (tags-todo "-CANCELLED+WAITING|HOLD/!"
-                 ((org-agenda-overriding-header "Waiting tasks")
-                  (org-agenda-skip-function 'bh/skip-non-tasks)))
-      (tags-todo "-CANCELLED/!"
-                 ((org-agenda-overriding-header "Stuck Projects")
-                  (org-agenda-skip-function 'bh/skip-non-stuck-projects))))))
+(org-add-agenda-custom-command
+ '("P" "Projects and Next Tasks"
+   ((tags-todo "-CANCELLED/!NEXT"
+               ((org-agenda-overriding-header "Next tasks")
+                (org-agenda-skip-function 'bh/skip-projects-and-habits-and-single-tasks)))
+    (tags-todo "-CANCELLED+WAITING|HOLD/!"
+               ((org-agenda-overriding-header "Waiting tasks")
+                (org-agenda-skip-function 'bh/skip-non-tasks)))
+    (tags-todo "-CANCELLED/!"
+               ((org-agenda-overriding-header "Stuck Projects")
+                (org-agenda-skip-function 'bh/skip-non-stuck-projects))))))
 #+END_SRC
 
 Same thing as above, but also include the next three days agenda.
@@ -644,7 +643,7 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
    each file.)
 #+BEGIN_SRC emacs-lisp
 (setq org-tag-persistent-alist '(("task" . ?t) ("drill" . ?d)
-				 ("IGNORE" . ?i)
+				 ("IGNORE" . ?I)
                                  ("breakdown" . ?b) ("IFBORED" . ?B)
 				 ("CANCELLED" . ?C)
                                  ("WAITING" . ?w) ("home" . ?h)
@@ -732,7 +731,7 @@ Require org-drill.
 Add random noise to the due dates of cards, so they're not always clumped together.
 Also, change the default cloze delimiters, as the defaults weren't working well for me.
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/elisp/org-mode/contrib/lisp/")
+;; (add-to-list 'load-path "~/elisp/org-mode/contrib/lisp/")
 (use-package org-drill
   :disabled 				;copy-list not defined for some reason?
   :after org
@@ -1035,10 +1034,11 @@ These functions clock into a task if it exists and creates it using
 	     'agenda
 	     'jmm/skip-non-projects))))
 
-(defun jmm/org-jump-to-marker (place)
+(defun jmm/org-jump-to-project-marker (place)
   (switch-to-buffer (marker-buffer place))
   (goto-char place)
-  (org-show-context))
+  (org-show-context)
+  (org-show-subtree))
 
 (setq jmm/helm-jump-org-project
     '((name . "Jump to Org project")
@@ -1047,7 +1047,7 @@ These functions clock into a task if it exists and creates it using
       (filtered-candidate-transformer
        helm-adaptive-sort)
       (action . (("Jump to"
-                  . jmm/org-jump-to-marker)))))
+                  . jmm/org-jump-to-project-marker)))))
 
 (defun jmm/helm-org-jump-project (&optional arg)
   "Use helm to jump to a project. With optional ARG, clear the cache."
@@ -1969,7 +1969,7 @@ This allows for easier readability of targets."
 			 (point-marker)))
 	  ids))
 #+END_SRC
-** Add tags without obliterating already set tags
+** Add and remove tags without obliterating already set tags
    Org Edna's ~tag!~ action sets tags but doesn't keep the ones already set.
    This adds the ability to add multiple tags while keeping the tags you already have.
 
@@ -1979,6 +1979,13 @@ This allows for easier readability of targets."
 TAGS is a string with multiple tags separated by a colon."
   (ignore last-entry)
   (mapc (lambda (tag) (org-toggle-tag tag 'on))
+	(if (stringp tags) (split-string tags ":" t) tags)))
+
+(defun org-edna-action/remove-tags! (last-entry tags)
+  "Remove TAGS without deleting already set tags.
+TAGS is a string with multiple tags separated by a colon."
+  (ignore last-entry)
+  (mapc (lambda (tag) (org-toggle-tag tag 'off))
 	(if (stringp tags) (split-string tags ":" t) tags)))
 #+END_SRC
 

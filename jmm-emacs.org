@@ -1090,7 +1090,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
                                          (loc (tramp-file-name-localname dissect)))
                                     (concat (if user (concat user "@")) host ":" "\"" (shell-quote-argument loc) "\"")
                                     )
-                                (concat "\"" (shell-quote-argument path) "\"")))
+                                (shell-quote-argument path)))
                             (dired-get-marked-files))
                     " ")))
     (kill-new string)
@@ -1557,8 +1557,9 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 	 ("M-g b" . helm-resume)
 	 ("C-c SPC" . helm-all-mark-rings)
 	 ("C-c b" . helm-bookmarks)
-	 :map helm-bookmark-map
-	 ("C-c s" . jmm/helm-bookmark-run-set-bookmark))
+	 ;; :map helm-bookmark-map
+	 ;; ("C-c s" . jmm/helm-bookmark-run-set-bookmark)
+	 )
   :init
   (setq helm-ff-newfile-prompt-p nil)
   :config
@@ -2428,6 +2429,7 @@ dispatch action.
 			 ("C-M-<right>" . sp-backward-barf-sexp)
 
 			 ("M-D" . sp-splice-sexp)
+			 ("M-S" . sp-split-sexp)
 			 ("C-M-<delete>" . sp-splice-sexp-killing-forward)
 			 ("C-M-<backspace>" . sp-splice-sexp-killing-backward)
 			 ("C-S-<backspace>" . sp-splice-sexp-killing-around)
