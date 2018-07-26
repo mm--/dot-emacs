@@ -569,6 +569,12 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 	 ("NAMESPACE\\'" . R-mode)
 	 ("\\.jl\\'" . ess-julia-mode)
 	 ("\\.[jJ][aA][gG]\\'" . ess-jags-mode))
+  ;; Hmm... this binding isn't working. Maybe ess-mode-map isn't loaded immediately?
+  :bind (:map ess-mode-map
+	      ("C-c C-p" . jmm/ess-eval-pipe-paragraph-and-print)
+	      ("C-%" . then_R_operator)
+	      :map inferior-ess-mode-map
+	      ("C-%" . then_R_operator))
   :config 
    ;; I like how ESS previously indented continuations as it makes ggplot
    ;; code easier to read.
@@ -642,6 +648,46 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   (add-hook 'comint-output-filter-functions
             'comint-truncate-buffer)
 #+end_src
+** Magrittr pipes
+
+   When you have a lot of ~magrittr~ pipes, sometimes you want to see
+   what's being output at a certain step in the chain. This function
+   evaluates the current chain up to the end of the line, and prints
+   the result.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/ess-eval-pipe-paragraph-and-print (vis)
+  "Send current paragraph (up to the end of the current line) to the inferior ESS process.
+This function will check if the current line ends with a \"%>%\" and also send a \"print\" command if it does.
+Useful for seeing that the output is at certain steps of a pipe chain.
+Prefix arg VIS toggles visibility of ess-code as for `ess-eval-region'."
+  (interactive "P")
+  (save-excursion
+    (let ((send-print? (prog2
+			   (beginning-of-line)
+			   (looking-at-p ".*%>%\s*$") ;Looking at a that ends in a pipe.
+			 (end-of-line)))
+	  (visibly (if vis (not ess-eval-visibly) ess-eval-visibly))
+	  (end (point)))
+      (backward-paragraph)
+      (ess-skip-blanks-forward 'multiline)
+      (ess-eval-region (point) end vis "Eval paragraph")
+      ;; If we send something that ends in a pipe, it'll wait until we
+      ;; give some final output, so here we send a "print"
+      (when send-print? (ess-send-string (ess-get-process) "print" visibly)))))
+#+END_SRC
+
+And a handy [[https://emacs.stackexchange.com/questions/8041/how-to-implement-the-piping-operator-in-ess-mode][keybinding from StackExchange]] for the pipe.
+#+BEGIN_SRC emacs-lisp
+;; From https://emacs.stackexchange.com/questions/8041/how-to-implement-the-piping-operator-in-ess-mode
+(defun then_R_operator ()
+  "R - %>% operator or 'then' pipe operator"
+  (interactive)
+  (just-one-space 1)
+  (insert "%>%")
+  (reindent-then-newline-and-indent))
+#+END_SRC
+
 * ERC
 I don't really use ERC anymore.
 #+begin_src emacs-lisp
