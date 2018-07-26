@@ -2126,7 +2126,22 @@ definition without bringing up a help buffer."
   :config
   (advice-add 'shr-browse-url :around #'jmm/org-open-link-alternate-browser))
 #+END_SRC
+** Search only visible text
 
+   It's just easier to have this hotkey than having to type ~C-s M-s
+   i~ all the time. Handy for org-mode.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/isearch-forward-visible ()
+  "Just `isearch-forward` but don't match invisible text."
+  (interactive)
+  (let ((search-invisible nil))
+    (isearch-forward)))
+
+;; I guess it can't just be "C-S" because the "S" looks like it means
+;; "shift".
+(bind-key "C-S-S" 'jmm/isearch-forward-visible)
+#+END_SRC
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
