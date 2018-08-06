@@ -2949,9 +2949,31 @@ It also provides functions for swapping and moving windows, which is super helpf
   (setq eyebrowse-new-workspace t)
   :config
   (eyebrowse-mode t)
-  ;; Se we defer loading, we'll need to initialize all frames when we first call it.
+  ;; Make it easier to clone slots
+  (advice-add 'eyebrowse-switch-to-window-config :around #'jmm/eyebrowse-temporarily-clone-slot)
+  ;; Since we defer loading, we'll need to initialize all frames when we first call it.
   (--each (frame-list) (with-selected-frame it (eyebrowse-init))))
 #+END_SRC
+
+*** Cloning slots
+
+    I usually just prefer to switch to the "scratch" buffer for new
+    slots, but occasionally I'll want to clone the old one. For
+    example, I often like cloning window configurations if I'm working
+    in a projectile project. This allows me to use keys like ~C-c w 2~
+    and ~C-c w c~ like normal, but when I provide a prefix like ~C-u
+    C-c w c~ it'll clone the last window configuration instead of
+    switching to "scratch".
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/eyebrowse-temporarily-clone-slot (orig-fun &rest args)
+  "With a prefix arg, set `eyebrowse-new-workspace' to nil in order to \"clone\" windows."
+   (if current-prefix-arg
+       (let* ((eyebrowse-new-workspace nil)) ;Nil means clone
+	 (apply orig-fun args))
+     (apply orig-fun args)))
+#+END_SRC
+
 ** Markdown mode
    I'm using markdown mode to edit markdown and Rmarkdown files.
 
