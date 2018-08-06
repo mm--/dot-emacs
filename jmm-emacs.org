@@ -1568,12 +1568,24 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 	(message "Saved")))
 
 (use-package elfeed
-	       :bind (("C-x w" . elfeed))
-	       :config
-	       (define-key elfeed-search-mode-map (kbd "C-x C-s") 'josh/save-elfeed)
-	       (define-key elfeed-show-mode-map "I" 'elfeed-toggle-images)
-	       (define-key elfeed-show-mode-map "i" 'elfeed-temporarily-inhibit-images)
-	       (advice-add 'elfeed-show-visit :around #'jmm/org-open-link-alternate-browser))
+  :bind (("C-x w" . elfeed)
+	 :map elfeed-show-mode-map
+	 ("I" . elfeed-toggle-images)
+	 ("i" . elfeed-temporarily-inhibit-images)
+	 ("k" . jmm/elfeed-tag-unread)
+	 :map elfeed-search-mode-map
+	 ("C-x C-s" . josh/save-elfeed))
+  :config
+  (advice-add 'elfeed-show-visit :around #'jmm/org-open-link-alternate-browser))
+#+END_SRC
+** Mark things as unread
+
+#+BEGIN_SRC emacs-lisp
+;; TODO: Make it easy to untag things too.
+(defun jmm/elfeed-tag-unread ()
+  "Tag as unread"
+  (interactive)
+  (elfeed-show-tag 'unread))
 #+END_SRC
 
 * Sawfish
