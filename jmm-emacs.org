@@ -1538,6 +1538,24 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
     (when (--some-p (string-match-p it (match-string 0)) jmm/tracking-link-regexps)
       (replace-match "" nil t))))
 #+END_SRC
+** Search for other emails from the same author
+
+   This just adds a hotkey to search for emails from the same email
+   author. This is useful for me when deciding to make new email
+   filters based on authors. (Like, what does this dude usually send
+   me? I guess I'll make a filter for him.)
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/notmuch-search-from ()
+  "Search for all messages from the email in the \"from\" field."
+  (interactive)
+  (--if-let
+      (-some-> (notmuch-show-get-from)
+	       notmuch-clean-address
+	       car)
+      (notmuch-search (s-concat "from:" it))
+    (user-error "No email address was found.")))
+#+END_SRC
 
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
