@@ -1972,6 +1972,19 @@ specifies the list of buffers to kill, asking for approval for each one."
 (bind-key "<f9> x" 'start-xterm)
 #+end_src
 
+#+begin_src emacs-lisp
+(defun start-xterm-at-projectile-root (&optional dirpath)
+    "Start a new xterm in the current directory. SSH if necessary"
+    (interactive)
+    (let ((path (if dirpath dirpath (expand-file-name (projectile-project-root)))))
+      (if (tramp-tramp-file-p path)
+          (let ((loc (tramp-file-name-localname (tramp-dissect-file-name path)))
+                (host (tramp-file-name-host (tramp-dissect-file-name path))))
+            (start-process "xterm" " xterm-processes" "xterm" "-T" (format "%s: %s" host loc) "-e" (format "ssh -t %s 'cd %s; bash'" host loc)))
+        (start-process "xterm" " xterm-processes" "xterm" "-T" path "-e" (format "cd \"%s\"; zsh" path)))))
+(bind-key "<f9> X" 'start-xterm-at-projectile-root)
+#+end_src
+
 ** Copy the path
 #+begin_src emacs-lisp
 (defun file-name-copy-path ()
