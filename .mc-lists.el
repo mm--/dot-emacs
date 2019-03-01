@@ -13,6 +13,7 @@
 	ace-jump-move
 	c-electric-delete-forward
 	c-electric-slash
+	cljr-slash
 	clojure-align
 	comment-dwim
 	dabbrev-expand
@@ -54,6 +55,7 @@
 	org-agenda-bulk-mark
 	org-agenda-bulk-unmark-all
 	org-agenda-previous-line
+	org-archive-to-archive-sibling
 	org-beginning-of-line
 	org-comment-dwim
 	org-ctrl-c-ctrl-c
@@ -97,6 +99,7 @@
 	skewer-css-eval-current-rule
 	sp-backward-sexp
 	sp-backward-unwrap-sexp
+	sp-backward-up-sexp
 	sp-forward-barf-sexp
 	sp-forward-sexp
 	sp-forward-slurp-sexp
@@ -122,11 +125,14 @@
 (setq mc/cmds-to-run-once
       '(
 	ace-jump-add-multiple-cursor
+	ace-jump-done
 	ace-jump-move
+	ace-jump-quick-exchange
 	ace-mc-add-char
 	ace-mc-add-multiple-cursors
 	ace-mc-add-single-cursor
 	ace-mc-do-keyboard-reset
+	ace-mc-quick-exchange
 	ajmc/add-char
 	ajmc/add-multiple-cursors
 	ajmc/add-single-cursor
@@ -137,6 +143,7 @@
 	avy-mc-goto-word-1
 	avy-mc-goto-word-1-multiple
 	avy-mc-test-goto-word-1
+	buf-move-left
 	describe-key
 	dired-toggle-read-only
 	dumb-jump-back
@@ -150,6 +157,7 @@
 	helm-swoop
 	isearch-forward-regexp
 	js2-mode-show-node
+	keyboard-escape-quit
 	magit-status
 	menu-bar-open
 	orgtbl-hijacker-command-100
@@ -157,9 +165,11 @@
 	orgtbl-hijacker-command-25
 	orgtbl-hijacker-command-5
 	revert-buffer
+	start-xterm
 	text-scale-adjust
 	undefined
 	wdired-exit
 	wdired-finish-edit
 	xah-open-in-external-app
+	xref-pop-marker-stack
 	))
