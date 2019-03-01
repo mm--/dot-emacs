@@ -1451,8 +1451,7 @@ Like `dired-ranger-copy' but I don't have to manually select the latest download
 	   ("L F" . jmm/notmuch-search-limit-from-author)
 	   ("L f" . jmm/notmuch-search-limit-from-author))
     :config
-    (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-proofpoint-links)
-    (add-to-list 'notmuch-show-insert-text/plain-hook 'jmm/notmuch-wash-tracking-links))
+    (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links))
 (use-package org-notmuch
   :after (notmuch))
 #+END_SRC
@@ -1630,26 +1629,132 @@ Only decodes version 2.
 
 Note: You'll have to be careful not to be phished, which is what
 proofpoint defends against."
-  (save-match-data
-    (let ((urlobj (url-generic-parse-url url)))
-      (if (s-equals? (url-host urlobj) "urldefense.proofpoint.com")
+  (let ((urlobj (url-generic-parse-url url)))
+    (if (s-equals? (url-host urlobj) "urldefense.proofpoint.com")
+	(--> urlobj
+	     (cdr (url-path-and-query it)) ; Get the query
+	     (url-parse-query-string it)  ; Get an alist of query parameters
+	     (car (alist-get "u" it nil nil #'equal))	; Get "u" which holds the url
+	     (s-replace-all '(("-" . "%") ("_" . "/")) it) ; Replace special characters so we can unhexify it
+	     (url-unhex-string it)) ; Unhex
+      url)))
+#+END_SRC
+
+Also decode some explicitly tracking urls
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/url-decode-appspot (url)
+  "Appspot isn't even trying to protect you. It's just tracking."
+  (let ((urlobj (url-generic-parse-url url)))
+      (if (string-match-p "appspot\.com$" (url-host urlobj))
 	  (--> urlobj
 	       (cdr (url-path-and-query it)) ; Get the query
 	       (url-parse-query-string it)  ; Get an alist of query parameters
-	       (car (alist-get "u" it nil nil #'equal))	; Get "u" which holds the url
-	       (s-replace-all '(("-" . "%") ("_" . "/")) it) ; Replace special characters so we can unhexify it
+	       (car (alist-get "link" it nil nil #'equal))	; Get "u" which holds the url
 	       (url-unhex-string it)) ; Unhex
-	url))))
+	url)))
+#+END_SRC
 
-(defun jmm/notmuch-wash-proofpoint-links (msg depth)
-  "Decode proofpoint links."
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/notmuch-wash-decodable-links (msg depth)
+  "Decode proofpoint and decodeable tracking links."
+  (goto-char (point-min))
+  (while (re-search-forward goto-address-url-regexp nil t)
+    (let* ((url (match-string 0))
+	   (decoded-url (save-match-data (-> url
+					     jmm/url-decode-proofpoint
+					     jmm/url-decode-appspot))))
+      (replace-match decoded-url
+		     nil t))))
+#+END_SRC
+** Remove superfluous tracking parameters
+
+Tracking parameters like [[https://en.wikipedia.org/wiki/UTM_parameters][UTM parameters]] (e.g. ~utm_source~) in URLs is
+really ugly and clutters my display. These functions help to wash out
+unnecessary parameters.
+
+Here's where you can define hosts and parameters to strip from them:
+
+#+BEGIN_SRC emacs-lisp
+(defcustom jmm/url-superfluous-parameters
+  '(("^mailchi\\.mp$" "e")
+    ("linkedin\\.com$" "trk" "trkEmail")
+    ("." "utm_source" "utm_medium" "utm_campaign" "utm_term" "utm_content" "mc_eid" "mc_cid"))
+  "Parameters that are unnecessary in links.
+A list of (REGEXP PARAMETERS) where the regex matches the host and paramters must match exactly."
+  :type '(alist :key-type (regexp :tag "Host regexp")
+		:value-type (repeat (string :tag "Parameter"))))
+#+END_SRC
+
+Now the actual implementation
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/keys-to-remove-for-host (hostname)
+  (->> jmm/url-superfluous-parameters
+       (-filter (lambda (elem) (s-matches? (car elem) hostname)))
+       (-mapcat #'cdr)))
+
+(defun jmm/remove-keys-from-alist (keys al)
+  "Remove any of KEYS in AL.
+
+KEYS is a list of strings."
+  (-remove (lambda (elem) (-contains? keys (car elem)))
+	   al))
+
+(defun jmm/url-clean-superfluous-parameters (url)
+  "Remove superfluous parameters from URL.
+
+See the variable `jmm/url-superfluous-parameters' for what gets cleaned."
+  (-let* ((urlobj (url-generic-parse-url url))
+	  ((path . query) (url-path-and-query urlobj))
+	  (newquery (when query
+		      (--> query
+			   (url-parse-query-string it)
+			   (jmm/remove-keys-from-alist (jmm/keys-to-remove-for-host (url-host urlobj)) it)
+			   (url-build-query-string it)))))
+    (setf (url-filename urlobj) (if (s-blank? newquery)
+				    path
+				  (concat path "?" newquery)))
+    (url-recreate-url urlobj)))
+
+(defun jmm/notmuch-wash-superfluous-parameters (msg depth)
+  "Remove tracking paraters from links"
   (goto-char (point-min))
   (while (re-search-forward goto-address-url-regexp nil t)
     (let ((url (match-string 0)))
-      (when (string-match-p "urldefense.proofpoint.com" url)
-	(replace-match (jmm/url-decode-proofpoint url) nil t)))))
+      (replace-match (save-match-data (jmm/url-clean-superfluous-parameters url))
+  		     nil
+  		     t))))
+#+END_SRC
+** Other plain text washing functions for links
+
+   Emacs weirdly lets links end in a closing parenthesis, which is not
+   usually what people do. Here I add a space between the parenthesis
+   and url to fix that.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/notmuch-wash-fix-link-parenthesis (msg depth)
+  "Links that are enclosed in parenthesis get matched weird
+sometimes. Add a space to the end to fix this."
+  (goto-char (point-min))
+  (while (re-search-forward goto-address-url-regexp nil t)
+    (let ((url (match-string 0)))
+      (when (string-match-p ")$" url)
+	(replace-match (concat " " (s-chop-suffix ")" url) " )") nil t)))))
 #+END_SRC
 
+Here's where we define the pipeline of washing links. We do this in a
+specific order because decoded urls may themselves have additional
+tracking parameters.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/notmuch-wash-links (msg depth)
+  (jmm/notmuch-wash-fix-link-parenthesis msg depth)
+  (jmm/notmuch-wash-decodable-links msg depth)
+  (jmm/notmuch-wash-tracking-links msg depth)
+  (jmm/notmuch-wash-superfluous-parameters msg depth))
+#+END_SRC
 
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
