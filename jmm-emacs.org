@@ -138,7 +138,7 @@ Enable all the disabled commands
   (winner-mode 1))
 
 (setq focus-follows-mouse t)
-(setq mouse-autoselect-window t) ;Sloppy focus
+;; (setq mouse-autoselect-window t) ;Sloppy focus
 (setq inhibit-splash-screen t)
 (setq Man-notify-method 'pushy)
 ;;(set-frame-font "-misc-fixed-medium-r-normal-*-11-*-*-*-*-*-*-*")
@@ -152,6 +152,10 @@ Enable all the disabled commands
       browse-url-generic-program "firefox")
 (setq shr-external-browser 'browse-url-generic) ;For eww
 (setq epg-gpg-program "gpg2")
+
+;; The *help* window default behavior is kinda annoying. Always select
+;; it so I can quickly close it by pressing "q"
+(setq help-window-select t)
 #+end_src
 
 Make scripts executable
@@ -589,7 +593,8 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 			 (ess-expression-offset . 4)
 			 (ess-else-offset . 0)
 			 (ess-close-brace-offset . 0)))
-  (setq ess-default-style 'MY-STYLE))
+  ;; (setq ess-default-style 'MY-STYLE)
+  )
 #+end_src
 
 #+begin_src emacs-lisp
