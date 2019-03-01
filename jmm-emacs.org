@@ -873,12 +873,12 @@ of erc-modified-channels-alist"
 	 ("\\.cljc\\'" . clojurec-mode)
 	 ("\\(?:build\\|profile\\)\\.boot\\'" . clojure-mode)
 	 ("\\.\\(clj\\|dtm\\|edn\\)\\'" . clojure-mode))
-  :init
-  ;; Handy stuff for starting up figwheel
-  (setq cider-default-cljs-repl
-	"(do (require 'figwheel-sidecar.repl-api)
-           (figwheel-sidecar.repl-api/start-figwheel!)
-           (figwheel-sidecar.repl-api/cljs-repl))")
+  ;; :init
+  ;; ;; Handy stuff for starting up figwheel
+  ;; (setq cider-default-cljs-repl
+  ;; 	"(do (require 'figwheel-sidecar.repl-api)
+  ;;          (figwheel-sidecar.repl-api/start-figwheel!)
+  ;;          (figwheel-sidecar.repl-api/cljs-repl))")
   :config
   (define-clojure-indent
     (defroutes 'defun)
