@@ -28,6 +28,8 @@ loaded ~org-plus-contrib~
 	org-lowest-priority ?F
 	org-default-priority ?D)
   (setq org-agenda-dim-blocked-tasks nil)
+  (setq org-agenda-todo-ignore-scheduled 'future
+	org-agenda-tags-todo-honor-ignore-options t)
   :config
   (unbind-key "C-'" org-mode-map)
   (add-to-list 'org-tags-exclude-from-inheritance "MARKED")
