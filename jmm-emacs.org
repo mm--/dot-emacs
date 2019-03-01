@@ -1439,7 +1439,17 @@ Like `dired-ranger-copy' but I don't have to manually select the latest download
 	   :map notmuch-show-mode-map
 	   ("b" . josh/notmuch-send-html-to-browser)
 	   ("B" . notmuch-show-resend-message)
-	   ("o" . jmm/notmuch-show-open-in-gmail))
+	   ("o" . jmm/notmuch-show-open-in-gmail)
+	   ("S")
+	   ("S F" . jmm/notmuch-search-from)
+	   ("S f" . jmm/notmuch-search-from)
+	   :map notmuch-search-mode-map
+	   ("S")
+	   ("S F" . jmm/notmuch-search-all-from-author)
+	   ("S f" . jmm/notmuch-search-all-from-author)
+	   ("L")
+	   ("L F" . jmm/notmuch-search-limit-from-author)
+	   ("L f" . jmm/notmuch-search-limit-from-author))
     :config
     (add-to-list 'notmuch-show-insert-text/plain-hook 'jmm/notmuch-wash-tracking-links))
 (use-package org-notmuch
@@ -1558,8 +1568,50 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
       (-some-> (notmuch-show-get-from)
 	       notmuch-clean-address
 	       car)
-      (notmuch-search (s-concat "from:" it))
+      (progn
+	(kill-new it)
+	(notmuch-search (s-concat "from:" it)))
     (user-error "No email address was found.")))
+#+END_SRC
+** Limit a search to emails from the same author
+
+   Some of my tags and searches aren't refined enough. Sometimes I
+   have a lot of unread email from the same author and want to go
+   through these at the same time.
+
+   For example, I have a "journal" tag for emails from different
+   academic journals. If I haven't caught up on them I'll just see
+   them piled together. This makes it fast to narrow it down to a specific journal.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/notmuch-get-email-addresses (search-terms)
+  "Return a list of email addresses for SEARCH-TERMS.
+
+The SEARCH-TERMS should be a list"
+  (let ((args '("address" "--format=sexp" "--format-version=4")))
+    (->> (apply #'notmuch-call-notmuch-sexp (append args search-terms))
+	 (--map (plist-get it :address)))))
+
+(defun jmm/notmuch-search-get-author-query ()
+  "Get a query for the author/email address under point."
+  (let ((author (--> (notmuch-search-find-stable-query)
+		     (list (car it))
+		     (jmm/notmuch-get-email-addresses it)
+		     (car it))))
+    (when author
+      (concat "from:" author))))
+
+(defun jmm/notmuch-search-limit-from-author ()
+  "Limit a search to the email address under the point."
+  (interactive)
+  (-when-let (authorq (jmm/notmuch-search-get-author-query))
+    (notmuch-search-filter authorq)))
+
+(defun jmm/notmuch-search-all-from-author ()
+  "Search all mail sent from the email address under the point."
+  (interactive)
+  (-when-let (authorq (jmm/notmuch-search-get-author-query))
+    (notmuch-search authorq)))
 #+END_SRC
 
 * Elfeed
