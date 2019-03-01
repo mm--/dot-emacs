@@ -34,6 +34,7 @@ loaded ~org-plus-contrib~
   (add-to-list 'org-tag-faces '("MARKED" :foreground "MediumPurple1" :weight bold))
   (add-to-list 'org-tag-faces '("vague" :foreground "DodgerBlue" :weight bold))
   (add-to-list 'org-tag-faces '("breakdown" :foreground "RoyalBlue" :weight bold))
+  (add-to-list 'org-tag-faces '("project" :foreground "DeepPink" :weight bold))
   (add-to-list 'org-tag-faces '("blocked" :foreground "yellow" :weight bold))
   (advice-add 'org-open-at-point :around #'jmm/org-open-link-alternate-browser)
   (advice-add 'org-open-at-point-global :around #'jmm/org-open-link-alternate-browser)
@@ -649,6 +650,7 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
                                  ("WAITING" . ?w) ("home" . ?h)
                                  ("REWARD" . ?R) ("SHOPPING" . ?s)
                                  ("paper" . ?p) ("erlich" . ?e) ("@net" . ?n) ("nyu" . ?y)
+				 ("project" . ?P)
 				 ("event" . ?E)
                                  ("vague" . ?v) ("lookup" . ?l)
                                  ("CODING" . ?c)
@@ -660,11 +662,12 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
    Stuck projects are projects that don't have a next action or a TODO.
    Also, make sure the "PROJECT" tag isn't inherited.
 #+begin_src emacs-lisp
-  (setq org-stuck-projects
-             '("+PROJECT/-MAYBE-DONE" ("NEXT" "TODO") ("@SHOP")
-               "\\<IGNORE\\>"))
+(setq org-stuck-projects
+           '("+PROJECT/-MAYBE-DONE" ("NEXT" "TODO") ("@SHOP")
+             "\\<IGNORE\\>"))
 
-  (add-to-list 'org-tags-exclude-from-inheritance "PROJECT")
+(add-to-list 'org-tags-exclude-from-inheritance "PROJECT")
+(add-to-list 'org-tags-exclude-from-inheritance "project")
 #+end_src
 * If I didn't want it to interfere with windmove
 #+begin_src emacs-lisp
@@ -1124,6 +1127,7 @@ Return t if it's a valid target, otherwise return nil."
 (setq org-todo-state-tags-triggers
       (quote (("CANCELLED" ("CANCELLED" . t))
               ("WAITING" ("WAITING" . t))
+	      ("PROJECT" ("project" . t))
               ("HOLD" ("WAITING") ("HOLD" . t))
               (done ("WAITING") ("HOLD"))
               ("TODO" ("WAITING") ("CANCELLED") ("HOLD"))
