@@ -3022,3 +3022,14 @@ obscuring other windows.
   :after (org))
 #+END_SRC
 
+** fasd
+   Useful for navigating to frequently visited files and directories
+#+BEGIN_SRC emacs-lisp
+(use-package fasd
+  :if (not noninteractive)
+  :ensure t
+  :init
+  (setq fasd-enable-initial-prompt nil)
+  (global-fasd-mode 1)
+  :bind (("C-c f" . fasd-find-file)))
+#+END_SRC
