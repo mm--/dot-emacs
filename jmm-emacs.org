@@ -236,7 +236,8 @@ Set my font
   :init
   (setq telephone-line-lhs
 	'((accent . (telephone-line-vc-segment
-                     telephone-line-process-segment))
+                     telephone-line-process-segment
+		     telephone-line-pdf-segment))
           (nil    . (telephone-line-minor-mode-segment
                      telephone-line-buffer-segment))))
   (setq telephone-line-rhs
@@ -244,7 +245,39 @@ Set my font
           (accent . (telephone-line-major-mode-segment))
           (evil   . (telephone-line-airline-position-segment))))
   :config
+  ;; Adapted from http://tech.toryanderson.com/2018/05/27/display-pdf-pages-with-telephone-line/
+  ;; For pdf-tools
+  (telephone-line-defsegment telephone-line-pdf-segment ()
+    (if (eq major-mode 'pdf-view-mode)
+	(propertize (pdf-view-page-number)
+                    'face '(:inherit)
+                    'display '(raise 0.0)
+                    'mouse-face '(:box 1)
+                    'local-map (make-mode-line-mouse-map
+				'mouse-1 (lambda ()
+					   (interactive)
+					   (pdf-view-goto-page))))))
   (telephone-line-mode 1))
+#+END_SRC
+*** PDF Tools segment
+
+#+BEGIN_SRC emacs-lisp
+;; Adapted from http://tech.toryanderson.com/2018/05/27/display-pdf-pages-with-telephone-line/
+(defun pdf-view-page-number ()
+  "Format the page number to be displayed on the modeline.
+
+Shows the current page, total number of pages, and the page
+label (which can be different from the number for example if you're on page \"iv\")"
+  (interactive)
+  (let ((x (format  "[pg %s/%s \"%s\"]"
+		    (number-to-string (pdf-view-current-page))
+		    (number-to-string (pdf-cache-number-of-pages))
+		    (nth (1- (pdf-view-current-page))
+		    	 (pdf-info-pagelabels))
+		    )))
+    (if (called-interactively-p)
+	(message x)
+      x)))
 #+END_SRC
 
 * Keybindings
