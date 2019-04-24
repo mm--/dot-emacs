@@ -154,6 +154,7 @@
 	handle-switch-frame
 	helm-M-x
 	helm-buffers-list
+	helm-man-woman
 	helm-swoop
 	isearch-forward-regexp
 	js2-mode-show-node
