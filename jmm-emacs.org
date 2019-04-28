@@ -2475,7 +2475,10 @@ definition without bringing up a help buffer."
 	 ("C-M-<" . mc/mark-all-like-this-dwim)
 	 ("C-<mouse-1>" . mc/add-cursor-on-click))
   :init
-  (unbind-key "C-<down-mouse-1>"))
+  (unbind-key "C-<down-mouse-1>")
+  :config
+  (add-to-list 'mc/cmds-to-run-for-all #'jmm/replace-numbers-with-zero-padding)
+  (add-to-list 'mc/cmds-to-run-for-all #'jmm/replace-month-name-with-num))
 #+end_src
 *** Inserting letters for each cursor
     Basically exactly like ~mc/insert-numbers~ but for letters.
@@ -2531,6 +2534,59 @@ definition without bringing up a help buffer."
 #+BEGIN_SRC emacs-lisp
 (add-hook 'multiple-cursors-mode-enabled-hook (lambda () (setq select-enable-primary nil)))
 (add-hook 'multiple-cursors-mode-disabled-hook (lambda () (setq select-enable-primary t)))
+#+END_SRC
+*** Replacing month names with numbers
+    I need to replace month names with numbers a lot when formatting
+    calendar events.
+#+BEGIN_SRC emacs-lisp
+(defvar jmm/month-names
+  '(("\\bJan\\(uary\\)?\\b" "01")
+    ("\\bFeb\\(ruary\\)?\\b" "02")
+    ("\\bMar\\(ch\\)?\\b" "03")
+    ("\\bApr\\(il\\)?\\b" "04")
+    ("\\bMay\b" "05")
+    ("\\bJun\\(e\\)?\\\b" "06")
+    ("\\bJul\\(y\\)?\\b" "07")
+    ("\\bAug\\(ust\\)?\\b" "08")
+    ("\\bSept?\\(ember\\)?\\b" "09")
+    ("\\bOct\\(ober\\)?\\b" "10")
+    ("\\bNov\\(ember\\)?\\b" "11")
+    ("\\bDec\\(ember\\)?\\b" "12")))
+
+(defun jmm/replace-month-name-with-num (beginning end)
+  "Replace month names with numbers in active region.
+Useful for formatting dates for inputs into calendars."
+  (interactive "r")
+  (when (use-region-p)
+    (cl-dolist (thismonth jmm/month-names)
+      (-let [(searchexpr replaceresult) thismonth]
+	  (save-excursion
+	    (goto-char beginning)
+	    (while (re-search-forward searchexpr end t)
+	      (replace-match replaceresult))
+	    )))))
+
+(define-key endless/mc-map "M" #'jmm/replace-month-name-with-num)
+#+END_SRC
+*** Zero padding multiple cursors
+    The function ~mc/insert-numbers-default~ is pretty handy, but
+    sometimes I need integers to be zero padded to the same
+    length. This function helps me do that.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/replace-numbers-with-zero-padding (numzeros beginning end)
+  "Replace numbers/integers in active region with zero-padded versions.
+This is also handy when using multiple cursors."
+  (interactive "P\nr")
+  (when (use-region-p)
+    (let ((formatstr (format "%%0%dd" (if (listp numzeros) 2 numzeros)))
+	  (end-marker (set-marker (make-marker) end))) ;; Replacing can affect the region's end..
+      (save-excursion
+	(goto-char (region-beginning))
+	(while (re-search-forward "[0-9]+" end-marker t)
+	  (replace-match (format formatstr (string-to-number (match-string 0)))))))))
+
+(define-key endless/mc-map "0" #'jmm/replace-numbers-with-zero-padding)
 #+END_SRC
 
 ** Expand Region
