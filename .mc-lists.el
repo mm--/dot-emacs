@@ -41,6 +41,9 @@
 	jmm/org-add-tag
 	jmm/org-edna-hydra/body
 	jmm/org-edna-hydra/lambda-n-and-exit
+	jmm/replace-month-name-with-num
+	jmm/replace-numbers-with-zero-padding
+	jmm/replace-zero-padding
 	josh/org-convert-added-or-add-created
 	josh/org-toggle-marked-tag
 	kill-region
@@ -107,6 +110,7 @@
 	sp-splice-sexp
 	sp-splice-sexp-killing-around
 	sp-splice-sexp-killing-backward
+	sp-split-sexp
 	sp-transpose-sexp
 	transpose-sexps
 	transpose-words
@@ -154,12 +158,12 @@
 	handle-switch-frame
 	helm-M-x
 	helm-buffers-list
-	helm-man-woman
 	helm-swoop
 	isearch-forward-regexp
 	js2-mode-show-node
 	keyboard-escape-quit
 	magit-status
+	mc/vertical-align-with-space
 	menu-bar-open
 	orgtbl-hijacker-command-100
 	orgtbl-hijacker-command-102
