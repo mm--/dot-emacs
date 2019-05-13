@@ -606,12 +606,6 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 	 ("NAMESPACE\\'" . R-mode)
 	 ("\\.jl\\'" . ess-julia-mode)
 	 ("\\.[jJ][aA][gG]\\'" . ess-jags-mode))
-  ;; Hmm... this binding isn't working. Maybe ess-mode-map isn't loaded immediately?
-  :bind (:map ess-mode-map
-	      ("C-c C-p" . jmm/ess-eval-pipe-paragraph-and-print)
-	      ("C-%" . then_R_operator)
-	      :map inferior-ess-mode-map
-	      ("C-%" . then_R_operator))
   :config 
    ;; I like how ESS previously indented continuations as it makes ggplot
    ;; code easier to read.
@@ -628,6 +622,15 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 			 (ess-close-brace-offset . 0)))
   ;; (setq ess-default-style 'MY-STYLE)
   )
+
+(use-package ess-r-mode
+  :bind (:map ess-r-mode-map
+  	      ("C-c C-p" . jmm/ess-eval-pipe-paragraph-and-print)
+  	      ("C-%" . then_R_operator)
+	      ("_" . ess-insert-assign)
+	 :map inferior-ess-r-mode-map
+	      ("C-%" . then_R_operator)
+	      ("_" . ess-insert-assign)))
 #+end_src
 
 #+begin_src emacs-lisp
