@@ -2525,6 +2525,9 @@ definition without bringing up a help buffer."
     #'mc/edit-beginnings-of-lines)
   (define-key endless/mc-map "\C-e"
     #'mc/edit-ends-of-lines)
+
+  (define-key endless/mc-map " " #'mc/vertical-align-with-space)
+  (define-key endless/mc-map "|" #'mc/vertical-align)
 #+END_SRC
 *** Disable primary selection for multiple cursors
     Setting ~x-select-enable-primary~ allows me to paste into emacs from an xterm selection using "~C-y~" (yank)
