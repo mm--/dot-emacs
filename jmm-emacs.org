@@ -641,12 +641,11 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
   (add-hook 'ess-mode-hook
             (lambda ()
               (flyspell-prog-mode)
-              (auto-complete-mode 1)
-              (ac-flyspell-workaround)))
+              (smartparens-mode 0)))
 
   (add-hook 'inferior-ess-mode-hook
             (lambda ()
-              (auto-complete-mode 1)))
+              (smartparens-mode 0)))
 
   (autoload 'ess-rdired "ess-rdired"
     "View *R* objects in a dired-like buffer." t)
