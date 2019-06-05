@@ -975,6 +975,92 @@ of erc-modified-channels-alist"
 				 (ansi-term shell-pop-term-shell))))
   (setq shell-pop-universal-key "C-c t"))
 #+END_SRC
+** Eshell
+#+BEGIN_SRC emacs-lisp
+(use-package eshell
+  :init
+  (setq eshell-error-if-no-glob t
+	eshell-hist-ignoredups t
+	eshell-input-filter #'eshell-input-filter-initial-space
+	eshell-history-size 10000
+        eshell-destroy-buffer-when-process-dies t))
+#+END_SRC
+*** Eshell facilities for clicking on ls files
+    Modified from [[https://www.emacswiki.org/emacs/EshellEnhancedLS]].
+    Allows for some nice features like clicking files (or navigating
+    with avy) to add files to the input line.
+
+    TODO: Files should have their paths stored, as clicking files
+    becomes less useful after changing directories.
+#+BEGIN_SRC emacs-lisp
+(eval-after-load "em-ls"
+  '(progn
+     (require 'em-rebind)
+     (defun jmm/eshell-ls-filename-at-point (point)
+       (interactive "d")
+       (get-text-property point 'ls-filename))
+
+     (defun jmm/eshell-ls-filename-at-click (event)
+       (interactive "e")
+       (jmm/eshell-ls-filename-at-point (posn-point (event-end event))))
+
+     (defun jmm/eshell-insert-text-as-argument (str)
+       "Take in some string and add to Eshell prompt.
+If the point isn't at the Eshell prompt, append to the end (with a separating space).
+If the point is in the eshell prompt, insert at point.
+Append it to the eshell prompt (if we're not at it), adding a space if necessary."
+       (if (eshell-point-within-input-p (point))
+	   (progn
+	     (unless (looking-back "[[:space:]]")
+	       (insert " "))
+	     (insert (eshell-quote-argument str))
+	     (unless (or (looking-at-p "[[:space:]]") (eobp))
+	       (insert " ")))
+	 (save-excursion
+	   (goto-char (point-max))
+	   (jmm/eshell-insert-text-as-argument str)))) ;; Hopefully this doesn't infinitely loop
+
+     ;; (eshell-point-within-input-p (point))
+
+     (defun jmm/eshell-ls-input-insert-filename-at-click (event)
+       (interactive "e")
+       (jmm/eshell-insert-text-as-argument
+	(jmm/eshell-ls-filename-at-click event)))
+
+     (defun jmm/eshell-ls-input-insert-filename-at-point (point)
+       (interactive "d")
+       (jmm/eshell-insert-text-as-argument
+	(jmm/eshell-ls-filename-at-point point)))
+
+     (defun jmm/eshell-find-filename-at-point (point)
+       (interactive "d")
+       (find-file (jmm/eshell-ls-filename-at-point point)))
+
+     (defun jmm/eshell-find-filename-at-click (event)
+       (interactive "e")
+       (find-file (jmm/eshell-ls-filename-at-click event)))
+
+     (defvar jmm/eshell-ls-keymap
+       (let ((mymap (make-sparse-keymap)))
+	 (define-key mymap (kbd "SPC") 'jmm/eshell-ls-input-insert-filename-at-point)
+	 (define-key mymap (kbd "RET") 'jmm/eshell-find-filename-at-point)
+	 (define-key mymap (kbd "<return>") 'jmm/eshell-find-filename-at-point)
+	 (define-key mymap (kbd "<mouse-1>") 'jmm/eshell-ls-input-insert-filename-at-click)
+	 (define-key mymap (kbd "<mouse-3>") 'jmm/eshell-find-filename-at-click)
+	 mymap))
+
+     ;; From https://www.emacswiki.org/emacs/EshellEnhancedLS
+     ;; Modified from "ted-electrify-ls" slightly (like the help-echo string)
+     (defadvice eshell-ls-decorated-name (after jmm-electrify-ls-modified activate)
+       "Eshell's `ls' now lets you click or RET on file names to open them."
+       (add-text-properties 0 (length ad-return-value)
+			    (list 'help-echo "RET, mouse-3: visit this file\nSPC, mouse-1: Insert filename at input"
+				  'mouse-face 'highlight
+				  'ls-filename ad-return-value
+				  'keymap jmm/eshell-ls-keymap)
+			    ad-return-value)
+       ad-return-value)))
+#+END_SRC
 
 * Encryption
 #+begin_src emacs-lisp
