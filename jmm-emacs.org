@@ -1964,8 +1964,8 @@ tracking parameters.
   :diminish helm-mode
   :bind (("M-x" . helm-M-x)
 	 ("C-x b" . helm-buffers-list)
-	 ("C-x C-f" . helm-find-files)
-	 ("C-x f" . helm-for-files)
+	 ;; ("C-x C-f" . helm-find-files)
+	 ;; ("C-x f" . helm-for-files)
 	 ("C-x C-i" . helm-semantic-or-imenu)
 	 ("M-x" . helm-M-x)
 	 ("M-y" . helm-show-kill-ring)
@@ -2161,6 +2161,43 @@ Make an easy way to find files in open dired buffers
 
 ;; (bind-key "C-c s" 'jmm/helm-bookmark-run-set-bookmark helm-bookmark-map)
 #+END_SRC
+* Ivy
+  Ivy provides another completion framework. At some points it feels a
+  bit quicker than helm.
+#+BEGIN_SRC emacs-lisp
+(use-package ivy
+  :if (not noninteractive)
+  :ensure t
+  :defer 3
+  :init
+  (setq ivy-use-virtual-buffers t)
+  (setq ivy-extra-directories nil) ;; Don't like seeing ./ and ../ in completions
+  :bind (("C-c C-r" . ivy-resume)
+	 :map ivy-mode-map
+	 ("C-'" . ivy-avy)
+	 :map ivy-minibuffer-map
+	 ("C-<" . ivy-minibuffer-shrink)
+	 ("C->" . ivy-minibuffer-grow)))
+
+(use-package ivy-hydra
+  :if (not noninteractive)
+ :ensure t)
+
+(use-package swiper
+  :ensure t
+  :bind (("M-i" . swiper)))
+
+(use-package counsel
+  :ensure t
+  :bind ((bind-key "C-x l" #'counsel-locate)
+	 (bind-key "C-c k" #'counsel-ag)
+	 (bind-key "C-x C-f" #'counsel-find-file)
+	 (bind-key "<f2> u" #'counsel-unicode-char)
+	 (bind-key "<f1> f" 'counsel-describe-function)
+	 (bind-key "<f1> v" 'counsel-describe-variable)))
+
+#+END_SRC
+
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
 #+BEGIN_SRC emacs-lisp
@@ -2744,8 +2781,8 @@ This is also handy when using multiple cursors."
 #+BEGIN_SRC emacs-lisp
 (use-package avy
   :ensure t
-  :bind* (("C-'" . avy-goto-char-timer)
-	  ("C-0" . avy-goto-word-1))
+  ;; :bind* (("C-'" . avy-goto-char-timer)
+  ;; 	  ("C-0" . avy-goto-word-1))
   :bind (("C-:" . avy-goto-char-2)
 	 ("M-g w" . avy-goto-word-1)
 	 :map isearch-mode-map
