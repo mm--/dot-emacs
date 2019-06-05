@@ -1080,7 +1080,8 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 (eval-after-load 'eshell
   '(progn
     (bind-key "M-L" #'jmm/eshell-ls-recent eshell-mode-map)
-    (bind-key "C-c C-h" #'jmm/eshell-prompt-history eshell-mode-map)))
+    (bind-key "C-c C-h" #'jmm/eshell-prompt-history eshell-mode-map)
+    (bind-key "M-D" #'jmm/counsel-fasd-directories-eshell eshell-mode-map)))
 #+END_SRC
 
 * Encryption
@@ -2058,7 +2059,7 @@ Set up hotkeys and stuff for helm-swoop
   :bind (("M-i" . helm-swoop)
          ("M-I" . helm-swoop-back-to-last-point)
          ("C-c M-i" . helm-multi-swoop)
-	 ("C-c d" . helm-multi-swoop-dired)
+	 ("C-c D" . helm-multi-swoop-dired)
          ("C-x M-i" . helm-multi-swoop-all)
 	 :map isearch-mode-map
 	 ;; When doing isearch, hand the word over to helm-swoop
@@ -2181,22 +2182,90 @@ Make an easy way to find files in open dired buffers
 
 (use-package ivy-hydra
   :if (not noninteractive)
- :ensure t)
+  :ensure t)
 
 (use-package swiper
+  :if (not noninteractive)
   :ensure t
   :bind (("M-i" . swiper)))
 
 (use-package counsel
+  :if (not noninteractive)
   :ensure t
-  :bind ((bind-key "C-x l" #'counsel-locate)
-	 (bind-key "C-c k" #'counsel-ag)
-	 (bind-key "C-x C-f" #'counsel-find-file)
-	 (bind-key "<f2> u" #'counsel-unicode-char)
-	 (bind-key "<f1> f" 'counsel-describe-function)
-	 (bind-key "<f1> v" 'counsel-describe-variable)))
+  ;; Require counsel for jmm/counsel-fasd-directories
+  :defer 3
+  :bind (("C-x l" . counsel-locate)
+	 ("C-c k" . counsel-ag)
+	 ("C-x C-f" . counsel-find-file)
+	 ("<f2> u" . counsel-unicode-char)
+	 ("<f1> f" . counsel-describe-function)
+	 ("<f1> v" . counsel-describe-variable)
+	 ("C-c d" . jmm/counsel-fasd-directories))
+  :config
+  ;; Fasd still works well with only two characters
+  (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2)))
 
 #+END_SRC
+** Ivy completions for fasd
+   Makes it easy to quickly navigate directories.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/counsel-fasd-directory-function (str)
+  (or
+   (counsel-more-chars)
+   (progn
+     (counsel--async-command
+      (format "fasd -dlR %s" str))
+     '("" "working..."))))
+
+(defvar jmm/counsel-fasd-directory-history nil
+  "Maintains a list of fasd directories selected.")
+
+(defun jmm/ivy--switch-directory (directory)
+  "Switch to a dired directory from an ivy completion"
+  (with-ivy-window
+    (when directory
+      (dired directory))))
+
+(defun jmm/ivy--eshell-cd-directory (directory)
+  "Send Eshell a command to switch to a directory from an ivy completion"
+  (with-ivy-window
+    (eshell-kill-input)
+    (insert (concat "cd " (eshell-quote-argument directory)))
+    (eshell-send-input)))
+
+(defun jmm/counsel-fasd-directories (&optional initial-input)
+  "Call the \"fasd\" shell command to get \"frecent\" directories.
+     INITIAL-INPUT can be given as the initial minibuffer input."
+  (interactive)
+  (ivy-read "fasd directory: " #'jmm/counsel-fasd-directory-function
+	    :initial-input initial-input
+	    :dynamic-collection t
+	    :history 'jmm/counsel-fasd-directory-history
+	    :action
+	    '(1
+	      ("d" jmm/ivy--switch-directory "Open in dired")
+	      ("e" jmm/ivy--eshell-cd-directory "CD in Eshell"))
+	    :unwind #'counsel-delete-process
+	    :caller 'jmm/counsel-fasd-directories))
+
+
+;; Same thing but switch the default action
+(defun jmm/counsel-fasd-directories-eshell (&optional initial-input)
+  "Call the \"fasd\" shell command to get \"frecent\" directories.
+     INITIAL-INPUT can be given as the initial minibuffer input."
+  (interactive)
+  (ivy-read "fasd directory: " #'jmm/counsel-fasd-directory-function
+	    :initial-input initial-input
+	    :dynamic-collection t
+	    :history 'jmm/counsel-fasd-directory-history
+	    :action
+	    '(1
+	      ("e" jmm/ivy--eshell-cd-directory "CD in Eshell")
+	      ("d" jmm/ivy--switch-directory "Open in dired"))
+	    :unwind #'counsel-delete-process
+	    :caller 'jmm/counsel-fasd-directories))
+#+END_SRC
+
 
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
@@ -2785,6 +2854,8 @@ This is also handy when using multiple cursors."
   ;; 	  ("C-0" . avy-goto-word-1))
   :bind (("C-:" . avy-goto-char-2)
 	 ("M-g w" . avy-goto-word-1)
+	 ("C-'" . avy-goto-char-timer)
+	 ("C-0" . avy-goto-word-1)
 	 :map isearch-mode-map
 	 ("C-'" . avy-isearch))
   :init (setq avy-keys (number-sequence ?a ?z)
