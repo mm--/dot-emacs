@@ -1061,6 +1061,27 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 			    ad-return-value)
        ad-return-value)))
 #+END_SRC
+*** Prompt history completing read and showing recent files
+#+BEGIN_SRC emacs-lisp
+(defun jmm/eshell-ls-recent ()
+  "Show recent files with human readable file sizes."
+  (interactive)
+  (eshell-kill-input)
+  (insert "ls -lahtr")
+  (eshell-send-input))
+
+(defun jmm/eshell-prompt-history ()
+  "Prompt for some Eshell history."
+  (interactive)
+  (insert (ivy-read "History: "
+		   (delete-dups (ring-elements eshell-history-ring)))))
+
+
+(eval-after-load 'eshell
+  '(progn
+    (bind-key "M-L" #'jmm/eshell-ls-recent eshell-mode-map)
+    (bind-key "C-c C-h" #'jmm/eshell-prompt-history eshell-mode-map)))
+#+END_SRC
 
 * Encryption
 #+begin_src emacs-lisp
