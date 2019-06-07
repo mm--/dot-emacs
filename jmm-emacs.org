@@ -983,8 +983,30 @@ of erc-modified-channels-alist"
 	eshell-hist-ignoredups t
 	eshell-input-filter #'eshell-input-filter-initial-space
 	eshell-history-size 10000
-        eshell-destroy-buffer-when-process-dies t))
+	eshell-last-dir-ring-size 500
+        eshell-destroy-buffer-when-process-dies t)
+  :config
+  (add-hook 'eshell-mode-hook
+	    (lambda ()
+	      (eshell/alias "mpv" "mpv --no-terminal $*")
+	      ;; Fast CD switching (although I usually use "M-D")
+	      (eshell/alias "fd" "cd ${fasd -dl1 $*}")
+	      ;; Switch to dired in the current directory. Or show files in dired.
+	      (eshell/alias "d" "dired {default-val $* "."}")))
 #+END_SRC
+*** Eshell prompt
+    Makes the eshell prompt look nicer
+#+BEGIN_SRC emacs-lisp
+(use-package eshell-prompt-extras
+  :ensure t
+  :after (eshell)
+  :config
+  (with-eval-after-load "esh-opt"
+    (autoload 'epe-theme-lambda "eshell-prompt-extras")
+    (setq eshell-highlight-prompt nil
+	  eshell-prompt-function 'epe-theme-lambda)))
+#+END_SRC
+
 *** Eshell facilities for clicking on ls files
     Modified from [[https://www.emacswiki.org/emacs/EshellEnhancedLS]].
     Allows for some nice features like clicking files (or navigating
@@ -1083,6 +1105,41 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
     (bind-key "C-c C-h" #'jmm/eshell-prompt-history eshell-mode-map)
     (bind-key "M-D" #'jmm/counsel-fasd-directories-eshell eshell-mode-map)))
 #+END_SRC
+*** Utilitiy commands/functions
+#+BEGIN_SRC emacs-lisp
+(defun eshell/default-val (var default)
+  "Returns VAR if non-nil, otherwise returns default.
+I use this for `dired' so if no arguments are passed, it just
+gets the dired of the current directory. "
+  (eshell-echo (if var
+		   (eshell/listify var)
+		 (eshell/listify default)))
+)
+#+END_SRC
+
+It's weird that I don't see an easy way to pipe buffer contents to
+other programs. Perhaps this should be included by default. (Or maybe
+rewrite "cat" to also allow for buffer arguments.)
+
+#+BEGIN_SRC emacs-lisp
+(defun eshell/cat-buf (&rest args)
+  "Concatenate buffers. Use the flag -n to strip buffer text properties."
+  (eshell-eval-using-options
+   "cat-buf" args
+   '((?n "no-props" nil no-props "Remove text properties from buffers when printing.")
+     (?h "help" nil nil "Output this help screen.")
+     :preserve-args
+     :usage "[-n] buffer...")
+   (progn
+     (mapconcat (lambda (buffer)
+		  (with-current-buffer buffer
+		    (if no-props
+			(buffer-substring-no-properties (point-min) (point-max))
+			(buffer-string))))
+		args
+		""))))
+#+END_SRC
+
 
 * Encryption
 #+begin_src emacs-lisp
