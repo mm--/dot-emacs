@@ -1098,13 +1098,63 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
   (insert (ivy-read "History: "
 		   (delete-dups (ring-elements eshell-history-ring)))))
 
-
+;; TODO: Move this somewhere else
 (eval-after-load 'eshell
   '(progn
     (bind-key "M-L" #'jmm/eshell-ls-recent eshell-mode-map)
     (bind-key "C-c C-h" #'jmm/eshell-prompt-history eshell-mode-map)
-    (bind-key "M-D" #'jmm/counsel-fasd-directories-eshell eshell-mode-map)))
+    (bind-key "M-D" #'jmm/counsel-fasd-directories-eshell eshell-mode-map)
+    (bind-key "M-F" #'jmm/counsel-files-in-directory-eshell eshell-mode-map)))
 #+END_SRC
+*** Ivy prompt for files or directories in the current directory
+    This is a handy function that allows you to use Ivy to complete
+    file names or directories in the current directory. I bind this to
+    ~M-F~.
+
+    Examples:
+     - ~C-- M-F~ (negative arguments) only shows non-directory files
+       in the current directory.
+     - ~C-u M-F~ (positive universal argument) shows all files
+       (including directories) in all subdirectories.
+     - ~C- C-u M-F~ (negative argument with universal argument) shows
+       all non-directory files in all subdirectories.
+
+#+BEGIN_SRC emacs-lisp
+;; TODO: Color broken symlinks differently.
+;; Also possibly ignore git files.
+(defvar jmm/counsel-files-in-directory-eshell
+  "Holds the file history of `jmm/counsel-files-in-directory-eshell'")
+
+(defun jmm/counsel-files-in-directory-eshell (arg &optional initial-input)
+  " Prompt for a list of files in directory.
+With optional numeric argument ARG, search directories recursively.
+With negative argument ARG, exclude directories
+INITIAL-INPUT can be given as the initial minibuffer input."
+  (interactive "P")
+  (let* ((commandstr (->> (list find-program
+				"."
+				(when (< (prefix-numeric-value arg) 0)
+				  "\\( ! -type d \\)")
+				(unless (>= (abs (prefix-numeric-value arg)) 4)
+				  "-maxdepth 1")
+				"-print0")
+			  (-remove #'null)
+			  (s-join " ")))
+	 (cands (split-string (shell-command-to-string commandstr) "\0" t)))
+    (ivy-read "Find file: " cands
+	      :initial-input initial-input
+	      :history 'jmm/counsel-files-in-directory-history
+	      :unwind #'counsel-delete-process
+	      :action
+	      '(1
+		("e" jmm/eshell-insert-text-as-argument "insert eshell-escaped filename")
+		("f" (lambda (file)
+		       (with-ivy-window (find-file file))) "find file")
+		("r" counsel-find-file-as-root "open as root")
+		("d" counsel-locate-action-dired "dired"))
+	      :caller 'jmm/counsel-files-in-directory-eshell)))
+#+END_SRC
+
 *** Utilitiy commands/functions
 #+BEGIN_SRC emacs-lisp
 (defun eshell/default-val (var default)
