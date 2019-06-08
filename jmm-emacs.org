@@ -2948,7 +2948,8 @@ cursor in place but add a multiple cursor to the candidate location.
 One caveat is that you /need/ to have multiple candidates to use
 ~avy-dispatch-alist~. If there's only one candidate, you'll
 immediately jump to it without giving you a chance to activate the ~M~
-dispatch action.
+dispatch action. (Since writing this I realized you should just change
+~avy-single-candidate-jump~ to ~nil~)
 #+BEGIN_SRC emacs-lisp
 (defun jmm/avy-action-add-mc (pt)
   "Add multiple cursor at PT."
