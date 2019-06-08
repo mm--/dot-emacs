@@ -2907,6 +2907,7 @@ This is also handy when using multiple cursors."
 #+BEGIN_SRC emacs-lisp
 (use-package avy
   :ensure t
+  ;; The override global map was breaking ivy-avy
   ;; :bind* (("C-'" . avy-goto-char-timer)
   ;; 	  ("C-0" . avy-goto-word-1))
   :bind (("C-:" . avy-goto-char-2)
@@ -2917,11 +2918,23 @@ This is also handy when using multiple cursors."
 	 ("C-'" . avy-isearch))
   :init (setq avy-keys (number-sequence ?a ?z)
 	      avy-style 'at-full
+	      avy-single-candidate-jump nil ;; I'd like to be able to yank/teleport single candidates
 	      avy-background t
-	      avy-timeout-seconds 0.3)
+	      avy-timeout-seconds 0.5)
   :config
-  (add-to-list 'avy-dispatch-alist
-	       '(?M . jmm/avy-action-add-mc)))
+  ;; Unfortunately I use all lowercase letters as candidate keys. So
+  ;; dispatch keys need to be uppercase or modified with the control key.
+  (setq avy-dispatch-alist
+	'((?M . jmm/avy-action-add-mc)
+	  (?X . avy-action-kill-stay)
+	  (?T . avy-action-teleport)
+	  (?\C-t . jmm/avy-action-teleport-line)
+	  (?Y . avy-action-yank)
+	  (?\C-y . jmm/avy-action-yank-line)
+	  (?C . avy-action-copy)
+	  (?I . avy-action-ispell)
+	  (?Z . avy-action-zap-to-char)))
+  (advice-add 'avy--read-candidates :around #'jmm/avy--hide-timer-overlays))
 #+END_SRC
 
 You can add a multiple cursor by customizing
@@ -2942,7 +2955,46 @@ dispatch action.
   (save-excursion
     (goto-char pt)
     (mc/create-fake-cursor-at-point)
-    (mc/maybe-multiple-cursors-mode)))
+    (mc/maybe-multiple-cursors-mode)
+    ;; (avy-resume) ;; You can kind of get a terrible "ace-mc" type
+    ;; thing going by automatically resuming after selecting a
+    ;; targt. However, the overlays don't appear over avy's
+    ;; background.
+    ))
+#+END_SRC
+*** Hide premature background overlays for avy timers
+Some commit this year made timers show backgrounds /immediately/, even
+before you had any candidates to select. Probably due to the theme I'm
+using this made it harder to select candidates. This function advice
+restores the old behavior.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/avy--hide-timer-overlays (orig-fun &rest args)
+  "Advice to hide backgrounds on avy timers. I only want to show
+backgrounds once there are candidates to select."
+  (let (avy-background)
+    (apply orig-fun args)))
+#+END_SRC
+*** Other convenience dispatch actions
+
+Avy has a really cool feature where you can change what action will
+happen to the candidate select. This makes it really easy to copy a
+symbol to the point you're currently at.
+
+Here I ad some other convenience functions like teleporting and
+yanking the rest of a line, which is helpful sometimes in command
+prompts. Theoretically you should be able just to switch
+~avy-command~, but I haven't found out how to do that on the fly.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/avy-action-yank-line (pt)
+  "Yank the rest of the line at point here."
+  (let ((avy-command 'avy-goto-line))
+    (avy-action-yank pt)))
+
+(defun jmm/avy-action-teleport-line (pt)
+  "Teleport the rest of the line at point here."
+  (let ((avy-command 'avy-goto-line))
+    (avy-action-teleport pt)))
 #+END_SRC
 
 * Other modes
