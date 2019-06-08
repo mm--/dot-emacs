@@ -1122,22 +1122,28 @@ other programs. Perhaps this should be included by default. (Or maybe
 rewrite "cat" to also allow for buffer arguments.)
 
 #+BEGIN_SRC emacs-lisp
-(defun eshell/cat-buf (&rest args)
+(defun eshell/buffcat (&rest buffers)
   "Concatenate buffers. Use the flag -n to strip buffer text properties."
   (eshell-eval-using-options
-   "cat-buf" args
-   '((?n "no-props" nil no-props "Remove text properties from buffers when printing.")
+   "buffcat" buffers
+   '((?s "strip" nil strip "Remove text properties from buffers when printing.")
+     (?n "newlines" nil newlines "Add trailing newlines to buffers without them.")
      (?h "help" nil nil "Output this help screen.")
      :preserve-args
      :usage "[-n] buffer...")
    (progn
-     (mapconcat (lambda (buffer)
-		  (with-current-buffer buffer
-		    (if no-props
-			(buffer-substring-no-properties (point-min) (point-max))
-			(buffer-string))))
-		args
-		""))))
+     (if (null args)
+	 (eshell-show-usage)
+	 (mapconcat (lambda (buffer)
+		      (with-current-buffer buffer
+			(let ((str (if strip
+				       (buffer-substring-no-properties (point-min) (point-max))
+				     (buffer-string))))
+			  (if newlines
+			      (concat (s-chomp str) "\n")
+			    str))))
+		    args
+		    "")))))
 #+END_SRC
 
 
