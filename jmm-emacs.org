@@ -2983,8 +2983,11 @@ This is also handy when using multiple cursors."
   (setq avy-dispatch-alist
 	'((?M . jmm/avy-action-add-mc)
 	  (?X . avy-action-kill-stay)
+	  (?\C-k . jmm/avy-action-kill-line-stay)
 	  (?T . avy-action-teleport)
 	  (?\C-t . jmm/avy-action-teleport-line)
+	  (?\C-r . jmm/avy-action-replace-stay)
+	  (?\C-s . jmm/avy-action-swap)
 	  (?Y . avy-action-yank)
 	  (?\C-y . jmm/avy-action-yank-line)
 	  (?C . avy-action-copy)
@@ -3052,7 +3055,67 @@ prompts. Theoretically you should be able just to switch
   "Teleport the rest of the line at point here."
   (let ((avy-command 'avy-goto-line))
     (avy-action-teleport pt)))
+
+(defun jmm/avy-action-kill-line-stay (pt)
+  "Kill the rest of the line at point here but stay here."
+  (let ((avy-command 'avy-goto-line))
+    (avy-action-kill-stay pt)))
 #+END_SRC
+
+Here are functions for swapping two locations, or replacing one
+location with what you have under point.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/avy--kill-sexp-at-old-position ()
+  "Swtich to the old window, kill the sexp at point and return the string."
+  (with-selected-window (cdr (ring-ref avy-ring 0))
+    (let ((thing-bounds (bounds-of-thing-at-point 'sexp))
+	  (oldstr (thing-at-point 'sexp)))
+      (kill-region (car thing-bounds) (cdr thing-bounds))
+      oldstr)))
+
+(defun jmm/avy-action-replace-stay (pt)
+  "Replace sexp at PT with the one we're currently at (point).
+The sexp at point is looked for backwards as well as forwards.
+For example, if you just typed \"hello\" and had your point past
+the \"o\", it'll still use \"hello\" to replace stuff."
+  (let ((m1 (set-marker (make-marker) pt))
+	(oldstr (jmm/avy--kill-sexp-at-old-position)))
+    (save-excursion
+      (goto-char m1)
+      (avy-forward-item)
+      (kill-region m1 (point))
+      (insert oldstr))
+    (set-marker m1 nil))
+  (message "Killed: %s" (current-kill 0))
+  (select-window
+   (cdr
+    (ring-ref avy-ring 0)))
+  t)
+
+(defun jmm/avy-action-swap (pt)
+  "Swap sexp at PT with the one we're currently at (point).
+The sexp at point is looked for backwards as well as forwards.
+For example, if you just typed \"hello\" and had your point past
+the \"o\", it'll still use \"hello\" to replace stuff.
+
+Note: Only swaps starting from PT. So if you want to swap the
+whole sexp, start at the beginning character.
+Note: This also messes up with multiple windows"
+  (let ((m1 (set-marker (make-marker) pt))
+	(oldstr (jmm/avy--kill-sexp-at-old-position)))
+    (save-excursion
+      (goto-char m1)
+      (avy-forward-item)
+      (kill-region m1 (point))
+      (insert oldstr))
+    (set-marker m1 nil))
+  (select-window
+   (cdr
+    (ring-ref avy-ring 0)))
+  (yank)
+  t)
+#+END_SRC
+
 
 * Other modes
 ** Enriched Mode
