@@ -977,22 +977,25 @@ of erc-modified-channels-alist"
 #+END_SRC
 ** Eshell
 #+BEGIN_SRC emacs-lisp
-  (use-package eshell
-    :init
-    (setq eshell-error-if-no-glob t
-	  eshell-hist-ignoredups t
-	  eshell-input-filter #'eshell-input-filter-initial-space
-	  eshell-history-size 10000
-	  eshell-last-dir-ring-size 500
-	  eshell-destroy-buffer-when-process-dies t)
-    :config
-    (add-hook 'eshell-mode-hook
-	      (lambda ()
-		(eshell/alias "mpv" "mpv --no-terminal $*")
-		;; Fast CD switching (although I usually use "M-D")
-		(eshell/alias "fd" "cd ${fasd -dl1 $*}")
-		;; Switch to dired in the current directory. Or show files in dired.
-		(eshell/alias "d" "dired {default-val $* \".\"}"))))
+(use-package eshell
+  :init
+  (setq eshell-error-if-no-glob t
+	eshell-hist-ignoredups t
+	eshell-input-filter #'eshell-input-filter-initial-space
+	eshell-history-size 10000
+	eshell-last-dir-ring-size 500
+	eshell-destroy-buffer-when-process-dies t)
+  :config
+  (add-hook 'eshell-mode-hook
+	    (lambda ()
+	      (eshell/alias "mpv" "mpv --no-terminal $*")
+	      ;; Fast CD switching (although I usually use "M-D")
+	      (eshell/alias "fd" "cd ${fasd -dl1 $*}")
+	      ;; Switch to dired in the current directory. Or show files in dired.
+	      (eshell/alias "d" "dired {default-val $* \".\"}")
+	      ;; We want $PAGER to be "cat" ("less" messes up stuff for us. Especially with nix-env)
+	      (make-local-variable 'process-environment)
+	      (setenv "PAGER" "cat"))))
 #+END_SRC
 *** Eshell prompt
     Makes the eshell prompt look nicer
