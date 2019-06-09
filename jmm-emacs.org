@@ -1125,6 +1125,10 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 (defvar jmm/counsel-files-in-directory-eshell
   "Holds the file history of `jmm/counsel-files-in-directory-eshell'")
 
+;; TODO: Maybe implement this with `directory-files-recursively'
+;; and `directory-files-and-attributes'
+;; See https://stackoverflow.com/questions/26514437/emacs-sort-list-of-directories-files-by-modification-date
+;; TODO: Eshell should probably also sort by most recent date if possible
 (defun jmm/counsel-files-in-directory-eshell (arg &optional initial-input)
   " Prompt for a list of files in directory.
 With optional numeric argument ARG, search directories recursively.
@@ -1140,7 +1144,13 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 				"-print0")
 			  (-remove #'null)
 			  (s-join " ")))
-	 (cands (split-string (shell-command-to-string commandstr) "\0" t)))
+	 ;; TODO: Find a better way to get this to work remotely.
+	 (shellstr (let ((shell-file-name (if (tramp-tramp-file-p default-directory)
+					      (tramp-file-name-localname
+					       (tramp-dissect-file-name (eshell-search-path "bash")))
+					    shell-file-name)))
+		     (shell-command-to-string commandstr)))
+	 (cands (split-string shellstr "\0" t)))
     (ivy-read "Find file: " cands
 	      :initial-input initial-input
 	      :history 'jmm/counsel-files-in-directory-history
