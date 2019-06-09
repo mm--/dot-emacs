@@ -38,6 +38,7 @@
 	indent-for-tab-command
 	indent-region
 	insert-register
+	jmm/eshell-ls-input-insert-filename-at-point
 	jmm/org-add-tag
 	jmm/org-edna-hydra/body
 	jmm/org-edna-hydra/lambda-n-and-exit
@@ -163,6 +164,7 @@
 	js2-mode-show-node
 	keyboard-escape-quit
 	magit-status
+	mc/vertical-align
 	mc/vertical-align-with-space
 	menu-bar-open
 	orgtbl-hijacker-command-100
