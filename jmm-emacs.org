@@ -3004,6 +3004,7 @@ This is also handy when using multiple cursors."
 	  (?Y . avy-action-yank)
 	  (?\C-y . jmm/avy-action-yank-line)
 	  (?C . avy-action-copy)
+	  (?\C-c . jmm/avy-action-copy-line)
 	  (?I . avy-action-ispell)
 	  (?Z . avy-action-zap-to-char)))
   (advice-add 'avy--read-candidates :around #'jmm/avy--hide-timer-overlays))
@@ -3063,6 +3064,11 @@ prompts. Theoretically you should be able just to switch
   "Yank the rest of the line at point here."
   (let ((avy-command 'avy-goto-line))
     (avy-action-yank pt)))
+
+(defun jmm/avy-action-copy-line (pt)
+  "Copy the rest of the line at point here."
+  (let ((avy-command 'avy-goto-line))
+    (avy-action-copy pt)))
 
 (defun jmm/avy-action-teleport-line (pt)
   "Teleport the rest of the line at point here."
