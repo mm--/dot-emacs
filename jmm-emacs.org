@@ -1168,7 +1168,7 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 	      :caller 'jmm/counsel-files-in-directory-eshell)))
 #+END_SRC
 
-*** Utilitiy commands/functions
+*** Utility commands/functions
 #+BEGIN_SRC emacs-lisp
 (defun eshell/default-val (var default)
   "Returns VAR if non-nil, otherwise returns default.
@@ -1208,7 +1208,27 @@ rewrite "cat" to also allow for buffer arguments.)
 		    args
 		    "")))))
 #+END_SRC
+*** Git annex utilities
+    Functions that make it easier to operate on git annex files
+#+BEGIN_SRC emacs-lisp
+(defun jmm/git-annex-find-files (&rest args)
+  "Generate a list of git annex files that match ARGS.
+For example, ARGS could be \"--in=here\""
+  (-remove #'s-blank?
+	   (s-split "\0"
+		    (shell-command-to-string (mapconcat #'identity
+							(append '("git annex find --print0") args)
+							" ")))))
+(defun eshell/dga (&rest args)
+  "Show a `dired' buffer of git annex files that match ARGS.
+For example, ARGS could be \"--in=here\""
+  (dired (cons "." (apply #'jmm/git-annex-find-files args))))
 
+(defun eshell/gaf (&rest args)
+  "Return a list of git annex files that match ARGS.
+For example, ARGS could be \"--in=here\""
+  (apply #'jmm/git-annex-find-files args))
+#+END_SRC
 
 * Encryption
 #+begin_src emacs-lisp
