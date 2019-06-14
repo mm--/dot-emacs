@@ -1598,6 +1598,43 @@ files, showing the current tags all files currently have in common."
 	(not (file-exists-p (file-truename (dired-get-filename t)))))
    "unavailable file"))
 #+END_SRC
+*** Mark git-annex files with git-annex-matching-options
+
+    This command makes it easy to mark dired files using ~git-annex-matching-options~.
+
+    For instance, you could find files that are in a certain remote
+    using ~--in=remote~ or mark/unmark files that have a certain tag
+    using ~--metadata tag=sometag~.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/dired-mark-files-git-annex-matching (matchingoptions &optional marker-char)
+  "Mark all files that match git annex's MATCHINGOPTIONS for use in later commands.
+A prefix argument means to unmark them instead.
+`.' and `..' are never marked."
+  (interactive
+   (list (read-string (concat (if current-prefix-arg "Unmark" "Mark")
+                              " files matching (git annex match expression): ")
+                      nil 'jmm-dired-annex-matchingoptions-history)
+	 (if current-prefix-arg ?\040)))
+  (let ((dired-marker-char (or marker-char dired-marker-char)))
+    (dired-mark-if
+     (and (not (looking-at-p dired-re-dot))
+	  (not (eolp))			; empty line
+	  (let ((fn (dired-get-filename nil t)))
+	    (when (and fn (not (file-directory-p fn)))
+	      (message "Checking %s" fn)
+	      ;; For now we do it inside emacs
+	      ;; Grep might be better if there are a lot of files
+	      (s-present? (shell-command-to-string
+			   (mapconcat
+			    #'identity
+			    (list "git annex find" matchingoptions (shell-quote-argument fn))
+			    " "))))))
+     "matching file")))
+
+(eval-after-load 'dired
+  '(bind-key "% a" #'jmm/dired-mark-files-git-annex-matching dired-mode-map))
+#+END_SRC
 
 ** Dired ranger
    dired-ranger (see [[https://github.com/Fuco1/dired-hacks][dired-hacks]]) adds some really convenient ways to
