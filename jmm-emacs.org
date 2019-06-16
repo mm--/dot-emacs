@@ -1534,7 +1534,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
     Git-annex has a pretty cool ability to tag files and filter
     directory views based on metadata. It's kind of a pain to tag
     files, though, so here's a function that adds some autocompletion
-    to tagging file.
+    to tagging files.
 
 #+BEGIN_SRC emacs-lisp
 (defvar-local jmm/git-annex-directory-tags nil
@@ -1623,8 +1623,6 @@ A prefix argument means to unmark them instead.
 	  (let ((fn (dired-get-filename nil t)))
 	    (when (and fn (not (file-directory-p fn)))
 	      (message "Checking %s" fn)
-	      ;; For now we do it inside emacs
-	      ;; Grep might be better if there are a lot of files
 	      (s-present? (shell-command-to-string
 			   (mapconcat
 			    #'identity
