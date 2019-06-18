@@ -1508,10 +1508,11 @@ paste into a terminal. Hopefully understandable by rsync or scp."
   :config
   (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
   (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
-  (define-key git-annex-dired-map "l" 'git-annex-dired-lock-files)
-  (define-key git-annex-dired-map "u" 'git-annex-dired-unlock-files)
-  (define-key git-annex-dired-map "t" 'jmm/dired-git-annex-tag)
   (bind-keys :map git-annex-dired-map
+	     ("l" . git-annex-dired-lock-files)
+	     ("u" . git-annex-dired-unlock-files)
+	     ("t" . jmm/dired-git-annex-tag)
+	     ("s" . jmm/dired-git-annex-print-human-file-size)
 	     ("*")
 	     ("* u" . jmm/dired-mark-git-annex-unavailable-files))
   ;; git-annex.el kinda clobbers dired-marked-face and dired-flagged-face
@@ -1632,6 +1633,46 @@ A prefix argument means to unmark them instead.
 
 (eval-after-load 'dired
   '(bind-key "% a" #'jmm/dired-mark-files-git-annex-matching dired-mode-map))
+#+END_SRC
+*** Get git-annex file sizes
+    Unfortunately, ~dired~ only shows symlink file size (as far as I
+    can tell), which isn't really helpful when using git-annex.
+    
+    This function is a first pass at determining git-annex file
+    sizes. I have ~@ s~ bound to
+    ~jmm/dired-git-annex-print-human-file-size~, which will tell me
+    the human readable file size of the git-annex file at point.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/git-annex-file-target (filename)
+  "If FILENAME is a git annex file, return its symlink target."
+  (when (file-exists-p filename))
+  (let ((symname (file-symlink-p filename)))
+    (when (string-match-p ".*\\.git/annex/.+" symname)
+      symname)))
+
+(defun jmm/dired-git-annex-file-target ()
+  "If the dired file at point is a git annex file, return its symlink target."
+  (jmm/git-annex-file-target (dired-get-filename nil t)))
+
+(defun jmm/git-annex-file-size (filename)
+  "Try to determine the size of the git annex file FILENAME."
+  (-when-let (target (jmm/git-annex-file-target filename))
+    (or (save-match-data
+	  (when (string-match "SHA256E-s\\([0-9]+\\)--" target)
+	    (string-to-number (match-string 1 target))))
+	(-some-> (expand-file-name target (file-name-directory filename))
+		 file-attributes
+		 file-attribute-size))))
+
+(defun jmm/dired-git-annex-print-human-file-size ()
+  "Try to print the human readable file size of the dired git-annex file at point."
+  (interactive)
+  (let* ((filename (dired-get-filename nil t))
+	 (string-file (file-name-nondirectory filename)))
+    (-if-let (filesize (-some-> (jmm/git-annex-file-size filename)
+				file-size-human-readable))
+	(message "%s - %s" filesize string-file)
+      (message "Can't determine git annex file size of %s" string-file))))
 #+END_SRC
 
 ** Dired ranger
