@@ -1513,6 +1513,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 	     ("u" . git-annex-dired-unlock-files)
 	     ("t" . jmm/dired-git-annex-tag)
 	     ("s" . jmm/dired-git-annex-print-human-file-size)
+	     ("S" . jmm/dired-git-annex-add-real-file-sizes)
 	     ("*")
 	     ("* u" . jmm/dired-mark-git-annex-unavailable-files))
   ;; git-annex.el kinda clobbers dired-marked-face and dired-flagged-face
@@ -1645,8 +1646,8 @@ A prefix argument means to unmark them instead.
 #+BEGIN_SRC emacs-lisp
 (defun jmm/git-annex-file-target (filename)
   "If FILENAME is a git annex file, return its symlink target."
-  (when (file-exists-p filename))
-  (let ((symname (file-symlink-p filename)))
+  (-when-let (symname (and (file-exists-p filename)
+			   (file-symlink-p filename)))
     (when (string-match-p ".*\\.git/annex/.+" symname)
       symname)))
 
@@ -1673,6 +1674,51 @@ A prefix argument means to unmark them instead.
 				file-size-human-readable))
 	(message "%s - %s" filesize string-file)
       (message "Can't determine git annex file size of %s" string-file))))
+#+END_SRC
+*** Show git-annex file sizes in dired
+    Okay, I found a way to replace the symlink sizes of git-annex with
+    the real sizes in ~dired~. Finally.
+
+    This function does just that, it goes through all git annex files,
+    replaces the file size with the actual file size (if it can
+    determine it), and then aligns everything. Should work for
+    subdirectories too. I'm binding this to ~@ S~, but theoretically
+    you could add it to a hook if you wanted.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/dired-git-annex-add-real-file-sizes ()
+  "Go through all the git-annex files in dired, replace the
+symlink file size with the real file size, then try to align
+everything."
+  (interactive)
+  (require 'dired-aux)
+  (let ((regexp directory-listing-before-filename-regexp))
+    (save-excursion
+      (goto-char (point-min))
+      (dired-goto-next-file)
+      (while (or (dired-move-to-filename)
+		 (progn (save-restriction
+			  (narrow-to-region (dired-subdir-min) (dired-subdir-max))
+			  (dired--align-all-files))
+			(dired-next-subdir 1 t)
+			(dired-goto-next-file)
+			(dired-move-to-filename)))
+	;; Use point difference instead of `current-column', because
+	;; the former works when `dired-hide-details-mode' is enabled.
+	(let ((inhibit-read-only t))
+	  (when (and (jmm/dired-git-annex-file-target)
+		     (re-search-backward regexp (line-beginning-position) t))
+	    (goto-char (match-beginning 0))
+	    (-when-let (newsize (-some-> (jmm/git-annex-file-size (dired-get-filename nil t))
+					 file-size-human-readable))
+	      (search-backward-regexp "[[:space:]]" nil t)
+	      (when (re-search-forward "[[:space:]]+\\([^[:space:]]+\\)[[:space:]]" nil t)
+		(goto-char (match-beginning 1))
+		(delete-region (point) (match-end 1))
+		(insert-and-inherit newsize))))
+	  (forward-line))))))
+
+
 #+END_SRC
 
 ** Dired ranger
