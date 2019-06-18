@@ -1646,7 +1646,7 @@ A prefix argument means to unmark them instead.
 #+BEGIN_SRC emacs-lisp
 (defun jmm/git-annex-file-target (filename)
   "If FILENAME is a git annex file, return its symlink target."
-  (-when-let (symname (and (file-exists-p filename)
+  (-when-let (symname (and filename
 			   (file-symlink-p filename)))
     (when (string-match-p ".*\\.git/annex/.+" symname)
       symname)))
