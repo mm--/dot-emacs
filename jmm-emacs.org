@@ -1686,6 +1686,7 @@ A prefix argument means to unmark them instead.
     you could add it to a hook if you wanted.
 
 #+BEGIN_SRC emacs-lisp
+;; Based off of `dired--align-all-files'
 (defun jmm/dired-git-annex-add-real-file-sizes ()
   "Go through all the git-annex files in dired, replace the
 symlink file size with the real file size, then try to align
@@ -1703,8 +1704,6 @@ everything."
 			(dired-next-subdir 1 t)
 			(dired-goto-next-file)
 			(dired-move-to-filename)))
-	;; Use point difference instead of `current-column', because
-	;; the former works when `dired-hide-details-mode' is enabled.
 	(let ((inhibit-read-only t))
 	  (when (and (jmm/dired-git-annex-file-target)
 		     (re-search-backward regexp (line-beginning-position) t))
