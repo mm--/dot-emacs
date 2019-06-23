@@ -1514,7 +1514,9 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 	     ("t" . jmm/dired-git-annex-tag)
 	     ("s" . jmm/dired-git-annex-print-human-file-size)
 	     ("S" . jmm/dired-git-annex-add-real-file-sizes)
+	     ("b" . jmm/git-annex-browse-url)
 	     ("*")
+	     ("* a" . jmm/dired-mark-git-annex-available-files)
 	     ("* u" . jmm/dired-mark-git-annex-unavailable-files))
   ;; git-annex.el kinda clobbers dired-marked-face and dired-flagged-face
   ;; This fixes that
@@ -1599,6 +1601,14 @@ files, showing the current tags all files currently have in common."
    (and (looking-at-p ".* -> \\(.*\\.git/annex/.+\\)")
 	(not (file-exists-p (file-truename (dired-get-filename t)))))
    "unavailable file"))
+
+(defun jmm/dired-mark-git-annex-available-files ()
+  "Mark git-annex files that are present."
+  (interactive)
+  (dired-mark-if
+   (and (looking-at-p ".* -> \\(.*\\.git/annex/.+\\)")
+	(file-exists-p (file-truename (dired-get-filename t))))
+   "available file"))
 #+END_SRC
 *** Mark git-annex files with git-annex-matching-options
 
@@ -1718,6 +1728,45 @@ everything."
 	  (forward-line))))))
 
 
+#+END_SRC
+*** Browsing URLs for git-annex files
+    
+    Many times I have git-annex files that are dropped in the local
+    repository, but still exist on the web. Sometimes, I'd like to
+    browse these URLs directly, rather than waiting for the ~get~
+    operation to complete on the file and then opening it.
+
+#+BEGIN_SRC emacs-lisp
+;; TODO: Process multiple files at once?
+(defun jmm/git-annex-whereis-info (filename)
+  "Get information about where a git-annex file exists.
+Returns a parsed json list from whereis."
+  (let* ((json-array-type 'list)
+	 (whereisdata (shell-command-to-string
+		       (mapconcat
+			#'identity
+			(list "git annex whereis --json" (shell-quote-argument filename))
+			" "))))
+    (when (s-present? whereisdata)
+      (json-read-from-string whereisdata))))
+
+(defun jmm/git-annex-urls (filename)
+  "Get the git-annex web urls for FILENAME."
+  (-some->> (jmm/git-annex-whereis-info filename)
+	    (assoc-default 'whereis)
+	    (-mapcat (lambda (x) (assoc-default 'urls x)))
+	    (-map (lambda (s) (s-chop-prefix "yt:" s)))))
+
+(defun jmm/git-annex-browse-url ()
+  "Browse the first git-annex web urls for file at point."
+  (interactive)
+  (let* ((filename (dired-get-filename nil t))
+	 (filestr (file-name-nondirectory filename)))
+    (-if-let (url (car (jmm/git-annex-urls filename)))
+	(progn
+	  (message "Opening url: %s" url)
+	  (jmm/org-open-link-alternate-browser #'browse-url url))
+      (user-error "No url found for %s" filestr))))
 #+END_SRC
 
 ** Dired ranger
