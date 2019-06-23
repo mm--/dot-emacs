@@ -1229,6 +1229,31 @@ For example, ARGS could be \"--in=here\""
 For example, ARGS could be \"--in=here\""
   (apply #'jmm/git-annex-find-files args))
 #+END_SRC
+*** Dired ranger stuff
+    It'd be handy to have quick access to the ~dired-ranger~ ring.
+    
+    You can use this like ~mpv ${dring}~ or ~ls ${dring}(Lm+20)~
+    (lists files from the beginning of the ~dired-ranger-copy-ring~
+    that are larger than 20 megabytes).
+#+BEGIN_SRC emacs-lisp
+(defun eshell/dring (&rest arguments)
+  "Get the list of files in `dired-ranger-copy-ring'."
+  (eshell-eval-using-options
+   "dring" arguments
+   '((?p "pop" nil pop "Pop the top of the dired-ranger-copy-ring.")
+     (?e "element" t element "Get the specific element in the ring (instead of the default 0 [first] element).")
+     (?h "help" nil nil "Output this help screen.")
+     :preserve-args
+     :usage "[-p] [-e index]")
+   (progn
+     (if args
+	 (eshell-show-usage)
+       (let* ((idx (or element 0))
+	      (files (cdr (ring-ref dired-ranger-copy-ring idx))))
+	 (when pop
+	   (ring-remove dired-ranger-copy-ring idx))
+	 files)))))
+#+END_SRC
 
 * Encryption
 #+begin_src emacs-lisp
