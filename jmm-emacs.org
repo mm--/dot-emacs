@@ -1142,6 +1142,7 @@ INITIAL-INPUT can be given as the initial minibuffer input."
   (interactive "P")
   (let* ((commandstr (->> (list find-program
 				"."
+				"\\( -name .git \\) -prune -o"
 				(when (< (prefix-numeric-value arg) 0)
 				  "\\( ! -type d \\)")
 				(unless (>= (abs (prefix-numeric-value arg)) 4)
