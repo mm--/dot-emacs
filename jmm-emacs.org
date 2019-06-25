@@ -993,6 +993,8 @@ of erc-modified-channels-alist"
 	      (eshell/alias "fd" "cd ${fasd -dl1 $*}")
 	      ;; Switch to dired in the current directory. Or show files in dired.
 	      (eshell/alias "d" "dired {default-val $* \".\"}")
+	      ;; Make it easy to switch to the project root
+	      (eshell/alias "cdp" "cd ${projectile-project-root}")
 	      ;; We want $PAGER to be "cat" ("less" messes up stuff for us. Especially with nix-env)
 	      (make-local-variable 'process-environment)
 	      (setenv "PAGER" "cat"))))
