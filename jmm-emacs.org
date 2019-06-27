@@ -1133,7 +1133,7 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 ;; TODO: Maybe implement this with `directory-files-recursively'
 ;; and `directory-files-and-attributes'
 ;; See https://stackoverflow.com/questions/26514437/emacs-sort-list-of-directories-files-by-modification-date
-;; TODO: Eshell should probably also sort by most recent date if possible
+;; DONE: Eshell should probably also sort by most recent date if possible
 (defun jmm/counsel-files-in-directory-eshell (arg &optional initial-input)
   " Prompt for a list of files in directory.
 With optional numeric argument ARG, search directories recursively.
@@ -1147,7 +1147,7 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 				  "\\( ! -type d \\)")
 				(unless (>= (abs (prefix-numeric-value arg)) 4)
 				  "-maxdepth 1")
-				"-print0")
+				"-printf '%T+\\t%p\\0'")
 			  (-remove #'null)
 			  (s-join " ")))
 	 ;; TODO: Find a better way to get this to work remotely.
@@ -1156,7 +1156,9 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 					       (tramp-dissect-file-name (eshell-search-path "bash")))
 					    shell-file-name)))
 		     (shell-command-to-string commandstr)))
-	 (cands (split-string shellstr "\0" t)))
+	 (cands (-as-> (split-string shellstr "\0" t) x
+		       (sort x #'string>)
+		       (--map (cadr (s-split-up-to "\t" it 1 t)) x))))
     (ivy-read "Find file: " cands
 	      :initial-input initial-input
 	      :history 'jmm/counsel-files-in-directory-history
@@ -1754,6 +1756,10 @@ everything."
 		(delete-region (point) (match-end 1))
 		(insert-and-inherit newsize))))
 	  (forward-line))))))
+
+;; (add-hook 'dired-mode-hook #'jmm/dired-git-annex-add-real-file-sizes)
+;; (add-hook 'dired-after-readin-hook #'jmm/dired-git-annex-add-real-file-sizes)
+
 
 
 #+END_SRC
