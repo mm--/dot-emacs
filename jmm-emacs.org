@@ -1944,13 +1944,15 @@ Like `dired-ranger-copy' but I don't have to manually select the latest download
 #+BEGIN_SRC emacs-lisp
 (defun jmm/tramp-rsync-allow-dereference-symlinks ()
   "Add \"-L\" to rsync's copy arguments in `tramp-methods'"
-  (interactive)
   (let* ((rsync-args-pair (assoc 'tramp-copy-args (assoc-default "rsync" tramp-methods))))
     (cl-pushnew '("-L") (cadr rsync-args-pair) :test 'equal)))
 
-;; Hmm... this isn't working for some reason
-;; (eval-after-load 'tramp-loaddefs
-;;   '(jmm/tramp-rsync-allow-dereference-symlinks))
+;; Seems like both tramp-loaddefs and tramp-sh write tramp-methods. So
+;; we have to load this after both.
+(eval-after-load 'tramp-loaddefs
+  '(jmm/tramp-rsync-allow-dereference-symlinks))
+(eval-after-load 'tramp-sh
+  '(jmm/tramp-rsync-allow-dereference-symlinks))
 #+END_SRC
 * Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
