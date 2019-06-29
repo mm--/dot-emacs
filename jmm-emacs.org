@@ -1916,6 +1916,42 @@ Like `dired-ranger-copy' but I don't have to manually select the latest download
 
   (bind-key "<f9> t" 'josh/kill-tramp-buffers)
 #+END_SRC
+** Get the remote path for TRAMP
+   
+   Sometimes I notice TRAMP having issues detecting the ~PATH~
+   environment on NixOS. This should hopefully help with that.
+#+BEGIN_SRC emacs-lisp
+;; This is the part necessary for Nix
+(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+
+;; This should be in there anyway
+(add-to-list 'tramp-remote-path 'tramp-default-remote-path)
+#+END_SRC
+** Dereference symlinks when copying with rsync
+
+   It took me way too long to find out that TRAMP had an "rsync"
+   method! All this time I've been waiting for it to do the default
+   thing of piping stuff through ~base64~ and ~gzip~.
+
+   Anyway, one issue I have with the rsync method is that copying
+   symlinks doesn't work in the same way as when you use ~ssh~. That
+   is, symlinks aren't dereferenced. I have a lot of symlinks since I
+   use ~git-annex~ a lot, so I need to be able to copy the /file the
+   symlink points to/ rather than just the /symlink itself/ (which
+   fails). This modifies the ~rsync~ TRAMP method to add the "-L"
+   argument to rsync to dereference links.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/tramp-rsync-allow-dereference-symlinks ()
+  "Add \"-L\" to rsync's copy arguments in `tramp-methods'"
+  (interactive)
+  (let* ((rsync-args-pair (assoc 'tramp-copy-args (assoc-default "rsync" tramp-methods))))
+    (cl-pushnew '("-L") (cadr rsync-args-pair) :test 'equal)))
+
+;; Hmm... this isn't working for some reason
+;; (eval-after-load 'tramp-loaddefs
+;;   '(jmm/tramp-rsync-allow-dereference-symlinks))
+#+END_SRC
 * Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
   got a couple of main selling points. First is that things are
