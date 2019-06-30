@@ -3823,6 +3823,37 @@ but more easily allows you to scale up images."
 	  (fakesize (round (/ desiredwidth percentwidth))))
     (pdf-view-extract-region-image (pdf-view-active-region) nil (cons fakesize nil))))
 #+END_SRC
+**** Make a clipped image easy to copy to a specific directory
+
+     After using ~jmm/pdf-crop-image-width~, you'll get a buffer named
+     ~\*PDF Image\*~. Saving this file to the directory you want can
+     be cumbersome. Usually I want to save the image to a directory
+     different from the one the PDF lives in.
+
+     This function writes the image to a temporary file (with private
+     mode settings) and copies it to the
+     ~dired-ranger-copy-ring~. This makes it really easy to paste into
+     an open ~dired~ buffer, exactly where you want it.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/image-copy-to-dired-ranger-ring ()
+  "Save the image as a PNG, and push it to `dired-ranger-copy-ring'"
+  (interactive)
+  (let ((filename (make-temp-file "pdf-" nil ".png")))
+    (with-file-modes #o600
+      (write-region (point-min) (point-max) filename))
+    (ring-insert
+     dired-ranger-copy-ring
+     (cons (list (current-buffer))
+	   (list filename)))
+    (message (format "Copied %s into copy ring." filename))))
+
+
+(with-eval-after-load 'image-mode
+  (require 'dired-ranger)
+  (bind-key "[" #'jmm/image-copy-to-dired-ranger-ring image-mode-map))
+#+END_SRC
+
 *** Copy string to other window
 
     This function makes it easy to copy quotes into my notes files.
