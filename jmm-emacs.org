@@ -995,6 +995,8 @@ of erc-modified-channels-alist"
 	      (eshell/alias "d" "dired {default-val $* \".\"}")
 	      ;; Make it easy to switch to the project root
 	      (eshell/alias "cdp" "cd ${projectile-project-root}")
+	      ;; Easily make a directory and switch to it
+	      (eshell/alias "mcd" "mkdir -p $1 && cd $1")
 	      ;; We want $PAGER to be "cat" ("less" messes up stuff for us. Especially with nix-env)
 	      (make-local-variable 'process-environment)
 	      (setenv "PAGER" "cat"))))
@@ -1213,6 +1215,29 @@ rewrite "cat" to also allow for buffer arguments.)
 		    args
 		    "")))))
 #+END_SRC
+**** CD to other buffer's default directory
+     If you have a split screen, change to the default directory of the other window.
+#+BEGIN_SRC emacs-lisp
+;; TODO: Actually check that there is another window, otherwise maybe switch to the most recent buffer.
+;; TODO: If the other buffer is a dired buffer, switch to whatever directory the point is at.
+(defun eshell/cdo (&rest arguments)
+  "Change directories to default directory of other window."
+  (eshell-eval-using-options
+   "cdo" arguments
+   '((?h "help" nil nil "Output this help screen.")
+     :preserve-args
+     :usage ""
+     :post-usage "Changes to the default-directory of the buffer in the other window")
+   (progn
+     (if (null args)
+	 (if-let (other-dir (save-window-excursion
+			      (other-window 1)
+			      default-directory))
+	     (eshell/cd other-dir)
+	   (eshell-show-usage))
+	 (eshell-show-usage)))))
+#+END_SRC
+
 *** Git annex utilities
     Functions that make it easier to operate on git annex files
 #+BEGIN_SRC emacs-lisp
@@ -2588,6 +2613,7 @@ Make an easy way to find files in open dired buffers
 	 ("<f2> u" . counsel-unicode-char)
 	 ("<f1> f" . counsel-describe-function)
 	 ("<f1> v" . counsel-describe-variable)
+	 ("C-h C-b" . counsel-descbinds)
 	 ("C-c d" . jmm/counsel-fasd-directories))
   :config
   ;; Fasd still works well with only two characters
