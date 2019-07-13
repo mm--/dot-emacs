@@ -1827,6 +1827,59 @@ Returns a parsed json list from whereis."
 	  (jmm/org-open-link-alternate-browser #'browse-url url))
       (user-error "No url found for %s" filestr))))
 #+END_SRC
+*** Sort dired by file size
+
+    "Wait", you may ask, "can't you already sort dired just by
+    pressing ~s~"? Yeah, but that doesn't take into account git-annex
+    file sizes. This function does.
+
+    In the future this general sorting mechanism (sorting the lines
+    instead of just reverting the dired buffer) will probably be
+    useful for other stuff (maybe sort by last time a file was
+    modified in a git commit, or by number of git-annex copies).
+#+BEGIN_SRC emacs-lisp
+(defun jmm/dired-dir-files-beginning ()
+  "First point where there's a filename on the line. Beginning of line."
+  (save-excursion
+    (goto-char (dired-subdir-min))
+    (dired-goto-next-file)
+    (beginning-of-line)
+    (point)))
+
+(defun jmm/dired-dir-files-end ()
+  "Last point where there's a filename. End of line."
+  (save-excursion
+    (goto-char (dired-subdir-max))
+    (while (not (dired-get-filename nil t))
+      (dired-previous-line nil))
+    (end-of-line)
+    (point)))
+
+(defun jmm/dired-file-size ()
+  "Return the file size of a file at point (for sorting). Takes
+into account git-annex files."
+  (let* ((filename (dired-get-filename nil t))
+	 (string-file (file-name-nondirectory filename)))
+    (or (jmm/git-annex-file-size filename)
+	(file-attribute-size (file-attributes filename)))))
+
+;; TODO: Should just try to directly use the field listed.
+(defun jmm/dired-sort-size (&optional ascending)
+  "Sort some dired lines by size (consider annex sizes).
+With optional argument ASCENDING, sort by ascending file size. (I
+like going the other way around usually.)"
+  (interactive "P")
+  (let (buffer-read-only
+	(beg (jmm/dired-dir-files-beginning))
+	(end (jmm/dired-dir-files-end)))
+    (save-excursion
+      (save-restriction
+	(narrow-to-region beg end)
+	(goto-char (point-min))
+	(sort-subr (not ascending)
+		   'forward-line 'end-of-line
+		   #'jmm/dired-file-size nil)))))
+#+END_SRC
 
 ** Dired ranger
    dired-ranger (see [[https://github.com/Fuco1/dired-hacks][dired-hacks]]) adds some really convenient ways to
