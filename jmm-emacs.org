@@ -2667,10 +2667,17 @@ Make an easy way to find files in open dired buffers
 	 ("<f1> f" . counsel-describe-function)
 	 ("<f1> v" . counsel-describe-variable)
 	 ("C-h C-b" . counsel-descbinds)
-	 ("C-c d" . jmm/counsel-fasd-directories))
+	 ("C-c d" . jmm/counsel-fasd-directories)
+	 ("C-c j" . jmm/counsel-dired-file))
   :config
   ;; Fasd still works well with only two characters
-  (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2)))
+  (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2))
+  (ivy-set-actions
+   'jmm/counsel-dired-file
+   '(("x" counsel-locate-action-extern "xdg-open")
+     ("j" jmm/mpv-scrobble-file "scrobblempv")
+     ("J" jmm/mpv-play-file "mpv")
+     ("d" jmm/counsel-dired-file-dired "dired"))))
 
 #+END_SRC
 ** Ivy completions for fasd
@@ -2732,7 +2739,64 @@ Make an easy way to find files in open dired buffers
 	    :unwind #'counsel-delete-process
 	    :caller 'jmm/counsel-fasd-directories))
 #+END_SRC
+** Ivy for opening a file visible in a dired buffer
 
+   Makes it easier to find a file that I know is visible in some
+   buried dired buffer somewhere.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/get-dired-files ()
+  "Get all files in a dired buffer"
+  (when (eq major-mode 'dired-mode)
+    (save-excursion
+      (goto-char (point-min))
+      (cl-loop until (eobp)
+	       do (dired-goto-next-file)
+	       collect (-if-let (filename (dired-get-filename nil t))
+			   (propertize filename
+				       'buffer (current-buffer)
+				       ;; 'size (file-attribute-size (file-attributes filename))
+				       ))
+	       do (forward-line)))))
+
+(defun jmm/get-all-dired-files ()
+  "Get a list of all dired files."
+  (->> (buffer-list)
+       (--filter (with-current-buffer it
+		   (eq major-mode 'dired-mode)))
+       (--mapcat (with-current-buffer it
+		   (jmm/get-dired-files)))
+       -non-nil
+       ;; (--sort (< (get-text-property 0 'size it)
+       ;; 		  (get-text-property 0 'size other)))
+       ))
+
+;; TODO: Sort files by modification time?
+(defun jmm/counsel-dired-file ()
+  "Prompt for a file name. Go to it in a dired directory."
+  (interactive)
+  (ivy-read "File: "
+	    (jmm/get-all-dired-files)
+	    :action (lambda (file)
+                      (when file
+                        (with-ivy-window
+                          (find-file
+                           (concat (file-remote-p default-directory) file)))))))
+
+(defun jmm/counsel-dired-file-dired (x)
+  "Go to the dired directory containing X."
+  (switch-to-buffer (get-text-property 0 'buffer x))
+  (dired-goto-file x))
+
+(defun jmm/mpv-scrobble-file (x)
+  (let* ((process-connection-type nil))
+    (start-process "" nil "mpvappendscrobble" x)
+    (message (format "Played %s" x))))
+
+(defun jmm/mpv-play-file (x)
+  (let* ((process-connection-type nil))
+    (start-process "" nil "mpv" "--audio-pitch-correction" x)
+    (message (format "Played %s" x))))
+#+END_SRC
 
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
