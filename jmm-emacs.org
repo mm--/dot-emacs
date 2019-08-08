@@ -978,6 +978,8 @@ of erc-modified-channels-alist"
 ** Eshell
 #+BEGIN_SRC emacs-lisp
 (use-package eshell
+  :unless noninteractive
+  :defer t
   :init
   (setq eshell-error-if-no-glob t
 	eshell-hist-ignoredups t
@@ -985,21 +987,31 @@ of erc-modified-channels-alist"
 	eshell-history-size 10000
 	eshell-last-dir-ring-size 500
 	eshell-destroy-buffer-when-process-dies t)
+  ;; TODO: Automatically load eshell-hist-ex
+  ;; (add-to-list 'eshell-modules-list 'eshell-hist-ex)
   :config
   (add-hook 'eshell-mode-hook
 	    (lambda ()
-	      (eshell/alias "mpv" "mpv --no-terminal $*")
+	      ;; TODO: Don't rewrite aliases that already exist.
+	      (jmm/eshell-maybe-add-alias "mpv" "mpv --no-terminal $*")
 	      ;; Fast CD switching (although I usually use "M-D")
-	      (eshell/alias "fd" "cd ${fasd -dl1 $*}")
+	      (jmm/eshell-maybe-add-alias "fd" "cd ${fasd -dl1 $*}")
 	      ;; Switch to dired in the current directory. Or show files in dired.
-	      (eshell/alias "d" "dired {default-val $* \".\"}")
+	      (jmm/eshell-maybe-add-alias "d" "dired {default-val $* \".\"}")
 	      ;; Make it easy to switch to the project root
-	      (eshell/alias "cdp" "cd ${projectile-project-root}")
+	      (jmm/eshell-maybe-add-alias "cdp" "cd ${projectile-project-root}")
 	      ;; Easily make a directory and switch to it
-	      (eshell/alias "mcd" "mkdir -p $1 && cd $1")
+	      (jmm/eshell-maybe-add-alias "mcd" "mkdir -p $1 && cd $1")
 	      ;; We want $PAGER to be "cat" ("less" messes up stuff for us. Especially with nix-env)
 	      (make-local-variable 'process-environment)
 	      (setenv "PAGER" "cat"))))
+
+(defun jmm/eshell-maybe-add-alias (alias definition)
+  "Define an ALIAS with DEFINITION if alias doens't exist.
+See `eshell/alias'.
+Mostly so we don't repeatedly write aliases."
+  (unless (eshell-lookup-alias alias)
+    (eshell/alias alias definition)))
 #+END_SRC
 *** Eshell prompt
     Makes the eshell prompt look nicer
@@ -1106,8 +1118,8 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 		   (delete-dups (ring-elements eshell-history-ring)))))
 
 ;; TODO: Move this somewhere else
-(eval-after-load 'eshell
-  '(progn
+(with-eval-after-load 'esh-mode
+  (progn
     (bind-key "M-L" #'jmm/eshell-ls-recent eshell-mode-map)
     (bind-key "C-c C-h" #'jmm/eshell-prompt-history eshell-mode-map)
     (bind-key "M-D" #'jmm/counsel-fasd-directories-eshell eshell-mode-map)
@@ -1192,18 +1204,19 @@ other programs. Perhaps this should be included by default. (Or maybe
 rewrite "cat" to also allow for buffer arguments.)
 
 #+BEGIN_SRC emacs-lisp
-(defun eshell/buffcat (&rest buffers)
-  "Concatenate buffers. Use the flag -n to strip buffer text properties."
-  (eshell-eval-using-options
-   "buffcat" buffers
-   '((?s "strip" nil strip "Remove text properties from buffers when printing.")
-     (?n "newlines" nil newlines "Add trailing newlines to buffers without them.")
-     (?h "help" nil nil "Output this help screen.")
-     :preserve-args
-     :usage "[-n] buffer...")
-   (progn
-     (if (null args)
-	 (eshell-show-usage)
+(with-eval-after-load 'eshell
+  (defun eshell/buffcat (&rest buffers)
+    "Concatenate buffers. Use the flag -n to strip buffer text properties."
+    (eshell-eval-using-options
+     "buffcat" buffers
+     '((?s "strip" nil strip "Remove text properties from buffers when printing.")
+       (?n "newlines" nil newlines "Add trailing newlines to buffers without them.")
+       (?h "help" nil nil "Output this help screen.")
+       :preserve-args
+       :usage "[-n] buffer...")
+     (progn
+       (if (null args)
+	   (eshell-show-usage)
 	 (mapconcat (lambda (buffer)
 		      (with-current-buffer buffer
 			(let ((str (if strip
@@ -1213,29 +1226,30 @@ rewrite "cat" to also allow for buffer arguments.)
 			      (concat (s-chomp str) "\n")
 			    str))))
 		    args
-		    "")))))
+		    ""))))))
 #+END_SRC
 **** CD to other buffer's default directory
      If you have a split screen, change to the default directory of the other window.
 #+BEGIN_SRC emacs-lisp
 ;; TODO: Actually check that there is another window, otherwise maybe switch to the most recent buffer.
 ;; TODO: If the other buffer is a dired buffer, switch to whatever directory the point is at.
-(defun eshell/cdo (&rest arguments)
-  "Change directories to default directory of other window."
-  (eshell-eval-using-options
-   "cdo" arguments
-   '((?h "help" nil nil "Output this help screen.")
-     :preserve-args
-     :usage ""
-     :post-usage "Changes to the default-directory of the buffer in the other window")
-   (progn
-     (if (null args)
-	 (if-let (other-dir (save-window-excursion
-			      (other-window 1)
-			      default-directory))
-	     (eshell/cd other-dir)
-	   (eshell-show-usage))
-	 (eshell-show-usage)))))
+(with-eval-after-load 'eshell
+  (defun eshell/cdo (&rest arguments)
+    "Change directories to default directory of other window."
+    (eshell-eval-using-options
+     "cdo" arguments
+     '((?h "help" nil nil "Output this help screen.")
+       :preserve-args
+       :usage ""
+       :post-usage "Changes to the default-directory of the buffer in the other window")
+     (progn
+       (if (null args)
+	   (if-let (other-dir (save-window-excursion
+				(other-window 1)
+				default-directory))
+	       (eshell/cd other-dir)
+	     (eshell-show-usage))
+	 (eshell-show-usage))))))
 #+END_SRC
 
 *** Git annex utilities
@@ -1266,23 +1280,25 @@ For example, ARGS could be \"--in=here\""
     (lists files from the beginning of the ~dired-ranger-copy-ring~
     that are larger than 20 megabytes).
 #+BEGIN_SRC emacs-lisp
-(defun eshell/dring (&rest arguments)
-  "Get the list of files in `dired-ranger-copy-ring'."
-  (eshell-eval-using-options
-   "dring" arguments
-   '((?p "pop" nil pop "Pop the top of the dired-ranger-copy-ring.")
-     (?e "element" t element "Get the specific element in the ring (instead of the default 0 [first] element).")
-     (?h "help" nil nil "Output this help screen.")
-     :preserve-args
-     :usage "[-p] [-e index]")
-   (progn
-     (if args
-	 (eshell-show-usage)
-       (let* ((idx (or element 0))
-	      (files (cdr (ring-ref dired-ranger-copy-ring idx))))
-	 (when pop
-	   (ring-remove dired-ranger-copy-ring idx))
-	 files)))))
+(with-eval-after-load 'eshell
+  (defun eshell/dring (&rest arguments)
+    "Get the list of files in `dired-ranger-copy-ring'."
+    (eshell-eval-using-options
+     "dring" arguments
+     '((?p "pop" nil pop "Pop the top of the dired-ranger-copy-ring.")
+       (?e "element" t element "Get the specific element in the ring (instead of the default 0 [first] element).")
+       (?h "help" nil nil "Output this help screen.")
+       :preserve-args
+       :usage "[-p] [-e index]")
+     (progn
+       (if args
+	   (eshell-show-usage)
+	 (let* ((idx (or element 0))
+		(files (cdr (ring-ref dired-ranger-copy-ring idx))))
+	   (when pop
+	     (ring-remove dired-ranger-copy-ring idx))
+	   files))))))
+
 #+END_SRC
 
 * Encryption

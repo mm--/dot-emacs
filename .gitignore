@@ -12,7 +12,6 @@ url/*
 /secrets.el
 /personal/
 /abbrev_defs
-/elisp/
 /emms/
 /eshell/
 /games/
