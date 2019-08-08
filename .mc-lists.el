@@ -28,6 +28,7 @@
 	electric-newline-and-maybe-indent
 	ess-eval-line
 	ess-indent-or-complete
+	ess-insert-assign
 	ess-smart-S-assign
 	ess-smart-comma
 	ess-yank
@@ -153,6 +154,7 @@
 	dired-toggle-read-only
 	dumb-jump-back
 	end-of-buffer
+	ess-eval-region-or-function-or-paragraph-and-step
 	eval-expression
 	find-file
 	handle-select-window
