@@ -1334,6 +1334,54 @@ For example, ARGS could be \"--in=here\""
 	   files))))))
 
 #+END_SRC
+*** Add information about IP addresses to command outputs
+    Add a hover tooltip to IP addresses so we can see where they're coming from, etc.
+#+BEGIN_SRC emacs-lisp
+;; There's a way to clean this up with rx, but I haven't gotten it quite right yet.
+;; See https://francismurillo.github.io/2017-03-30-Exploring-Emacs-rx-Macro/
+(defvar jmm/ip-address-regexp "\\(25[0-5]\\|2[0-4][0-9]\\|1[0-9][0-9]\\|[1-9][0-9]\\|[0-9]\\)\\.\\(25[0-5]\\|2[0-4][0-9]\\|1[0-9][0-9]\\|[1-9][0-9]\\|[0-9]\\)\\.\\(25[0-5]\\|2[0-4][0-9]\\|1[0-9][0-9]\\|[1-9][0-9]\\|[0-9]\\)\\.\\(25[0-5]\\|2[0-4][0-9]\\|1[0-9][0-9]\\|[1-9][0-9]\\|[0-9]\\)")
+
+(defun jmm/get-ip-info (ipaddr)
+  "Get info of IPADDR as a string."
+  ;; Local default directory
+  (let ((default-directory "~"))
+    (s-trim-right (shell-command-to-string (format "geoiplookup %s" ipaddr)))))
+
+(defun jmm/get-ip-info-for-tooltip (window object pos)
+  "Hopefully OBJECT is a string"
+  (if (bufferp object)
+      (or (get-pos-property pos 'ipinfo object)
+	  (let* ((ip (get-pos-property pos 'ip object))
+		 (ipinfo (jmm/get-ip-info ip))
+		 (startpos (previous-single-property-change pos 'ip))
+		 (endpos (1- (next-single-property-change pos 'ip))))
+	    (put-text-property startpos endpos 'ipinfo ipinfo)
+	    ipinfo))))
+
+(defun jmm/ip-address-add-props-to-itself (&optional match)
+  "Add text properties to a match"
+  (let ((match (or match 0)))
+    (add-text-properties
+     (match-beginning match) (match-end match)
+     `(mouse-face highlight
+       ip         ,(match-string-no-properties match)
+       help-echo  jmm/get-ip-info-for-tooltip
+       face ((:underline t))
+       ))))
+
+(defun jmm/eshell-handle-ip-addresses ()
+  "Add tooltips to IP addresses"
+  (save-excursion
+    (goto-char eshell-last-output-block-begin)
+    (unless (eolp)
+      (beginning-of-line))
+    (while (re-search-forward jmm/ip-address-regexp eshell-last-output-end t)
+      (jmm/ip-address-add-props-to-itself))))
+
+(with-eval-after-load 'esh-mode
+  (add-to-list 'eshell-output-filter-functions 'jmm/eshell-handle-ip-addresses))
+
+#+END_SRC
 
 * Encryption and compression
 #+begin_src emacs-lisp
