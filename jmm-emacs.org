@@ -1173,18 +1173,16 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 ;; and `directory-files-and-attributes'
 ;; See https://stackoverflow.com/questions/26514437/emacs-sort-list-of-directories-files-by-modification-date
 ;; DONE: Eshell should probably also sort by most recent date if possible
-(defun jmm/counsel-files-in-directory-eshell (arg &optional initial-input)
-  " Prompt for a list of files in directory.
-With optional numeric argument ARG, search directories recursively.
-With negative argument ARG, exclude directories
-INITIAL-INPUT can be given as the initial minibuffer input."
-  (interactive "P")
+
+(defun jmm/counsel-files-in-directory--candidates (&optional recursive? normal-files? project-root?)
+  "Generate a command for `jmm/counsel-files-in-directory-eshell'.
+Also for `jmm/counsel-files-in-directory'."
   (let* ((commandstr (->> (list find-program
-				"."
+				(if project-root? (projectile-ensure-project (projectile-project-root)) ".")
 				"\\( -name .git \\) -prune -o"
-				(when (< (prefix-numeric-value arg) 0)
+				(when normal-files?
 				  "\\( ! -type d \\)")
-				(unless (>= (abs (prefix-numeric-value arg)) 4)
+				(unless recursive?
 				  "-maxdepth 1")
 				"-printf '%T+\\t%p\\0'")
 			  (-remove #'null)
@@ -1198,18 +1196,29 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 	 (cands (-as-> (split-string shellstr "\0" t) x
 		       (sort x #'string>)
 		       (--map (cadr (s-split-up-to "\t" it 1 t)) x))))
-    (ivy-read "Find file: " cands
-	      :initial-input initial-input
-	      :history 'jmm/counsel-files-in-directory-history
-	      :unwind #'counsel-delete-process
-	      :action
-	      '(1
-		("e" jmm/eshell-insert-text-as-argument "insert eshell-escaped filename")
-		("f" (lambda (file)
-		       (with-ivy-window (find-file file))) "find file")
-		("r" counsel-find-file-as-root "open as root")
-		("d" counsel-locate-action-dired "dired"))
-	      :caller 'jmm/counsel-files-in-directory-eshell)))
+    cands))
+
+(defun jmm/counsel-files-in-directory-eshell (arg &optional initial-input)
+  "Prompt for a list of files in directory.
+With optional numeric argument ARG, search directories recursively.
+With negative argument ARG, exclude directories
+INITIAL-INPUT can be given as the initial minibuffer input."
+  (interactive "P")
+  (ivy-read "Find file: " (jmm/counsel-files-in-directory--candidates (>= (abs (prefix-numeric-value arg)) 4)
+								      (< (prefix-numeric-value arg) 0))
+	    :initial-input initial-input
+	    :history 'jmm/counsel-files-in-directory-history
+	    :unwind #'counsel-delete-process
+	    :action
+	    '(1
+	      ("e" jmm/eshell-insert-text-as-argument "insert eshell-escaped filename")
+	      ("f" (lambda (file)
+		     (with-ivy-window (find-file file))) "find file")
+	      ("r" counsel-find-file-as-root "open as root")
+	      ("d" counsel-locate-action-dired "dired"))
+	    :caller 'jmm/counsel-files-in-directory-eshell))
+
+
 #+END_SRC
 
 *** Utility commands/functions
@@ -1490,12 +1499,12 @@ Because dired-jump is pretty useful
    calls ~~dired-jump~.
 #+BEGIN_SRC emacs-lisp
 (autoload 'get-buffers-matching-mode "helm-swoop")
-(defun jmm/dired-jump (&optional killbuffer)
+(defun jmm/dired-jump (&optional killbuffer file)
   "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir.
 With optional argument KILLBUFFER, also kill the current buffer."
   (interactive "P")
   (let* ((old-buffer (current-buffer))
-	 (file (or buffer-file-name
+	 (file (or file buffer-file-name
 		   (and (eq major-mode 'dired-mode) (directory-file-name (dired-current-directory)))
 		   default-directory))
 	 (dir (if file (file-name-directory file) default-directory))
@@ -1520,7 +1529,7 @@ With optional argument KILLBUFFER, also kill the current buffer."
 		(when dired-omit-mode
 		  (dired-omit-mode)
 		  (dired-goto-file file)))))
-      (dired-jump))
+      (dired-jump nil file))
     (when killbuffer (kill-buffer old-buffer))))
 (bind-key "C-x C-j" 'jmm/dired-jump)
 #+END_SRC
@@ -2018,6 +2027,51 @@ Like `dired-ranger-copy' but I don't have to manually select the latest download
      (cons (list (dired-noselect jmm/downloads-directory)) (list latest-file)))
     (message (format "Copied %s into copy ring." latest-file))))
 #+END_SRC
+** Finding files in subdirectories with ivy/counsel
+   Makes it easier to navigate project and find files with certain names.
+#+BEGIN_SRC emacs-lisp
+(defvar jmm/counsel-files-in-directory-history
+  "Holds the file history of `jmm/counsel-files-in-directory'"
+  nil)
+
+(defun jmm/counsel-action-jmm-dired-jump (x)
+  "Use `jmm/dired-jump' on X."
+  (jmm/dired-jump nil (expand-file-name x)))
+
+(defun jmm/counsel-action-dired-ranger-copy (x)
+  "Use `jmm/dired-jump' on X."
+  (with-ivy-window
+    (save-excursion
+      (let ((file (expand-file-name x)))
+	(jmm/dired-jump nil file)
+	(ring-insert
+	 dired-ranger-copy-ring
+	 (cons (list (current-buffer)) (list file)))
+	(message (format "Copied %s into copy ring." file))))))
+
+(defun jmm/counsel-files-in-directory (arg &optional initial-input)
+  "Prompt for a list of files in directory.
+With optional numeric argument ARG, search from the project root.
+With negative argument ARG, exclude directories
+INITIAL-INPUT can be given as the initial minibuffer input."
+  (interactive "P")
+  (ivy-read "Find file: " (jmm/counsel-files-in-directory--candidates t
+								      (not (< (prefix-numeric-value arg) 0))
+								      (>= (abs (prefix-numeric-value arg)) 4))
+	    :initial-input initial-input
+	    :unwind #'counsel-delete-process
+	    :action
+	    '(1
+	      ("f" (lambda (file)
+		     (with-ivy-window (find-file file))) "find file")
+	      ("j" jmm/mpv-scrobble-file "scrobblempv")
+	      ("r" counsel-find-file-as-root "open as root")
+	      ("d" jmm/counsel-action-jmm-dired-jump "dired")
+	      ("[" jmm/counsel-action-dired-ranger-copy "dired ranger copy"))
+	    :caller 'jmm/counsel-files-in-directory))
+;; (bind-key "M-F" #'jmm/counsel-files-in-directory dired-mode-map)
+#+END_SRC
+
 * Tramp
 #+begin_src emacs-lisp
 ;; (eval-when-compile
@@ -2725,7 +2779,9 @@ Make an easy way to find files in open dired buffers
 	 ("<f1> v" . counsel-describe-variable)
 	 ("C-h C-b" . counsel-descbinds)
 	 ("C-c d" . jmm/counsel-fasd-directories)
-	 ("C-c j" . jmm/counsel-dired-file))
+	 ("C-c j" . jmm/counsel-dired-file)
+	 :map dired-mode-map
+	 ("M-F" . jmm/counsel-files-in-directory))
   :config
   ;; Fasd still works well with only two characters
   (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2))
