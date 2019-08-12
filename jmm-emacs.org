@@ -1326,7 +1326,7 @@ For example, ARGS could be \"--in=here\""
 
 #+END_SRC
 
-* Encryption
+* Encryption and compression
 #+begin_src emacs-lisp
 (require 'epa-file)			;So we can encrypt authinfo
 (setq epa-file-cache-passphrase-for-symmetric-encryption t) ;So it doesn't ask for password multiple times
@@ -1339,6 +1339,22 @@ For example, ARGS could be \"--in=here\""
 #+begin_src emacs-lisp
   (set-register ?G "-*- epa-file-encrypt-to: (\"j.moller-mara@berkeley.edu\") -*-\n")
 #+end_src
+** Add the ability to read/write Brotli compressed files
+   Brotli is a fairly good tool for compressing text. I use it with some frequency.
+   This code allows me to open files ending in "~.br~" as Brotli compressed files.
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'jka-cmpr-hook
+  (add-to-list
+   'jka-compr-compression-info-list
+   ["\\.br\\'"
+    "brotli compressing"   "brotli" ("-Z" "-c")
+    "brotli uncompressing" "brotli" ("-c" "-d")
+    nil t nil])
+
+  ;; This is needed for the jka-compr-compression-info-list changes to take effect
+  (jka-compr-update))
+#+END_SRC
+
 * BBDB
 #+begin_src emacs-lisp
 (use-package bbdb
