@@ -2158,11 +2158,12 @@ INITIAL-INPUT can be given as the initial minibuffer input."
    Sometimes I notice TRAMP having issues detecting the ~PATH~
    environment on NixOS. This should hopefully help with that.
 #+BEGIN_SRC emacs-lisp
-;; This is the part necessary for Nix
-(add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+(with-eval-after-load 'tramp-sh
+  ;; This is the part necessary for Nix
+  (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 
-;; This should be in there anyway
-(add-to-list 'tramp-remote-path 'tramp-default-remote-path)
+  ;; This should be in there anyway
+  (add-to-list 'tramp-remote-path 'tramp-default-remote-path))
 #+END_SRC
 ** Dereference symlinks when copying with rsync
 
