@@ -2834,6 +2834,10 @@ Make an easy way to find files in open dired buffers
   :config
   ;; Fasd still works well with only two characters
   (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2))
+  ;; Optionally sort find-files by date
+  (setf (alist-get 'read-file-name-internal ivy-sort-functions-alist)
+      (list #'ivy-sort-file-function-default
+	    #'file-newer-than-file-p))
   (ivy-set-actions
    'jmm/counsel-dired-file
    '(("x" counsel-locate-action-extern "xdg-open")
