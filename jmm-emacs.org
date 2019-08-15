@@ -1166,7 +1166,7 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 #+BEGIN_SRC emacs-lisp
 ;; TODO: Color broken symlinks differently.
 ;; Also possibly ignore git files.
-(defvar jmm/counsel-files-in-directory-eshell
+(defvar jmm/counsel-files-in-directory-eshell nil
   "Holds the file history of `jmm/counsel-files-in-directory-eshell'")
 
 ;; TODO: Maybe implement this with `directory-files-recursively'
