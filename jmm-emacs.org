@@ -3709,6 +3709,17 @@ Note: This also messes up with multiple windows"
   t)
 #+END_SRC
 
+* Nix environment
+  
+  I have a small Emacs lisp file that gets loaded which adds a Nix
+  ~buildEnv~ to ~exec-path~ and ~PATH~. It includes binaries that I
+  find helpful to have installed alongside Emacs, such as "grip" for
+  markdown rendering and ~silver-searcher~. This loads it if it finds
+  it.
+
+#+BEGIN_SRC emacs-lisp
+(require 'jmm-add-nix-path nil t)
+#+END_SRC
 
 * Other modes
 ** Enriched Mode
