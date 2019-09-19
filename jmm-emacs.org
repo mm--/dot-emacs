@@ -2238,8 +2238,9 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 (require 'starttls)
 ;; use org structures and tables in message mode
 ;; Thanks, pragmaticemacs!
-(add-hook 'message-mode-hook 'turn-on-orgtbl)
-(add-hook 'message-mode-hook 'turn-on-orgstruct++)
+;; (add-hook 'message-mode-hook 'turn-on-orgtbl)
+;; This seems not to work anymore
+;; (add-hook 'message-mode-hook 'turn-on-orgstruct++)
 #+END_SRC
 
 When using ~shr~ to render HTML, sometimes the colors come out weird. This makes it more readable.
@@ -2816,7 +2817,8 @@ Make an easy way to find files in open dired buffers
 (use-package swiper
   :if (not noninteractive)
   :ensure t
-  :bind (("M-i" . swiper)))
+  :bind (("M-i" . swiper)
+	 ("M-I" . swiper-multi)))
 
 (use-package counsel
   :if (not noninteractive)
