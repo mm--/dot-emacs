@@ -967,6 +967,7 @@ These functions clock into a task if it exists and creates it using
 #+begin_src emacs-lisp
 (bind-key "<f11>" 'org-clock-goto)
 (bind-key "C-<f11>" 'org-clock-in-last)
+(bind-key "M-<f11>" 'org-clock-out)
 #+end_src
 ** Inserting a link to the currently clocked task
     When I'm capturing tasks or other ~org~ headlines, many times it's
