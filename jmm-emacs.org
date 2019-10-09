@@ -105,8 +105,8 @@ Enable all the disabled commands
 (transient-mark-mode 1)
 (column-number-mode 1)
 (show-paren-mode 1)
-(menu-bar-mode -1)
 ;; I'll set this in customize, so by default it doesn't take it away.
+;; (menu-bar-mode -1) ;; Was confusing some people
 ;; (tool-bar-mode 0)
 ;; (scroll-bar-mode 0)
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
@@ -289,6 +289,7 @@ label (which can be different from the number for example if you're on page \"iv
 (bind-key "<f9> m" 'magit-status)
 (define-key (current-global-map) [remap imenu] 'helm-imenu)
 ;; Replaced with helm
+(bind-key "C-c q" #'bury-buffer)
 #+end_src
 ** Keybindings to load org
    Again, most of my org-mode configuration is [[./jmm-org-config.org][here]], but for some dumb
