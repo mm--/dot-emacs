@@ -1286,6 +1286,26 @@ rewrite "cat" to also allow for buffer arguments.)
 	     (eshell-show-usage))
 	 (eshell-show-usage))))))
 #+END_SRC
+**** CD to the git project root directory
+     CD to a project's root (usually the one that has a "~.git~" file).
+#+BEGIN_SRC emacs-lisp
+(with-eval-after-load 'eshell
+  (defun eshell/cdp (&rest arguments)
+    "Change directories to project root of the default directory (Seeing if there's a .git file)."
+    (eshell-eval-using-options
+     "cdp" arguments
+     '((?h "help" nil nil "Output this help screen.")
+       :preserve-args
+       :usage ""
+       :post-usage "Change directories to git root of the default directory.")
+     (progn
+       (if (null args)
+	   (if-let (other-dir (locate-dominating-file default-directory ".git"))
+	       (eshell/cd other-dir)
+	     (eshell-show-usage))
+	 (eshell-show-usage))))))
+#+END_SRC
+
 
 *** Git annex utilities
     Functions that make it easier to operate on git annex files
