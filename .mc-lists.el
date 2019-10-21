@@ -29,6 +29,7 @@
 	ess-eval-line
 	ess-indent-or-complete
 	ess-insert-assign
+	ess-roxy-move-beginning-of-line
 	ess-smart-S-assign
 	ess-smart-comma
 	ess-yank
