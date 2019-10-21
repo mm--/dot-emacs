@@ -2213,6 +2213,73 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 (eval-after-load 'tramp-sh
   '(jmm/tramp-rsync-allow-dereference-symlinks))
 #+END_SRC
+** Utilities to add/remove Tramp hops (e.g. for "sudo")
+
+   These functions make it easier for me to find files with and
+   without "sudo". They basically just construct TRAMP file names,
+   adding hops where appropriate. I use this for my own version of
+   ~counsel-find-file-as-root~, which doesn't work with remote files.
+
+   Note, this won't work with some methods that don't chain
+   particularly well. For example if you had ~/rsync:host:/some/file~,
+   the resulting ~/rsync:host|sudo:host:/some/file~ doesn't seem to work for me.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/tramp-vec-to-hop (vec)
+  "Take in a Tramp VEC (as with `tramp-dissect-file-name') and output a hop."
+  (let ((method (tramp-file-name-method vec))
+	(user (tramp-file-name-user vec))
+	(domain (tramp-file-name-domain vec))
+	(host (tramp-file-name-host vec))
+	(port (tramp-file-name-port vec))
+	(hop (tramp-file-name-hop vec)))
+    (->> (tramp-make-tramp-file-name method user domain host port nil hop)
+	 (replace-regexp-in-string (concat "^" tramp-prefix-format) "")
+	 (replace-regexp-in-string (concat tramp-postfix-host-format "$") tramp-postfix-hop-format))))
+
+
+(defun jmm/tramp-add-sudo-method (file)
+  "Add a sudo method to a file.
+This should be idempotent (i.e. won't add sudo to a file that already has sudo.)"
+  (if (tramp-tramp-file-p file)
+      (let ((newhop (jmm/tramp-vec-to-hop (tramp-dissect-file-name file))))
+	(with-parsed-tramp-file-name file v1
+	  (if (string= v1-method "sudo")
+	      file ;; Don't add sudo redundantly
+	    (tramp-make-tramp-file-name
+	     "sudo" v1-user v1-domain v1-host v1-port v1-localname newhop))))
+    (tramp-make-tramp-file-name
+     "sudo" nil nil nil nil file nil)))
+
+(defun jmm/tramp-remove-final-method (file)
+  "Remove the destination of the last hop."
+  (if (tramp-tramp-file-p file)
+      (with-parsed-tramp-file-name file v1
+	(if v1-hop
+	    (let ((hop-file-name (concat
+				  tramp-prefix-format
+				  (replace-regexp-in-string
+				   (concat tramp-postfix-hop-regexp "$")
+				   tramp-postfix-host-format v1-hop))))
+	      (with-parsed-tramp-file-name hop-file-name v2
+		(tramp-make-tramp-file-name v2-method v2-user v2-domain v2-host v2-port v1-localname v2-hop)))
+	  v1-localname))
+    file))
+
+(defun jmm/tramp-is-sudo-p (file)
+  "If this FILE being accessed with sudo?"
+  (and (tramp-tramp-file-p file)
+       (with-parsed-tramp-file-name file v1
+	 (string= v1-method "sudo"))))
+
+(defun jmm/tramp-toggle-sudo-file (file)
+  "If FILE is being accessed with sudo, return the same path that isn't.
+If it isn't being accessed with sudo, return the same path that is."
+  (if (jmm/tramp-is-sudo-p file)
+      (jmm/tramp-remove-final-method file)
+    (jmm/tramp-add-sudo-method file)))
+#+END_SRC
+
 * Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
   got a couple of main selling points. First is that things are
@@ -2869,7 +2936,20 @@ Make an easy way to find files in open dired buffers
    '(("x" counsel-locate-action-extern "xdg-open")
      ("j" jmm/mpv-scrobble-file "scrobblempv")
      ("J" jmm/mpv-play-file "mpv")
-     ("d" jmm/counsel-dired-file-dired "dired"))))
+     ("t" jmm/counsel-find-file-toggle-root "open toggling root")
+     ("r" jmm/counsel-find-file-as-root "open as root")
+     ("d" jmm/counsel-dired-file-dired "dired")))
+  (ivy-set-actions
+   'counsel-find-file
+   '(("j" find-file-other-window "other window")
+     ("f" find-file-other-frame "other frame")
+     ("b" counsel-find-file-cd-bookmark-action "cd bookmark")
+     ("x" counsel-find-file-extern "open externally")
+     ("R" jmm/counsel-find-file-toggle-root "open toggling root")
+     ("r" jmm/counsel-find-file-as-root "open as root")
+     ("k" counsel-find-file-delete "delete")
+     ("m" counsel-find-file-move "move or rename")
+     ("d" counsel-find-file-mkdir-action "mkdir"))))
 
 #+END_SRC
 ** Ivy completions for fasd
@@ -2989,6 +3069,34 @@ Make an easy way to find files in open dired buffers
     (start-process "" nil "mpv" "--audio-pitch-correction" x)
     (message (format "Played %s" x))))
 #+END_SRC
+** Better method for finding files as root
+
+   ~counsel-find-file-as-root~ doesn't seem to work with remote files (e.g. ~/sshx:user@host:/some/file~).
+
+   These functions take care of that.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/counsel-find-file-toggle-root (x)
+  "Find file X toggling root privileges.
+Works with remote (Tramp) files as well."
+  (let* ((file-name (jmm/tramp-toggle-sudo-file x)))
+    ;; If the current buffer visits the same file we are about to open,
+    ;; replace the current buffer with the new one.
+    (if (eq (current-buffer) (get-file-buffer x))
+        (find-alternate-file file-name)
+      (find-file file-name))))
+
+(defun jmm/counsel-find-file-as-root (x)
+  "Find file X with root privileges.
+Works with remote (Tramp) files as well."
+  (let* ((file-name (jmm/tramp-add-sudo-method x)))
+    ;; If the current buffer visits the same file we are about to open,
+    ;; replace the current buffer with the new one.
+    (if (eq (current-buffer) (get-file-buffer x))
+        (find-alternate-file file-name)
+      (find-file file-name))))
+#+END_SRC
+
 
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
