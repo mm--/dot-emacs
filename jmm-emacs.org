@@ -3048,11 +3048,12 @@ Make an easy way to find files in open dired buffers
   (interactive)
   (ivy-read "File: "
 	    (jmm/get-all-dired-files)
-	    :action (lambda (file)
-                      (when file
-                        (with-ivy-window
-                          (find-file
-                           (concat (file-remote-p default-directory) file)))))))
+	    :action #'jmm/counsel-open-file))
+
+(defun jmm/counsel-open-file (file)
+  "Open FILE."
+  (when file
+    (find-file file)))
 
 (defun jmm/counsel-dired-file-dired (x)
   "Go to the dired directory containing X."
