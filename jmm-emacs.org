@@ -3859,6 +3859,30 @@ Note: This also messes up with multiple windows"
 #+BEGIN_SRC emacs-lisp
 (require 'jmm-add-nix-path nil t)
 #+END_SRC
+** Rename man page buffers under Nix
+
+   When you look up man pages with Emacs in Nix, you end up with
+   buffer names like "\*Man -l
+   /run/current-system/sw/share/man/man1/cat.1.gz\*". This is way too
+   verbose and makes it hard to switch buffers (as the name of the
+   command usually gets clipped from the end).
+
+   This function and hook renames man page buffers, getting rid of the
+   path information.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/man-rename-nix-man-page ()
+  "Renames a man page and gets rid of the nix path."
+  (interactive)
+  (when (s-match "^\\*Man " (buffer-name))
+    (rename-buffer (->> (buffer-name)
+			(s-replace-regexp " -l " " ")
+			(s-replace-regexp "/.+/" "" )
+			(s-replace-regexp "\\.gz\\*" "*"))
+		   t)))
+
+(add-hook 'Man-mode-hook #'jmm/man-rename-nix-man-page)
+#+END_SRC
 
 * Other modes
 ** Enriched Mode
