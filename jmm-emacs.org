@@ -2140,6 +2140,43 @@ INITIAL-INPUT can be given as the initial minibuffer input."
 	    :caller 'jmm/counsel-files-in-directory))
 ;; (bind-key "M-F" #'jmm/counsel-files-in-directory dired-mode-map)
 #+END_SRC
+** Change the "yes", "no", "all", or "quit" prompt to take a single character
+
+I've aliased ~yes-or-no-p~ to be ~y-or-n-p~. This is nice because it
+means I don't have to repeatedly type "yes". This used to work for
+~dired~, but eventually it was changed to use
+~dired--yes-no-all-quit-help~ when recursively deleting directories.
+
+This function goes back to a single character response prompt.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/dired--y-n-a-q-h (prompt &optional help-msg)
+  "Ask a question with valid answers: (y)es, (n)o, (a)ll, (q)uit, (h)elp.
+PROMPT must end with '? ', for instance, 'Delete it? '.
+If optional arg HELP-MSG is non-nil, then is a message to show when
+the user answers 'help'.  Otherwise, default to `dired-delete-help'."
+  (let ((valid-answers (list ?y ?n ?a ?q))
+	(answer-plist '(?y "yes" ?n "no" ?a "all" ?q "quit"))
+        (answer "")
+        (input-fn (lambda ()
+                    (read-char
+	             (format "%s [(y)es, (n)o, (a)ll, (q)uit, (h)elp] " prompt)))))
+    (setq answer (funcall input-fn))
+    (when (= answer ?h)
+      (with-help-window "*Help*"
+        (with-current-buffer "*Help*"
+          (insert (or help-msg dired-delete-help)))))
+    (while (not (member answer valid-answers))
+      (unless (= answer ?h)
+        (beep)
+        (message "Please answer `(y)es' or `(n)o' or `(a)ll' or `(q)uit'")
+        (sleep-for 2))
+      (setq answer (funcall input-fn)))
+    (plist-get answer-plist answer)))
+
+(fset 'dired--yes-no-all-quit-help 'jmm/dired--y-n-a-q-h)
+#+END_SRC
+
 
 * Tramp
 #+begin_src emacs-lisp
@@ -2933,6 +2970,14 @@ Make an easy way to find files in open dired buffers
 	    #'file-newer-than-file-p))
   (ivy-set-actions
    'jmm/counsel-dired-file
+   '(("x" counsel-locate-action-extern "xdg-open")
+     ("j" jmm/mpv-scrobble-file "scrobblempv")
+     ("J" jmm/mpv-play-file "mpv")
+     ("t" jmm/counsel-find-file-toggle-root "open toggling root")
+     ("r" jmm/counsel-find-file-as-root "open as root")
+     ("d" jmm/counsel-dired-file-dired "dired")))
+  (ivy-set-actions
+   'counsel-locate
    '(("x" counsel-locate-action-extern "xdg-open")
      ("j" jmm/mpv-scrobble-file "scrobblempv")
      ("J" jmm/mpv-play-file "mpv")
