@@ -223,6 +223,14 @@ Set my font
 ;; (josh/set-my-font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
 (josh/set-my-font "-PfEd-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
 #+END_SRC
+
+Set a reasonable font for Chinese, if we have it.
+
+#+BEGIN_SRC emacs-lisp
+(when (and window-system (x-family-fonts "Noto Sans Mono CJK SC"))
+  (set-fontset-font t 'chinese-gbk (font-spec :family "Noto Sans Mono CJK SC")))
+#+END_SRC
+
 ** Telephone Line
    My default modeline was making it hard to see my [[https://github.com/wasamasa/eyebrowse][eyebrowse]]
    workspace when I was clocked in to something. [[https://github.com/dbordak/telephone-line][Telephone line]] looks
