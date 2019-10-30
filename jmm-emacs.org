@@ -2969,6 +2969,9 @@ Make an easy way to find files in open dired buffers
 	 ("C-c j" . jmm/counsel-dired-file)
 	 :map dired-mode-map
 	 ("M-F" . jmm/counsel-files-in-directory))
+  :init
+  ;; Suggest the file at point, if it's a path
+  (setq counsel-find-file-at-point t)
   :config
   ;; Fasd still works well with only two characters
   (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2))
