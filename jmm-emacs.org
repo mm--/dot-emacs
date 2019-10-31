@@ -112,6 +112,8 @@ Enable all the disabled commands
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
 (blink-cursor-mode 0)
 
+(xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
+
 (set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
 (set-register ?d '(file . "~/Downloads/"))
 
