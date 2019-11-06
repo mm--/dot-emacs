@@ -1315,6 +1315,45 @@ rewrite "cat" to also allow for buffer arguments.)
 	     (eshell-show-usage))
 	 (eshell-show-usage))))))
 #+END_SRC
+**** Recursively CD to parent directory until a string matches
+     
+     Sometimes I'm in some deeply nested directory, like
+     "~/home/jmm/foo/bar/baz/data/1/2/3/~" and I want to go back to
+     "~bar~". This eshell command lets me type "~cdup bar~" to go back
+     up to it.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/parent-directory-matching (regexp directory)
+  "Return a parent directory of DIRECTORY matching REGEXP."
+  (let ((thedir directory))
+    (while (progn
+	     (let ((updir (file-name-directory
+			   (directory-file-name thedir))))
+	       (if (string= thedir updir)
+		   ;; We can't go up anymore. Setting to nil will also break the loop
+		   (setq thedir nil)
+		 (setq thedir updir)
+		 (not (string-match-p regexp (file-name-nondirectory
+					      (directory-file-name thedir))))))))
+    thedir))
+
+(defun eshell/cdup (&rest arguments)
+  "Recursively change directories up until the directory name matches a string."
+  (eshell-eval-using-options
+   "cdup" arguments
+   '((?h "help" nil nil "Output this help screen.")
+     :preserve-args
+     :usage "[REGEXP]"
+     :post-usage "Recursively change directories up until the directory name matches a string.")
+   (progn
+     (-if-let (newdir (jmm/parent-directory-matching
+		       (if (null args)
+			   ""
+			 (car args))
+		       default-directory))
+	 (eshell/cd newdir)
+       (error "Can't find a directory matching \"%s\"" (car args))))))
+#+END_SRC
 
 
 *** Git annex utilities
