@@ -3945,7 +3945,21 @@ Note: This also messes up with multiple windows"
   t)
 #+END_SRC
 
-* Nix environment
+* Nix
+
+  [[https://nixos.org/nix/][Nix]] is an awesome way to declaratively build and distribute
+  packages.
+
+  Its purely functional expression language enforces a kind of
+  discipline of rigorously defining all dependencies needed to build
+  something (be it a binary, Emacs configuration, etc.).
+
+  I'm currently using it to manage parts of my Emacs configuration,
+  build packages/tools (like shell scripts that need specific binaries
+  installed), as well as using it to perform distributed builds of
+  some Bayesian data analyses I'm working on.
+
+** Nix environment
   
   I have a small Emacs lisp file that gets loaded which adds a Nix
   ~buildEnv~ to ~exec-path~ and ~PATH~. It includes binaries that I
@@ -3980,6 +3994,58 @@ Note: This also messes up with multiple windows"
 
 (add-hook 'Man-mode-hook #'jmm/man-rename-nix-man-page)
 #+END_SRC
+** Jumping to the definition of a Nix attribute
+
+   Nix already has the command ~nix edit nixpkgs.emacs26~, which will
+   open up your ~$EDITOR~ (obviously Emacs) to the nix expression
+   defining a derivation.
+
+   However, this doesn't seem to work for attributes that define
+   functions. Like, ~nix edit nixpkgs.lib.attrsets.attrByPath~ won't
+   find where it's defined. This is interesting since you can type
+   ~lib.attrsets.attrByPath~ into a ~nix repl '<nixpkgs>'~ and it'll
+   show you the file, line, and column.
+
+   These functions allow you to find where an attribute is declared
+   and then jump to it.
+
+   One thing to note, though, is that although ~nix edit
+   nixpkgs.emacs26~ will open the ~emacs/default.nix~ expression,
+   ~(jmm/nix-goto-attr-definition "emacs26")~ will actually go to the
+   "emacs26" attribute in ~all-packages.nix~.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/nix-get-attr-definition-position (attrpath)
+  "Given a Nixpkgs ATTRPATH like \"rPackages.rstan\", return an
+  alist of the file, line, and column the attribute was defined
+  bin.
+  This function automatically adds \"pkgs\" to the front of attrpath. "
+  (let* ((attrpath (s-split "\\." attrpath))
+	 (parentpath (s-join "." (cons "pkgs" (butlast attrpath))))
+	 (attrname (car (last attrpath)))
+	 (evalstr (format "(with import <nixpkgs> {}; builtins.unsafeGetAttrPos \"%s\" %s)"
+			  attrname
+			  parentpath)))
+    (json-read-from-string
+     (with-output-to-string
+       (with-current-buffer
+	   standard-output
+	 (process-file "nix" nil t nil "eval" "--json" evalstr))))))
+
+;; TODO: Make this something like xref-find-definitions
+;; Possibly use a cached "nix search --json" for completion.
+(defun jmm/nix-goto-attr-definition (attrpath)
+  "Given a Nixpkgs ATTRPATH like \"rPackages.rstan\", jump to its definition position."
+  (interactive (list (xref--read-identifier "Find definitions of: ")))
+  (-if-let ((&alist 'file file 'line line 'column column) (jmm/nix-get-attr-definition-position attrpath))
+      (progn
+	(xref-push-marker-stack)
+	(find-file file)
+	(goto-line line)
+	(move-to-column (1- column)))	; Not sure if the column is correct
+    (error "Can't find definition of %s" attrpath)))
+#+END_SRC
+
 
 * Other modes
 ** Enriched Mode
