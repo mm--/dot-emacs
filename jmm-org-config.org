@@ -2211,7 +2211,9 @@ properties drawer, which is usually the case for me.
 			      ;; We re-evaluate window-end every time because it can change
 			      (if wholebuffer (point-max) (window-end (selected-window) t))
 			      t)
-      (unless (get-char-property (1- (match-beginning 0)) 'invisible)
+      (if (get-char-property (1- (match-beginning 0)) 'invisible)
+	  (while (and (not (eobp)) (invisible-p (point)))
+	    (goto-char (next-property-change (point))))
 	(let ((planstart (match-beginning 0))
 	      (planend (jmm/org-end-planning-stuff)))
 	  (outline-flag-region (1- planstart) (1- planend) t)
