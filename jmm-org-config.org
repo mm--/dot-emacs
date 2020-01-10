@@ -2109,6 +2109,159 @@ See `org-clone-subtree-with-time-shift'."
      (nreverse markers))))
 #+END_SRC
 
+* org-ql
+
+  [[https://github.com/alphapapa/org-ql][org-ql]] provides a great way to define searches that can be used to
+  make an agenda view.
+
+  Not only are searches easier to define than their default agenda
+  counterparts, they're also way faster because ~org-ql~ caches
+  searches for each buffer. Agenda views that take 7 seconds normally
+  for me end up taking a fraction of a second using ~org-ql~.
+
+  With ~org-ql~ I find I no longer have to write complex
+  ~org-agenda-skip-function~ functions.
+
+#+BEGIN_SRC emacs-lisp
+(use-package org-ql
+  :after org
+  :ensure t
+  :bind (("C-c A 1" . jmm/org-ql-basic-agenda-1)
+	 ("C-c A e" . jmm/org-ql-erlich-agenda)
+	 ("C-c A n" . jmm/org-ql-next-todos-agenda)
+	 ("C-c A p" . jmm/org-ql-stuck-projects)
+	 ("C-c A r" . jmm/org-ql-recent-items)
+	 ("C-c A u" . jmm/org-ql-next-unscheduled-tasks)
+	 ("C-c A w" . jmm/org-ql-unscheduled-waiting-tasks))
+  :defer t)
+#+END_SRC
+** Some org-ql agenda views
+
+   Here are some ~org-ql~ views that I sometimes use.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-basic-agenda-1 ()
+  "A basic non-work-related agenda for the day."
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (and (not (done))
+	       (or (deadline auto)
+		   (scheduled :to today)
+		   (ts-active :on today)))
+	  (not (tags "erlich"))
+	  (not (tags "ARCHIVE")))
+    :sort '(date priority todo)
+    :title "Basic Agenda 1"
+    :super-groups '((:name "Personal"
+			   :tag "personal"
+			   :order 3)
+		    (:name "Home" :tag "home")
+		    (:name "Habit" :tag "habit")
+		    (:name "Net stuff" :tag "@net")
+		    (:todo "WAITING"
+			   :order 6)
+		    (:priority "A" :order 1)
+		    (:priority "B" :order 2)
+		    (:priority "C" :order 2))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-erlich-agenda ()
+  "Make an agenda for things I need to do today for the Erlich lab"
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (tags "erlich")
+	  (not (tags "ARCHIVE"))
+	  (or (and (not (done))
+		   (or (deadline auto)
+		       (scheduled :to today)
+		       (ts-active :on today)))
+	      (closed :on today)))
+    :sort '(date priority todo)
+    :title "Erlich Agenda View"
+    :super-groups '((:name "Risk" :tag "risk")
+		    (:name "Infrastructure" :tag "infrastructure")
+		    (:name "Emails" :tag "email")
+		    (:todo "WAITING" :order 6)
+		    (:priority "A" :order 1)
+		    (:priority "B" :order 2)
+		    (:priority "C" :order 2))))
+#+END_SRC
+
+
+#+BEGIN_SRC emacs-lisp
+;; FIXME: Some items scheduled in the future show up.
+(defun jmm/org-ql-recent-items ()
+  "A view that shows items with a timestamp from a week ago to today."
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(ts :from -7 :to today)
+    :title "Recent Items"
+    :sort '(date priority todo)
+    :super-groups '((:auto-ts t))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-next-todos-agenda ()
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (todo)
+	  (ts :from today :to +7))
+    :title "Next Items"
+    :sort '(date priority todo)
+    :super-groups '((:auto-ts t))))
+#+END_SRC
+
+** Project-related views
+
+   Some of these views require the ~ancestors~ and ~parent~
+   predicates, which should be included in a future version of
+   ~org-ql~.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-stuck-projects ()
+  "Find stuck projects in an agenda view.
+Taken from the org-ql examples.org, which was shared by reddit user \"emptymatrix\". "
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (tags-local "project")
+	  (not (done))
+	  (not (descendants (todo "NEXT")))
+	  (not (descendants (scheduled))))
+    :title "Stuck projects"
+    :sort '(date priority)
+    :super-groups '((:name "Erlich" :tag "erlich")
+		    (:priority "A" :order 1)
+		    (:priority "B" :order 2)
+		    (:priority "C" :order 2))))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-next-unscheduled-tasks ()
+  "Find unscheduled \"next\" tasks that are part of stuck projects."
+  (interactive)
+  (org-ql-search (org-agenda-files)
+  '(and (todo "NEXT")
+	(not (scheduled))
+	(ancestors (and (tags-local "project")
+			(not (descendants (and (todo)
+					       (scheduled)))))))
+  :title "Next tasks that should be scheduled"))
+#+END_SRC
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-unscheduled-waiting-tasks ()
+  "Find unscheduled \"waiting\" tasks in projects"
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (todo "WAITING")
+	  (not (scheduled))
+	  (ancestors (tags-local "project")))
+    :title "Unscheduled WAITING tasks in projects"))
+#+END_SRC
+
+
+
 * Other useful functions
 ** Org agenda current subtree or region
 
