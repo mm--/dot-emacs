@@ -38,6 +38,7 @@ loaded ~org-plus-contrib~
   (add-to-list 'org-tag-faces '("breakdown" :foreground "RoyalBlue" :weight bold))
   (add-to-list 'org-tag-faces '("project" :foreground "DeepPink" :weight bold))
   (add-to-list 'org-tag-faces '("blocked" :foreground "yellow" :weight bold))
+  (add-to-list 'org-tag-faces '("stuck" :foreground "yellow" :weight bold))
   (advice-add 'org-open-at-point :around #'jmm/org-open-link-alternate-browser)
   (advice-add 'org-open-at-point-global :around #'jmm/org-open-link-alternate-browser)
   (require 'org-screenshot)
@@ -670,6 +671,7 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
 
 (add-to-list 'org-tags-exclude-from-inheritance "PROJECT")
 (add-to-list 'org-tags-exclude-from-inheritance "project")
+(add-to-list 'org-tags-exclude-from-inheritance "stuck")
 #+end_src
 * If I didn't want it to interfere with windmove
 #+begin_src emacs-lisp
@@ -1820,7 +1822,7 @@ If we don't have a \"vague\" tag but do have a \"VAGUE_SINCE\" property, delete 
                                    (point))
                                (save-excursion (org-back-to-heading))))
 	 (current-tags (org-get-tags-at current-headline t)))
-    (cl-loop for (tag property) in '(("vague" "VAGUE_SINCE") ("breakdown" "BREAKDOWN_SINCE"))
+    (cl-loop for (tag property) in '(("vague" "VAGUE_SINCE") ("breakdown" "BREAKDOWN_SINCE") ("stuck" "STUCK_SINCE"))
 	     do (if (member tag current-tags)
 		    (unless (org-entry-get current-headline property)
 		      (org-entry-put current-headline property (jmm/org-current-inactive-timestamp)))
@@ -2129,7 +2131,7 @@ See `org-clone-subtree-with-time-shift'."
   :bind (("C-c A 1" . jmm/org-ql-basic-agenda-1)
 	 ("C-c A e" . jmm/org-ql-erlich-agenda)
 	 ("C-c A n" . jmm/org-ql-next-todos-agenda)
-	 ("C-c A p" . jmm/org-ql-stuck-projects)
+	 ("C-c A p" . jmm/org-ql-projects)
 	 ("C-c A r" . jmm/org-ql-recent-items)
 	 ("C-c A u" . jmm/org-ql-next-unscheduled-tasks)
 	 ("C-c A w" . jmm/org-ql-unscheduled-waiting-tasks))
@@ -2235,6 +2237,42 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
 		    (:priority "B" :order 2)
 		    (:priority "C" :order 2))))
 #+END_SRC
+
+Mark stuck projects with a "stuck" tag. Unmark unstuck
+projects. Create a project view.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-projects ()
+  "Find stuck projects in an agenda view.
+Taken from the org-ql examples.org, which was shared by reddit user \"emptymatrix\". "
+  (interactive)
+  (org-ql-select (org-agenda-files)
+    '(and (tags-local "project")
+	  (not (tags-local "stuck"))
+	  (not (done))
+	  (not (descendants (todo "NEXT")))
+	  (not (descendants (scheduled))))
+    :action '(org-toggle-tag "stuck" 'on))
+  (org-ql-select (org-agenda-files)
+    '(and (tags-local "stuck")
+	  (tags-local "project")
+	  (or
+	   (done)
+	   (descendants (todo "NEXT"))
+	   (descendants (scheduled))))
+    :action '(org-toggle-tag "stuck" 'off))
+  (org-ql-search (org-agenda-files)
+    '(and (tags-local "project")
+	  (not (done)))
+    :title "Projects"
+    :sort '(date priority)
+    :super-groups '((:name "Stuck projects" :tag "stuck" :order 4)
+		    (:name "Erlich" :tag "erlich")
+		    (:priority "A" :order 1)
+		    (:priority "B" :order 2)
+		    (:priority "C" :order 2))))
+#+END_SRC
+
 
 #+BEGIN_SRC emacs-lisp
 (defun jmm/org-ql-next-unscheduled-tasks ()
