@@ -2129,6 +2129,7 @@ See `org-clone-subtree-with-time-shift'."
   :after org
   :ensure t
   :bind (("C-c A 1" . jmm/org-ql-basic-agenda-1)
+	 ("C-c A 2" . jmm/org-ql-basic-agenda-2)
 	 ("C-c A e" . jmm/org-ql-erlich-agenda)
 	 ("C-c A n" . jmm/org-ql-next-todos-agenda)
 	 ("C-c A p" . jmm/org-ql-projects)
@@ -2154,6 +2155,30 @@ See `org-clone-subtree-with-time-shift'."
 	  (not (tags "ARCHIVE")))
     :sort '(date priority todo)
     :title "Basic Agenda 1"
+    :super-groups '((:name "Personal"
+			   :tag "personal"
+			   :order 3)
+		    (:name "Home" :tag "home")
+		    (:name "Habit" :tag "habit")
+		    (:name "Net stuff" :tag "@net")
+		    (:todo "WAITING"
+			   :order 6)
+		    (:priority "A" :order 1)
+		    (:priority "B" :order 2)
+		    (:priority "C" :order 2))))
+
+(defun jmm/org-ql-basic-agenda-2 ()
+  "A basic non-work-related agenda for *just* today."
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (and (not (done))
+	       (or (deadline auto)
+		   (scheduled :on today)
+		   (ts-active :on today)))
+	  (not (tags "erlich"))
+	  (not (tags "ARCHIVE")))
+    :sort '(date priority todo)
+    :title "Basic Agenda 2"
     :super-groups '((:name "Personal"
 			   :tag "personal"
 			   :order 3)
