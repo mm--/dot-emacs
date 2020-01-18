@@ -4048,7 +4048,7 @@ Note: This also messes up with multiple windows"
 			(s-replace-regexp "\\.gz\\*" "*"))
 		   t)))
 
-(add-hook 'Man-mode-hook #'jmm/man-rename-nix-man-page)
+;; (add-hook 'Man-mode-hook #'jmm/man-rename-nix-man-page)
 #+END_SRC
 ** Jumping to the definition of a Nix attribute
 
