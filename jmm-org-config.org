@@ -17,7 +17,11 @@ loaded ~org-plus-contrib~
 	 ("M-N" . josh/org-convert-added-or-add-created)
 	 ("M-M" . josh/org-toggle-marked-tag)
 	 ("M-H" . jmm/org-hide-visible-properties-drawer)
-	 ("C-x n p" . jmm/org-narrow-to-parent-project))
+	 ("C-x n p" . jmm/org-narrow-to-parent-project)
+	 ;; I find it really annoying having to skip over SCHEDULED,
+	 ;; PROPERTIES, and LOGBOOK entries just to starting writing
+	 ;; text under a heading.
+	 ("C-c C-j" . jmm/org-goto-text-content))
   :init
   (setq org-indirect-buffer-display 'current-window)
   (setq org-catch-invisible-edits 'smart)
@@ -2419,6 +2423,20 @@ With prefix, display only TODO-keyword items."
 		 (< jumpto (point-max))))
 	t)
       (point))))
+
+(defun jmm/org-goto-text-content ()
+  "Jump to the content of a heading, skipping any planning,
+properties or logbook drawers."
+  (interactive)
+  (goto-char (jmm/org-end-planning-stuff))
+  (when (org-at-heading-p)
+    (org-open-line 1)
+    ;; ;; TODO: There might only be blank lines
+    ;; (delete-blank-lines)
+    ;; (org-open-line 1)
+    ;; Just hit tab
+    (org-cycle))
+  (back-to-indentation))
 
 (defun jmm/org-hide-planning-stuff ()
   "When at a heading, hide planning info"
