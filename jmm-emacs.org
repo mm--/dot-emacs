@@ -3071,7 +3071,7 @@ Make an easy way to find files in open dired buffers
   (setq counsel-find-file-at-point t)
   :config
   ;; Fasd still works well with only two characters
-  (add-to-list 'counsel-more-chars-alist '(jmm/counsel-fasd-directories . 2))
+  (add-to-list 'ivy-more-chars-alist '(jmm/counsel-fasd-directories . 2))
   ;; Optionally sort find-files by date
   (setf (alist-get 'read-file-name-internal ivy-sort-functions-alist)
       (list #'ivy-sort-file-function-default
@@ -3110,7 +3110,7 @@ Make an easy way to find files in open dired buffers
 #+BEGIN_SRC emacs-lisp
 (defun jmm/counsel-fasd-directory-function (str)
   (or
-   (counsel-more-chars)
+   (ivy-more-chars)
    (progn
      (counsel--async-command
       (format "fasd -dlR %s" str))
