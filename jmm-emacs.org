@@ -3596,13 +3596,15 @@ open up the PDF to that page."
    This command, bound to ~C-h C-k~ prompts for a keybinding and jumps
    directly to its definition. You can pop back with ~M-,~.
 #+BEGIN_SRC emacs-lisp
-;; FIXME: This doesn't seem to work in other modes.
-(defun jmm/jump-to-key-definition (&optional key-list)
+(defun jmm/jump-to-key-definition (&optional key-to-check)
   "Kind of like `describe-key', but just jump directly to the
-definition without bringing up a help buffer."
-  (interactive (list (help--read-key-sequence)))
-  (let ((key-to-check (car (-map #'car key-list))))
-    (xref-find-definitions (nth 1 (help--analyze-key key-to-check nil)))))
+definition without bringing up a help buffer.
+
+If you provide KEY-TO-CHECK, pass it through `kbd' first."
+  (interactive (list (car (help-read-key-sequence))))
+  (-if-let (xrefs (xref-backend-definitions 'elisp (nth 1 (help--analyze-key key-to-check nil))))
+      (xref--show-xrefs xrefs nil)
+    (user-error "Can't find definition for: %s" key-to-check)))
 
 (bind-key "C-h C-k" 'jmm/jump-to-key-definition)
 #+END_SRC
