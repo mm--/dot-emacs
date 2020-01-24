@@ -2416,6 +2416,8 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
   (org-ql-sparse-tree
    '(and (todo "TODO")
 	 (not (scheduled))
+	 (not (deadline))
+	 (not (tags "ARCHIVE"))
 	 (not (ancestors (tags-local "project"))))
    :buffer (get-buffer "gtd-test.org")))
 

@@ -150,6 +150,8 @@ Enable all the disabled commands
 (setq history-length 1000)
 (setq history-delete-duplicates t)
 
+(setq async-shell-command-buffer 'new-buffer)
+
 (setq browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "firefox")
 (setq shr-external-browser 'browse-url-generic) ;For eww
@@ -3109,12 +3111,14 @@ Make an easy way to find files in open dired buffers
    Makes it easy to quickly navigate directories.
 #+BEGIN_SRC emacs-lisp
 (defun jmm/counsel-fasd-directory-function (str)
-  (or
-   (ivy-more-chars)
-   (progn
-     (counsel--async-command
-      (format "fasd -dlR %s" str))
-     '("" "working..."))))
+  ;; I normally don't use fasd for remote connections
+  (let ((default-directory "~/"))
+    (or
+     (ivy-more-chars)
+     (progn
+       (counsel--async-command
+	(format "fasd -dlR %s" str))
+       '("" "working...")))))
 
 (defvar jmm/counsel-fasd-directory-history nil
   "Maintains a list of fasd directories selected.")
@@ -4398,7 +4402,7 @@ result into the current buffer."
   "Default espeak WPM")
 
 (defvar jmm/espeak-script
-  "~/code/sh/espeak-emacs.sh"
+  "espeak-mpv"
   "Location of a shell script to run espeak. This script should
   take one argument, the initial words-per-minute (WPM) speed.")
 
