@@ -2389,6 +2389,8 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
 	(ancestors (and (tags-local "project")
 			(not (descendants (and (todo)
 					       (scheduled)))))))
+  ;; TODO: This might need a bug fix
+  :sort #'jmm/org-ql--created<
   :title "Next tasks that should be scheduled"))
 #+END_SRC
 
@@ -2422,6 +2424,24 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
    :buffer (get-buffer "gtd-test.org")))
 
 #+END_SRC
+** Comparators for sorting
+
+   Sometimes I want to see entries sorted from oldest to newest.
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-get-created-ts (elem)
+  "Get the timestamp of headline at point for created property."
+  (or (-some-> (plist-get elem 'headline)
+	       (plist-get :CREATED)
+	       (org-time-string-to-seconds))
+      (if org-sort-agenda-notime-is-late most-positive-fixnum -1)))
+
+(defun jmm/org-ql--created< (a b)
+  "Return non-nil if A's created property is less than B's."
+  (let ((a-ts (jmm/org-get-created-ts a))
+	(b-ts (jmm/org-get-created-ts b)))
+    (< a-ts b-ts)))
+#+END_SRC
+
 
 * Other useful functions
 ** Org agenda current subtree or region
