@@ -2440,6 +2440,46 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
   (let ((a-ts (jmm/org-get-created-ts a))
 	(b-ts (jmm/org-get-created-ts b)))
     (< a-ts b-ts)))
+
+(defun jmm/org-ql--created> (a b)
+  "Return non-nil if A's created property is greater than B's."
+  (let ((a-ts (jmm/org-get-created-ts a))
+	(b-ts (jmm/org-get-created-ts b)))
+    (> a-ts b-ts)))
+#+END_SRC
+** An example of searching through plain TODOs with Ivy
+
+This is just a toy example of jumping to various "TODO" tasks, sorted
+by most-recently-created TODOs first.
+
+It's a bit slow. Maybe this is because it returns a lot of items and
+formatting is done separately each time.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-goto-todo ()
+  "Have ivy prompt for todo items. Jump to it."
+  (interactive)
+  (ivy-read "TODO:"
+	    (->> (let ((org-sort-agenda-notime-is-late nil))
+		   (org-ql-select (org-agenda-files)
+		     '(and (todo)
+			   (not (tags "ARCHIVE"))
+			   (not (habit))
+			   (not (tags-local "project"))
+			   (not (todo "MAYBE"))
+			   (not (ancestors (tags-local "project"))))
+		     :sort #'jmm/org-ql--created>
+		     :action 'element-with-markers))
+		 (-map #'org-ql-view--format-element))
+	    :action (lambda (x)
+		      (let* ((marker (get-text-property 0 'org-hd-marker x))
+			     (buffer (marker-buffer marker))
+			     (pos (marker-position marker)))
+			(xref-push-marker-stack)
+			(pop-to-buffer-same-window buffer)
+			(widen)
+			(goto-char pos)
+			(org-reveal)))))
 #+END_SRC
 
 
