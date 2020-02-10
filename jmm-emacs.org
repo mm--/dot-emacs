@@ -3625,6 +3625,9 @@ If you provide KEY-TO-CHECK, pass it through `kbd' first."
     normal mode. And with ~C-u 3 C-c C-o~ I can open with Chromium's
     incognito mode.
 
+    With ~C-u C-u C-c C-o~ the link is instead copied to the kill ring
+    and clipboard.
+
     This is also useful with other things that open links, like ~elfeed~.
 
  #+BEGIN_SRC emacs-lisp
@@ -3645,12 +3648,56 @@ If you provide KEY-TO-CHECK, pass it through `kbd' first."
 
   Handy for opening in other browsers or incognito/private mode."
    (if current-prefix-arg
-       (let* ((jmm/browse-url-alt (if (listp current-prefix-arg) (car jmm/browse-url-generic-alternate)
-				    (elt jmm/browse-url-generic-alternate (- current-prefix-arg 1))))
-	      (browse-url-generic-program (car jmm/browse-url-alt))
-	      (browse-url-generic-args (cdr jmm/browse-url-alt)))
-	 (apply orig-fun args))
+       (if-let ((jmm/browse-url-alt (pcase current-prefix-arg
+				      ('(4) (car jmm/browse-url-generic-alternate))
+				      ('(16) nil)
+				      (_ (elt jmm/browse-url-generic-alternate (- current-prefix-arg 1))))))
+	   (let* ((browse-url-generic-program (car jmm/browse-url-alt))
+		  (browse-url-generic-args (cdr jmm/browse-url-alt)))
+	     (apply orig-fun args))
+	 (jmm/copy-url-at-point))
      (apply orig-fun args)))
+
+ (defun jmm/get-url-at-point--shr ()
+   "With the point on some shr link, get the url at point"
+   (if (save-excursion
+	 (goto-char (previous-single-char-property-change
+		     (point) 'goto-address nil
+		     (line-beginning-position)))
+	 (looking-at goto-address-url-regexp))
+       (browse-url-url-at-point)))
+
+ (defun jmm/get-url-at-point--org ()
+   "With the point over a link, return the URL."
+   (when (derived-mode-p 'org-mode)
+     (let* ((context
+	     ;; Only consider supported types, even if they are not the
+	     ;; closest one.
+	     (org-element-lineage
+	      (org-element-context)
+	      '(clock comment comment-block footnote-definition
+		      footnote-reference headline inline-src-block inlinetask
+		      keyword link node-property planning src-block timestamp)
+	      t))
+	    (type (org-element-type context)))
+       (when (eq type 'link)
+	 (org-element-property :raw-link context)))))
+
+ (defun jmm/get-url-at-point ()
+   "Try to get some url at point.
+ Should work for org-mode links and shr links, falling back to `browse-url-url-at-point'."
+   (or (jmm/get-url-at-point--org)
+       (jmm/get-url-at-point--shr)
+       (browse-url-url-at-point)))
+
+ (defun jmm/copy-url-at-point ()
+   "Copy url at point to kill ring and clipboard.
+ See `jmm/get-url-at-point'."
+   (interactive)
+   (--when-let (jmm/get-url-at-point)
+     (kill-new it)
+     (gui-set-selection 'PRIMARY it)
+     (message "Copied: %s" it)))
  #+END_SRC
 
  Here's an example of using it on ~shr~ links.
