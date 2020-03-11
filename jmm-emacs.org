@@ -4154,6 +4154,34 @@ Note: This also messes up with multiple windows"
 	(move-to-column (1- column)))	; Not sure if the column is correct
     (error "Can't find definition of %s" attrpath)))
 #+END_SRC
+** Jump to a dired buffer of the Nix store that provides a command
+
+   What package provides ~iwgetid~ in Nix or NixOS? Sometimes I want
+   to find what other binaries are distributed with the same package.
+   ~(jmm/nix-which-dired "iwgetid")~ goes to the Nix store path
+   containing the binary, and shows all other files installed by that
+   package.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/nix-which-dired (commandname)
+  "View a dired buffer that provides COMMANDNAME."
+  (interactive (list (read-shell-command "Command name: ")))
+  (dired
+   (->
+    (shell-command-to-string
+     (format "realpath $(which %s)" (shell-quote-argument commandname)))
+    string-trim-right
+    ;; Seems like a weird way to go up two directories....
+    directory-file-name
+    file-name-directory
+    directory-file-name
+    file-name-directory)
+   "-alhvR")
+  (dired-goto-file
+   (string-trim-right
+    (shell-command-to-string
+     (format "realpath $(which %s)" (shell-quote-argument commandname))))))
+#+END_SRC
 
 
 * Other modes
