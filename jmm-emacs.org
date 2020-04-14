@@ -3660,12 +3660,14 @@ If you provide KEY-TO-CHECK, pass it through `kbd' first."
 
  (defun jmm/get-url-at-point--shr ()
    "With the point on some shr link, get the url at point"
-   (if (save-excursion
-	 (goto-char (previous-single-char-property-change
-		     (point) 'goto-address nil
-		     (line-beginning-position)))
-	 (looking-at goto-address-url-regexp))
-       (browse-url-url-at-point)))
+   ;; 'shr-url shows up in notmuch HTML messages
+   (or (get-char-property (point) 'shr-url)
+       (if (save-excursion
+	     (goto-char (previous-single-char-property-change
+			 (point) 'goto-address nil
+			 (line-beginning-position)))
+	     (looking-at goto-address-url-regexp))
+	   (browse-url-url-at-point))))
 
  (defun jmm/get-url-at-point--org ()
    "With the point over a link, return the URL."
