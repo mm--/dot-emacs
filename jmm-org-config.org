@@ -2170,9 +2170,8 @@ See `org-clone-subtree-with-time-shift'."
     (:name "Quiz" :tag "quiz")
     (:name "Email" :tag "email")
     (:name "Shopping" :tag "SHOPPING")
-    (:name "Other" :anything)
-    (:todo "WAITING"
-	   :order 6))
+    (:todo "WAITING" :order 6)
+    (:name "Other" :anything))
   "Super groups for some basic agendas I use.")
 
 (defun jmm/org-ql-basic-agenda-1 ()
