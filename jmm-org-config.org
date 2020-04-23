@@ -2135,11 +2135,15 @@ See `org-clone-subtree-with-time-shift'."
   :after org
   :ensure t
   :bind (("C-c A 1" . jmm/org-ql-basic-agenda-1)
+	 ("C-c A !" . jmm/org-ql-basic-agenda-1-all)
 	 ("C-c A 2" . jmm/org-ql-basic-agenda-2)
 	 ("C-c A 3" . jmm/org-ql-show-sparse-tree-unscheduled-tasks)
 	 ("C-c A @" . jmm/org-ql-basic-agenda-2-tomorrow)
 	 ("C-c A e" . jmm/org-ql-erlich-agenda)
-	 ("C-c A E" . jmm/org-ql-erlich-agenda-tomorrow)
+	 ("C-c A E 1" . jmm/org-ql-erlich-agenda)
+	 ("C-c A E 2" . jmm/org-ql-erlich-agenda-tomorrow)
+	 ("C-c A E w" . jmm/org-ql-erlich-agenda-week)
+	 ("C-c A E p" . jmm/org-ql-erlich-projects)
 	 ("C-c A n" . jmm/org-ql-next-todos-agenda)
 	 ("C-c A p" . jmm/org-ql-projects)
 	 ("C-c A r" . jmm/org-ql-recent-items)
@@ -2152,6 +2156,25 @@ See `org-clone-subtree-with-time-shift'."
    Here are some ~org-ql~ views that I sometimes use.
 
 #+BEGIN_SRC emacs-lisp
+(defvar jmm/org-ql-basic-super-groups
+  '((:priority "A")
+    (:priority "B")
+    (:priority "C")
+    (:priority "D" :order 7)
+    (:name "Personal"
+	   :tag "personal"
+	   :order 3)
+    (:name "Home" :tag "home")
+    (:name "Habit" :tag "habit")
+    (:name "Net stuff" :tag "@net")
+    (:name "Quiz" :tag "quiz")
+    (:name "Email" :tag "email")
+    (:name "Shopping" :tag "SHOPPING")
+    (:name "Other" :anything)
+    (:todo "WAITING"
+	   :order 6))
+  "Super groups for some basic agendas I use.")
+
 (defun jmm/org-ql-basic-agenda-1 ()
   "A basic non-work-related agenda for the day."
   (interactive)
@@ -2163,18 +2186,21 @@ See `org-clone-subtree-with-time-shift'."
 	  (not (tags "erlich"))
 	  (not (tags "ARCHIVE")))
     :sort '(date priority todo)
-    :title "Basic Agenda 1"
-    :super-groups '((:name "Personal"
-			   :tag "personal"
-			   :order 3)
-		    (:name "Home" :tag "home")
-		    (:name "Habit" :tag "habit")
-		    (:name "Net stuff" :tag "@net")
-		    (:todo "WAITING"
-			   :order 6)
-		    (:priority "A" :order 1)
-		    (:priority "B" :order 2)
-		    (:priority "C" :order 2))))
+    :title "Basic Agenda 1 (Today)"
+    :super-groups jmm/org-ql-basic-super-groups))
+
+(defun jmm/org-ql-basic-agenda-1-all ()
+  "A basic agenda for the day, including work stuff."
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (and (not (done))
+	       (or (deadline auto)
+		   (scheduled :to today)
+		   (ts-active :on today)))
+	  (not (tags "ARCHIVE")))
+    :sort '(date priority todo)
+    :title "Basic Agenda 1 (Today, all)"
+    :super-groups jmm/org-ql-basic-super-groups))
 
 (defun jmm/org-ql-basic-agenda-2 ()
   "A basic non-work-related agenda for *just* today."
@@ -2187,18 +2213,8 @@ See `org-clone-subtree-with-time-shift'."
 	  (not (tags "erlich"))
 	  (not (tags "ARCHIVE")))
     :sort '(date priority todo)
-    :title "Basic Agenda 2"
-    :super-groups '((:name "Personal"
-			   :tag "personal"
-			   :order 3)
-		    (:name "Home" :tag "home")
-		    (:name "Habit" :tag "habit")
-		    (:name "Net stuff" :tag "@net")
-		    (:todo "WAITING"
-			   :order 6)
-		    (:priority "A" :order 1)
-		    (:priority "B" :order 2)
-		    (:priority "C" :order 2))))
+    :title "Basic Agenda 2 (Only today)"
+    :super-groups jmm/org-ql-basic-super-groups))
 
 (defun jmm/org-ql-basic-agenda-2-tomorrow ()
   "A basic non-work-related agenda for *just* tomorrow."
@@ -2206,34 +2222,25 @@ See `org-clone-subtree-with-time-shift'."
   (org-ql-search (org-agenda-files)
     '(and (and (not (done))
 	       (or (deadline auto)
-		   (scheduled :on tomorrow)
-		   (ts-active :on tomorrow)))
+		   (scheduled :on +1)
+		   (ts-active :on +1)))
 	  (not (tags "erlich"))
 	  (not (tags "ARCHIVE")))
     :sort '(date priority todo)
     :title "Basic Agenda 2 (tomorrow)"
-    :super-groups '((:name "Personal"
-			   :tag "personal"
-			   :order 3)
-		    (:name "Home" :tag "home")
-		    (:name "Habit" :tag "habit")
-		    (:name "Net stuff" :tag "@net")
-		    (:todo "WAITING"
-			   :order 6)
-		    (:priority "A" :order 1)
-		    (:priority "B" :order 2)
-		    (:priority "C" :order 2))))
+    :super-groups jmm/org-ql-basic-super-groups))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
 (defvar jmm/org-super-groups-erlich
   '((:priority "A" :order 1)
-		    (:priority "B" :order 2)
-		    (:priority "C" :order 3)
-		    (:name "WAITING tasks" :todo "WAITING")
-		    (:name "Risk" :tag "risk")
-		    (:name "Infrastructure" :tag "infrastructure")
-		    (:name "Emails" :tag "email"))
+    (:priority "B" :order 2)
+    (:priority "C" :order 3)
+    (:name "WAITING tasks" :todo "WAITING")
+    (:name "Risk" :tag "risk")
+    (:name "Infrastructure" :tag "infrastructure")
+    (:name "Emails" :tag "email")
+    (:name "Habits" :tag "habit"))
   "A super group layout for some Erlich agendas")
 
 (defun jmm/org-ql-erlich-agenda ()
@@ -2270,14 +2277,32 @@ See `org-clone-subtree-with-time-shift'."
   (interactive)
   (org-ql-search (org-agenda-files)
     '(and (and (not (done))
-	       ;; Weird, "on tomorrow" isn't working here, but it
-	       ;; works for some other agendas?
-	       (scheduled :on tomorrow))
+	       (scheduled :on +1))
 	  (tags "erlich")
 	  (not (tags "ARCHIVE")))
     :sort '(date priority todo)
     :title "Erlich Agenda View (tomorrow)"
     :super-groups jmm/org-super-groups-erlich))
+
+(defun jmm/org-ql-erlich-projects ()
+  "Make a view of outstanding projects for the Erlich lab"
+  (interactive)
+  (jmm/org-ql-update-projects)
+  (org-ql-search (org-agenda-files)
+    '(and (tags "erlich")
+	  (not (tags "ARCHIVE"))
+	  (and (not (done))
+	       (tags-local "project")))
+    :sort '(date priority todo)
+    :title "Erlich Project View"
+    :super-groups '((:priority "A")
+		    (:priority "B")
+		    (:priority "D" :order 6)
+		    (:name "HOLD" :tag "HOLD" :order 7)
+		    (:name "Gitlab" :tag "gitlab")
+		    (:name "Infrastructure" :tag "infrastructure" :order 3)
+		    (:name "Emails" :tag "email")
+		    (:name "Other" :anything))))
 #+END_SRC
 
 
@@ -2332,10 +2357,8 @@ Mark stuck projects with a "stuck" tag. Unmark unstuck
 projects. Create a project view.
 
 #+BEGIN_SRC emacs-lisp
-(defun jmm/org-ql-projects ()
-  "Find stuck projects in an agenda view.
-Taken from the org-ql examples.org, which was shared by reddit user \"emptymatrix\". "
-  (interactive)
+(defun jmm/org-ql-update-projects ()
+  "Update stuck and unscheduled project tags."
   (org-ql-select (org-agenda-files)
     '(and (tags-local "project")
 	  (not (tags-local "stuck"))
@@ -2363,7 +2386,13 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
 	  (or
 	   (done)
 	   (descendants (and (todo) (scheduled)))))
-    :action '(org-toggle-tag "unsched" 'off))
+    :action '(org-toggle-tag "unsched" 'off)))
+
+(defun jmm/org-ql-projects ()
+  "Find stuck projects in an agenda view.
+Taken from the org-ql examples.org, which was shared by reddit user \"emptymatrix\". "
+  (interactive)
+  (jmm/org-ql-update-projects)
   (org-ql-search (org-agenda-files)
     '(and (tags-local "project")
 	  (not (done)))
