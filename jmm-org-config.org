@@ -1117,6 +1117,70 @@ Return t if it's a valid target, otherwise return nil."
 (setq org-refile-target-verify-function #'jmm/org-is-valid-refile-target)
 (setq org-refile-use-cache t)
 #+END_SRC
+** Refiling to specific IDs
+
+   Sometimes headlines move around between files. Having a UUID in the
+   ID property of a headline allows you to keep track of it, even as
+   the headline title changes and moves.
+
+   These functions allow you to refile to a target specified by its ID.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-refile-to-buffer-pos (buffer pos &optional arg)
+  "Refile to a position given by a buffer and a point."
+  (let* ((headline (with-current-buffer buffer
+		     (org-with-wide-buffer
+		      (goto-char pos)
+		      (josh/plist-get (org-element-at-point) 'headline :title))))
+	 (filepath (buffer-file-name buffer))
+	 ;; TODO: Link or figure out the definition of rfloc
+	 (rfloc (list headline filepath nil pos)))
+    (if (and (eq major-mode 'org-agenda-mode) (not (and arg (listp arg)))) ;Don't use org-agenda-refile if we're just jumping
+	(org-agenda-refile nil rfloc)
+      (org-refile arg nil rfloc))))
+
+(defun jmm/org-capture-refile-to-buffer-pos (buffer pos &optional arg)
+  "Copied from `org-capture-refile' since it doesn't allow passing arguments. This does.
+
+See also `jmm/org-refile-to-buffer-pos'"
+  (unless (eq (org-capture-get :type 'local) 'entry)
+    (error
+     "Refiling from a capture buffer makes only sense for `entry'-type templates"))
+  (let ((mypos (point))
+	(base (buffer-base-buffer (current-buffer)))
+	(org-capture-is-refiling t)
+	(kill-buffer (org-capture-get :kill-buffer 'local)))
+    (org-capture-put :kill-buffer nil)
+    (org-capture-finalize)
+    (save-window-excursion
+      (with-current-buffer (or base (current-buffer))
+	(org-with-wide-buffer
+	 (goto-char mypos)
+	 (jmm/org-refile-to-buffer-pos buffer pos arg))))
+    (when kill-buffer (kill-buffer base))))
+
+
+(defun jmm/org-refile-to-id (id &optional arg)
+  "Refile to an org-mode headline with a specific ID.
+
+With a `C-u` ARG, just jump to the headline."
+  (interactive "P")
+  (-let ((is-capturing (and (boundp 'org-capture-mode) org-capture-mode))
+	 (is-jumping (and arg (listp arg)))
+	 ((buffer . pos) (save-window-excursion
+			   (save-excursion
+			     (org-id-goto id)
+			     (cons (current-buffer) (point))))))
+    (cond
+     (is-jumping
+      (jmm/org-refile-to-buffer-pos buffer pos arg))
+     (is-capturing
+      (jmm/org-capture-refile-to-buffer-pos buffer pos arg))
+     (t
+      (jmm/org-refile-to-buffer-pos buffer pos arg)))))
+
+#+END_SRC
+
 
 * Better task states
    From http://doc.norang.ca/org-mode.html
