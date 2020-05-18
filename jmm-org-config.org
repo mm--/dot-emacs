@@ -2198,17 +2198,18 @@ See `org-clone-subtree-with-time-shift'."
 (use-package org-ql
   :after org
   :ensure t
-  :bind (("C-c A 1" . jmm/org-ql-basic-agenda-1)
-	 ("C-c A !" . jmm/org-ql-basic-agenda-1-all)
+  :bind (("C-c A !" . jmm/org-ql-basic-agenda-1)
+	 ("C-c A 1" . jmm/org-ql-basic-agenda-1-all)
 	 ("C-c A 2" . jmm/org-ql-basic-agenda-2)
 	 ("C-c A 3" . jmm/org-ql-show-sparse-tree-unscheduled-tasks)
-	 ("C-c A @" . jmm/org-ql-basic-agenda-2-tomorrow)
+	 ("C-c A @" . jmm/org-ql-agenda-tomorrow)
 	 ("C-c A e" . jmm/org-ql-erlich-agenda)
 	 ("C-c A E 1" . jmm/org-ql-erlich-agenda)
 	 ("C-c A E 2" . jmm/org-ql-erlich-agenda-tomorrow)
 	 ("C-c A E w" . jmm/org-ql-erlich-agenda-week)
 	 ("C-c A E p" . jmm/org-ql-erlich-projects)
 	 ("C-c A n" . jmm/org-ql-next-todos-agenda)
+	 ("C-c A o" . jmm/org-ql-old-completed-tasks-agenda)
 	 ("C-c A p" . jmm/org-ql-projects)
 	 ("C-c A r" . jmm/org-ql-recent-items)
 	 ("C-c A u" . jmm/org-ql-next-unscheduled-tasks)
@@ -2225,14 +2226,13 @@ See `org-clone-subtree-with-time-shift'."
     (:priority "B")
     (:priority "C")
     (:priority "D" :order 7)
-    (:name "Personal"
-	   :tag "personal"
-	   :order 3)
+    (:name "Personal" :tag "personal")
     (:name "Home" :tag "home")
     (:name "Habit" :tag "habit")
     (:name "Net stuff" :tag "@net")
     (:name "Quiz" :tag "quiz")
     (:name "Email" :tag "email")
+    (:name "Erlich" :tag "erlich")
     (:name "Shopping" :tag "SHOPPING")
     (:todo "WAITING" :order 6)
     (:name "Other" :anything))
@@ -2291,6 +2291,19 @@ See `org-clone-subtree-with-time-shift'."
 	  (not (tags "ARCHIVE")))
     :sort '(date priority todo)
     :title "Basic Agenda 2 (tomorrow)"
+    :super-groups jmm/org-ql-basic-super-groups))
+
+(defun jmm/org-ql-agenda-tomorrow ()
+  "An agenda for *just* tomorrow."
+  (interactive)
+  (org-ql-search (org-agenda-files)
+    '(and (not (done))
+	 (or (deadline auto)
+	     (scheduled :on +1)
+	     (ts-active :on +1))
+	 (not (tags "ARCHIVE")))
+    :sort '(date priority todo)
+    :title "Tomorrow Agenda"
     :super-groups jmm/org-ql-basic-super-groups))
 #+END_SRC
 
@@ -2392,6 +2405,20 @@ See `org-clone-subtree-with-time-shift'."
     :super-groups '((:auto-ts t))))
 #+END_SRC
 
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-ql-old-completed-tasks-agenda ()
+  (interactive)
+  (org-ql-search (org-agenda-files)
+  '(and (done)
+	(level 2)
+	(category "Tasks")
+	(not (tags "reference"))
+	(closed :to -14))
+    :sort '(date)
+    :title "Old completed tasks"))
+#+END_SRC
+
+
 ** Project-related views
 
    Some of these views require the ~ancestors~ and ~parent~
@@ -2461,13 +2488,14 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
 	  (not (done)))
     :title "Projects"
     :sort '(date priority)
-    :super-groups '((:name "Held projects" :tag "HOLD" :order 6)
-		    (:name "Unscheduled projects" :tag "unsched" :order 3)
-		    (:name "Stuck projects" :tag "stuck" :order 4)
-		    (:name "Erlich" :tag "erlich")
+    :super-groups '((:name "Held projects" :tag "HOLD" :order 8)
 		    (:priority "A" :order 1)
 		    (:priority "B" :order 2)
-		    (:priority "C" :order 2))))
+		    (:priority "C" :order 3)
+		    (:name "Unscheduled projects" :tag "unsched" :order 6)
+		    (:name "Stuck projects" :tag "stuck" :order 7)
+		    (:name "Erlich" :tag "erlich" :order 5)
+		    (:name "Other" :order 4 :anything))))
 #+END_SRC
 
 

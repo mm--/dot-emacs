@@ -154,6 +154,7 @@
 	describe-key
 	dired-toggle-read-only
 	dumb-jump-back
+	edebug-step-mode
 	end-of-buffer
 	ess-eval-region-or-function-or-paragraph-and-step
 	eval-expression

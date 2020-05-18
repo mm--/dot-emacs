@@ -1212,6 +1212,7 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
 		   (delete-dups (ring-elements eshell-history-ring)))))
 
 ;; TODO: Move this somewhere else
+;; TODO: This seems to be binding globally
 (with-eval-after-load 'esh-mode
   (progn
     (bind-key "M-L" #'jmm/eshell-ls-recent eshell-mode-map)
