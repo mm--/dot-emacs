@@ -2681,6 +2681,19 @@ Also decode some explicitly tracking urls
 	url)))
 #+END_SRC
 
+A query-parameter extracting function to be used for a more generic implementation later.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/url-get-parameter (url parameter)
+  "Get a query PARAMETER for a URL.
+Useful for extracting redirects."
+  (--> url
+       (url-generic-parse-url it)
+       (cdr (url-path-and-query it))
+       (url-parse-query-string it)
+       (car (alist-get parameter it nil nil #'equal))))
+#+END_SRC
+
 
 #+BEGIN_SRC emacs-lisp
 (defun jmm/notmuch-wash-decodable-links (msg depth)
