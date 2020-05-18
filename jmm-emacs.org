@@ -3093,7 +3093,7 @@ Make an easy way to find files in open dired buffers
      ("J" jmm/mpv-play-file "mpv")
      ("t" jmm/counsel-find-file-toggle-root "open toggling root")
      ("r" jmm/counsel-find-file-as-root "open as root")
-     ("d" jmm/counsel-dired-file-dired "dired")))
+     ("d" jmm/counsel-action-jmm-dired-jump "dired")))
   (ivy-set-actions
    'counsel-find-file
    '(("j" find-file-other-window "other window")
