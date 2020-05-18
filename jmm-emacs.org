@@ -2450,7 +2450,9 @@ If it isn't being accessed with sudo, return the same path that is."
 	   ("S f" . jmm/notmuch-search-all-from-author)
 	   ("L")
 	   ("L F" . jmm/notmuch-search-limit-from-author)
-	   ("L f" . jmm/notmuch-search-limit-from-author))
+	   ("L f" . jmm/notmuch-search-limit-from-author)
+	   ("L w" . jmm/notmuch-search-limit-this-week)
+	   ("L m" . jmm/notmuch-search-limit-this-month))
     :config
     (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links))
 (use-package org-notmuch
@@ -2618,6 +2620,24 @@ The SEARCH-TERMS should be a list"
   (-when-let (authorq (jmm/notmuch-search-get-author-query))
     (notmuch-search authorq)))
 #+END_SRC
+** Other search limiting functions
+
+   I get a lot of scientific journal articles emailed to me. I also
+   read a lot of list emails. Sometimes I'm really behind on reading
+   them, and only want to look at emails for this week or month.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/notmuch-search-limit-this-week ()
+  "Limit a search to the emails from this week."
+  (interactive)
+  (notmuch-search-filter "date:\"this week\""))
+
+(defun jmm/notmuch-search-limit-this-month ()
+  "Limit a search to the emails from this month."
+  (interactive)
+  (notmuch-search-filter "date:\"this month\""))
+#+END_SRC
+
 ** Decode Proofpoint urls
 
 Many email providers use Proofpoint to provide a kind of email defense
