@@ -1778,8 +1778,8 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 ** Playing files with mpv
 #+BEGIN_SRC emacs-lisp
 (defvar jmm/mpv-program-alternates
-  '(("mpvappendscrobble")
-    ("mpv" "--audio-pitch-correction"))
+  `(("mpvappendscrobble")
+    ("mpv" "--audio-pitch-correction" ,(substitute-in-file-name "--input-ipc-server=$XDG_RUNTIME_DIR/mpvsocket")))
   "Different media players and arguments to pass to them")
 
 (defun josh/open-with-mpv (arg)
