@@ -209,6 +209,20 @@ Make scripts executable
       (mapc 'jmm/org-maybe-tangle-el (-filter #'f-file? (directory-files personal t "^[a-zA-Z0-9].*.*org$")))
       (mapc 'load (directory-files personal t "^[a-zA-Z0-9].*.*el$")))))
 #+END_SRC
+** Set the PATH variable on a Mac
+
+   I don't use a Mac. But when I use this config on Macs, sometimes
+   it's necessary to correctly set the ~PATH~ environment variable,
+   for things like CIDER.
+
+#+BEGIN_SRC emacs-lisp
+(use-package exec-path-from-shell
+  :ensure t
+  :if (memq window-system '(mac ns))
+  :config
+  (exec-path-from-shell-initialize))
+#+END_SRC
+
 
 * Theme/Appearance
 #+begin_src emacs-lisp
