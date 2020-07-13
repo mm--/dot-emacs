@@ -2770,6 +2770,29 @@ STATE should be one of the symbols listed in the docstring of
 
 (add-hook 'ediff-prepare-buffer-hook #'jmm/ediff-expand-all)
 #+END_SRC
+** Rescaling ~org-latex-preview~ fragments
+
+~org-latex-preview~ fragments unfortunately don't scale with
+~text-scale-mode~. Probably the obvious reason for this is that
+~text-scale-mode-amount~ doesn't give a percent size increase (e.g. a
+~text-scale-mode-amount~ from 0 to 1 isn't doubling the size).
+
+But, sometimes the previews are a bit small for me, so this changes
+the LaTeX scale depending on the font size. In the future I might add
+this to ~text-scale-mode-hook~ as describe [[https://emacs.stackexchange.com/a/3643][here]].
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/org-latex-preview-fragment-size (orig-fun &rest args)
+  "Advice to change the scale of `org-latex-preview' fragments based on `text-scale-mode' size."
+  (plist-put org-format-latex-options :scale
+	     (if text-scale-mode
+		 (1+ text-scale-mode-amount)
+	       1))
+  (apply orig-fun args))
+
+(advice-add 'org-latex-preview  :around #'jmm/org-latex-preview-fragment-size)
+#+END_SRC
+
 
 * Links
 ** PDFView links
