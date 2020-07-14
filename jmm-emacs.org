@@ -539,9 +539,9 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 #+end_src
 
 #+begin_src emacs-lisp
-(add-hook `latex-mode-hook (lambda () (defun tex-view ()
-  (interactive)
-  (tex-send-command "evince" (tex-append tex-print-file ".pdf") t))))
+;; (add-hook `latex-mode-hook (lambda () (defun tex-view ()
+;;   (interactive)
+;;   (tex-send-command "evince" (tex-append tex-print-file ".pdf") t))))
 #+end_src
 
 Make it easier to insert Greek symbols
@@ -571,58 +571,116 @@ Make it easier to insert Greek symbols
 
 ** AUCTeX and skeletons
 #+begin_src emacs-lisp
-  ;; AUCTeX
-  ;; (setq load-path (append load-path "~/.emacs.d/elpa/auctex-11.87.2/"))
-  ;; (load "auctex.el" nil t t)
-  ;; (load "preview-latex.el" nil t t)
-  (setq TeX-auto-save t)
-  (setq TeX-parse-self t)
-  (setq-default TeX-master nil)
-  (add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
+;; AUCTeX
+;; (setq load-path (append load-path "~/.emacs.d/elpa/auctex-11.87.2/"))
+;; (load "auctex.el" nil t t)
+;; (load "preview-latex.el" nil t t)
+(setq TeX-auto-save t)
+(setq TeX-parse-self t)
+(setq-default TeX-master nil)
+(add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
 
-  (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
-  (setq reftex-plug-into-AUCTeX t)
+(add-hook 'LaTeX-mode-hook 'turn-on-reftex)
+(setq reftex-plug-into-AUCTeX t)
 
-  (setq skeleton-end-newline nil)
-  (add-hook 'LaTeX-mode-hook
-   (lambda ()
-     (define-key LaTeX-mode-map (kbd "` v (") 'latex-skeleton-left-paren)
-     (define-key LaTeX-mode-map (kbd "` v [") 'latex-skeleton-left-bracket)
-     (define-key LaTeX-mode-map (kbd "` v {") 'latex-skeleton-left-brace)
-     (define-key LaTeX-mode-map (kbd "` v t") 'latex-math-text)
-     (define-key LaTeX-mode-map (kbd "` v $") 'quoted-parens)
-     (define-key LaTeX-mode-map (kbd "` v %") 'quoted-brackets)
-     ))
+;; View with PDF Tools by default
+(setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
 
-  (define-skeleton latex-skeleton-left-paren
-    "Insert \\left( ... \\right)."
-    nil "\\left(" _ "\\right)")
+;; Easily go to specific location from LaTeX -> pdf-tools
+(setq TeX-source-correlate-mode t)
+#+end_src
 
-  (define-skeleton latex-skeleton-left-bracket
-    "Insert \\left[ ... \\right]."
-    nil "\\left[" _ "\\right]")
+** Skeletons
 
-  (define-skeleton latex-skeleton-left-brace
-    "Insert \\left\\{ ... \\right\\}."
-    nil "\\left\\{" _ "\\right\\}")
+Makes entering some symbols easier.
+#+begin_src emacs-lisp
+(setq skeleton-end-newline nil)
+(add-hook 'LaTeX-mode-hook
+ (lambda ()
+   (define-key LaTeX-mode-map (kbd "` v (") 'latex-skeleton-left-paren)
+   (define-key LaTeX-mode-map (kbd "` v [") 'latex-skeleton-left-bracket)
+   (define-key LaTeX-mode-map (kbd "` v {") 'latex-skeleton-left-brace)
+   (define-key LaTeX-mode-map (kbd "` v t") 'latex-math-text)
+   (define-key LaTeX-mode-map (kbd "` v $") 'quoted-parens)
+   (define-key LaTeX-mode-map (kbd "` v %") 'quoted-brackets)
+   (define-key LaTeX-mode-map (kbd "` v b") 'jmm/LaTeX-mathbb)
+   ))
 
-  (define-skeleton latex-math-text
-    "Insert \\text{ ... }."
-    nil "\\text{" _ "}")
+(define-skeleton latex-skeleton-left-paren
+  "Insert \\left( ... \\right)."
+  nil "\\left(" _ "\\right)")
 
-  (define-skeleton quoted-parens
-    "Insert \\( ... \\)."
-    nil "\\(" _ "\\)")
+(define-skeleton latex-skeleton-left-bracket
+  "Insert \\left[ ... \\right]."
+  nil "\\left[" _ "\\right]")
 
-  (define-skeleton quoted-brackets
-    "Insert \\[ ... \\]."
-    nil "\\[" _ "\\]")
+(define-skeleton latex-skeleton-left-brace
+  "Insert \\left\\{ ... \\right\\}."
+  nil "\\left\\{" _ "\\right\\}")
+
+(define-skeleton latex-math-text
+  "Insert \\text{ ... }."
+  nil "\\text{" _ "}")
+
+(define-skeleton quoted-parens
+  "Insert \\( ... \\)."
+  nil "\\(" _ "\\)")
+
+(define-skeleton quoted-brackets
+  "Insert \\[ ... \\]."
+  nil "\\[" _ "\\]")
+
+(defun jmm/LaTeX-mathbb (char dollar)
+  "Like `LaTeX-math-cal' but for \\mathbb."
+  (interactive "*c\nP")
+  (if dollar (insert (or (car TeX-electric-math) "$")))
+  (insert "\\mathbb{" (char-to-string char) "}")
+  (if dollar (insert (or (cdr TeX-electric-math) "$"))))
 #+end_src
 ** AUCTeX handling errors
-Sometimes AUCTex can't parse errors correctly, prompting you to create a directory
+Sometimes AUCTex can't parse errors correctly, prompting you to create a directory.
+
+I'm also adding ~--synctex=1~ so I can go to the LaTeX source by control-clicking in pdf-tools.
 #+begin_src emacs-lisp
-(setq LaTeX-command-style '(("" "%(PDF)%(latex) -file-line-error %S%(PDFout)")))
+(setq LaTeX-command-style '(("" "%(PDF)%(latex) --synctex=1 -file-line-error %S%(PDFout)")))
 #+end_src
+** Make sure the pdf-tools buffer is up to date
+When using ~TeX-view~, I'd like ~pdf-tools~ to turn on ~auto-revert-mode~ so I can see the latest PDF.
+
+Note: Reverting the buffer might not happen in time, so syncing might point to an incorrect area.
+
+#+BEGIN_SRC emacs-lisp
+(defun jmm/tex-view-pdf-tools-auto-revert (&rest args)
+  "Turn on `auto-revert-mode' in pdf-tools after `TeX-view'."
+  (let ((pdf (concat file "." (TeX-output-extension))))
+    (with-current-buffer (or (find-buffer-visiting pdf)
+			     (find-file-noselect pdf))
+      (auto-revert-mode 1))))
+
+(advice-add 'TeX-pdf-tools-sync-view :before #'jmm/tex-view-pdf-tools-auto-revert)
+;; (advice-remove 'TeX-pdf-tools-sync-view #'jmm/tex-view-pdf-tools-auto-revert)
+
+#+END_SRC
+** AUCTeX preview-latex scaling
+
+For some reason the default scaling isn't working for me. This tries to calculate scale based on ~text-scale-mode~.
+
+#+BEGIN_SRC emacs-lisp
+(setq preview-scale-function #'jmm/get-font-scale)
+
+(defun jmm/get-font-scale ()
+  "Try to get the `text-scale-mode' relative scale amount."
+  (or (plist-get (car (alist-get 'default face-remapping-alist)) :height) 1))
+#+END_SRC
+
+Also, the preview font color initially wasn't working for me (since I use a light on dark color theme). It turns
+out my ghostscript version was too old. If this happens, use the
+following line.
+
+#+BEGIN_SRC emacs-lisp
+;; (setq preview-pdf-color-adjust-method 'compatible)
+#+END_SRC
+
 * R/ESS
   This seems to be necessary when installing ESS from MELPA.
 #+begin_src emacs-lisp
