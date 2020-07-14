@@ -23,3 +23,10 @@ url/*
 org-recent-headings
 /request/
 /emojis/
+session.*
+transient/history.el
+/nix-buffer
+/notes
+.#recentf
+%backup%~
+company-statistics-cache.el

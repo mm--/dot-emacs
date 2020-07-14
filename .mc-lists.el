@@ -12,7 +12,9 @@
 	ace-jump-mode
 	ace-jump-move
 	c-electric-delete-forward
+	c-electric-paren
 	c-electric-slash
+	c-electric-star
 	cljr-slash
 	clojure-align
 	comment-dwim
