@@ -2528,7 +2528,7 @@ If it isn't being accessed with sudo, return the same path that is."
 	   ("L m" . jmm/notmuch-search-limit-this-month))
     :config
     (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links))
-(use-package org-notmuch
+(use-package ol-notmuch
   :after (notmuch))
 #+END_SRC
 
