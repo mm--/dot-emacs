@@ -249,6 +249,15 @@ Set a reasonable font for Chinese, if we have it.
   (set-fontset-font t 'chinese-gbk (font-spec :family "Noto Sans Mono CJK SC")))
 #+END_SRC
 
+For whatever reason, when trying to view the HELLO file in Emacs 28 in NixOS, Emacs hangs.
+Using `csysdig`, I found a lot of accesses to an "Adobe Blank" font
+file. A bug report [here](https://debbugs.gnu.org/db/40/40733.html)
+shows how to work around this.
+
+#+BEGIN_SRC emacs-lisp
+(setq face-ignored-fonts '("Adobe Blank"))
+#+END_SRC
+
 ** Telephone Line
    My default modeline was making it hard to see my [[https://github.com/wasamasa/eyebrowse][eyebrowse]]
    workspace when I was clocked in to something. [[https://github.com/dbordak/telephone-line][Telephone line]] looks
