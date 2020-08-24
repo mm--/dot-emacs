@@ -5007,3 +5007,18 @@ obscuring other windows.
   (global-fasd-mode 1)
   :bind (("C-c f" . fasd-find-file)))
 #+END_SRC
+** symbol-overlay
+
+   It's sometimes nice to have the symbol at point automatically
+   highlighted, to see where it's used.
+
+#+BEGIN_SRC emacs-lisp
+(use-package symbol-overlay
+  :if (not noninteractive)
+  :diminish symbol-overlay-mode
+  :ensure t
+  :hook (prog-mode . symbol-overlay-mode)
+  :bind (:map prog-mode-map
+	      ("M-k" . symbol-overlay-put)))
+#+END_SRC
+
