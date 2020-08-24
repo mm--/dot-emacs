@@ -3157,7 +3157,7 @@ Make an easy way to find files in open dired buffers
   :if (not noninteractive)
   :ensure t
   :bind (("M-i" . swiper)
-	 ("M-I" . swiper-multi)))
+	 ("M-I" . swiper-all)))
 
 (use-package counsel
   :if (not noninteractive)
