@@ -30,3 +30,4 @@ transient/history.el
 .#recentf
 %backup%~
 company-statistics-cache.el
+/.lsp-session-v1
