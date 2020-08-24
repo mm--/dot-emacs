@@ -587,14 +587,14 @@ Make it easier to insert Greek symbols
 ;; (load "preview-latex.el" nil t t)
 (setq TeX-auto-save t)
 (setq TeX-parse-self t)
-(setq-default TeX-master nil)
+;; (setq-default TeX-master nil)		  ; This prompts for a master file each time.
 (add-hook 'LaTeX-mode-hook 'TeX-PDF-mode) ;use pdflatex by default
 
 (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
 (setq reftex-plug-into-AUCTeX t)
 
 ;; View with PDF Tools by default
-(setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
+;;(setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
 
 ;; Easily go to specific location from LaTeX -> pdf-tools
 (setq TeX-source-correlate-mode t)
