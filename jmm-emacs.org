@@ -470,6 +470,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 (add-hook `latex-mode-hook `flyspell-mode)
 (add-hook `tex-mode-hook `flyspell-mode)
 (add-hook `bibtex-mode-hook `flyspell-mode)
+(add-hook 'prog-mode 'flyspell-prog-mode)
 #+end_src
 
 ** Accepting previous misspelled words
