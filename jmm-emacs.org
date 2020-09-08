@@ -593,11 +593,16 @@ Make it easier to insert Greek symbols
 (add-hook 'LaTeX-mode-hook 'turn-on-reftex)
 (setq reftex-plug-into-AUCTeX t)
 
-;; View with PDF Tools by default
-;;(setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
+(defun jmm/latex-configuration ()
+  ;; View with PDF Tools by default
+  (setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
+  ;; Automatically revert PDF buffer. Works better than my old
+  ;; solution of turning on auto-revert-mode.
+  (add-hook 'TeX-after-compilation-finished-functions
+            #'TeX-revert-document-buffer)
+  (setq TeX-source-correlate-mode t))
 
-;; Easily go to specific location from LaTeX -> pdf-tools
-(setq TeX-source-correlate-mode t)
+(add-hook 'LaTeX-mode-hook 'jmm/latex-configuration)
 #+end_src
 
 ** Skeletons
@@ -654,23 +659,6 @@ I'm also adding ~--synctex=1~ so I can go to the LaTeX source by control-clickin
 #+begin_src emacs-lisp
 (setq LaTeX-command-style '(("" "%(PDF)%(latex) --synctex=1 -file-line-error %S%(PDFout)")))
 #+end_src
-** Make sure the pdf-tools buffer is up to date
-When using ~TeX-view~, I'd like ~pdf-tools~ to turn on ~auto-revert-mode~ so I can see the latest PDF.
-
-Note: Reverting the buffer might not happen in time, so syncing might point to an incorrect area.
-
-#+BEGIN_SRC emacs-lisp
-(defun jmm/tex-view-pdf-tools-auto-revert (&rest args)
-  "Turn on `auto-revert-mode' in pdf-tools after `TeX-view'."
-  (let ((pdf (concat file "." (TeX-output-extension))))
-    (with-current-buffer (or (find-buffer-visiting pdf)
-			     (find-file-noselect pdf))
-      (auto-revert-mode 1))))
-
-(advice-add 'TeX-pdf-tools-sync-view :before #'jmm/tex-view-pdf-tools-auto-revert)
-;; (advice-remove 'TeX-pdf-tools-sync-view #'jmm/tex-view-pdf-tools-auto-revert)
-
-#+END_SRC
 ** AUCTeX preview-latex scaling
 
 For some reason the default scaling isn't working for me. This tries to calculate scale based on ~text-scale-mode~.
