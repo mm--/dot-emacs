@@ -2525,7 +2525,19 @@ If it isn't being accessed with sudo, return the same path that is."
 	   ("L w" . jmm/notmuch-search-limit-this-week)
 	   ("L m" . jmm/notmuch-search-limit-this-month))
     :config
-    (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links))
+    (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links)
+    ;; Override `notmuch-search-filter-by-tag' so it only suggests
+    ;; tags that occur in the current search.
+    (defun notmuch-search-filter-by-tag (tag &optional arg)
+      "Filter the current search results based on a single tag.
+
+Runs a new search matching only messages that match both the
+current search results AND that are tagged with the given tag."
+      (interactive
+       (list (notmuch-select-tag-with-completion "Filter by tag: " notmuch-search-query-string)
+	     current-prefix-arg))
+      (notmuch-search (concat notmuch-search-query-string " and" (when arg " not") " tag:" tag)
+		      notmuch-search-oldest-first)))
 (use-package ol-notmuch
   :after (notmuch))
 #+END_SRC
