@@ -151,11 +151,11 @@ set ~.org.gpg_archive~ files to be encrypted by ~epa~.
    Need to make this more portable across different systems. I think it defaults to org-directory.
 #+begin_src emacs-lisp
 (setq org-capture-templates
-      '(("t" "Todo" entry (file+headline "gtd-test.org" "Tasks")
+      '(("t" "Todo" entry (id "28d41dfc-bff4-428b-939d-63cb4fcea958")
          "* TODO %i%?\n  Added: %U")
         ("r" "Refile" entry (file "refile.org")
          "* %i%?\n  Added: %U")
-        ("a" "Today" entry (file+headline "gtd-test.org" "Tasks")
+        ("a" "Today" entry (id "28d41dfc-bff4-428b-939d-63cb4fcea958")
          "* TODO %?\n  SCHEDULED: <%<%Y-%m-%d %a>>\n  Added: %U")
         ("d" "Date" entry (file+datetree+prompt "~/org/journal.org")
          "* %?\n%t\n")
@@ -164,11 +164,11 @@ set ~.org.gpg_archive~ files to be encrypted by ~epa~.
 	("E" "Email capture")
 	("EE" "Event (from email)" entry (file+headline "gtd-test.org" "Calendar")
 	 "* %:subject%?\n%^T\n%i\n%a%^{LOCATION}p")
-	("Et" "Todo (from email)" entry (file+headline "gtd-test.org" "Tasks")
+	("Et" "Todo (from email)" entry (id "28d41dfc-bff4-428b-939d-63cb4fcea958")
 	 "* TODO %:subject%?  :email:\n%i\n%a")
-	("Ea" "Todo today (from email)" entry (file+headline "gtd-test.org" "Tasks")
+	("Ea" "Todo today (from email)" entry (id "28d41dfc-bff4-428b-939d-63cb4fcea958")
 	 "* TODO %:subject%?   :email:\n  SCHEDULED: <%<%Y-%m-%d %a>>\n%a\n%i")
-	("Er" "Todo reply to email" entry (file+headline "gtd-test.org" "Tasks")
+	("Er" "Todo reply to email" entry (id "28d41dfc-bff4-428b-939d-63cb4fcea958")
 	 "* TODO Reply to %(car (s-split \" \" \"%:from\")): \"%:subject\"%?   :email:\n%a\n%i")
         ("l" "Lookup stuff")
         ("ll" "Lookup" entry (file+headline "lookup.org" "Lookup")
@@ -1189,7 +1189,7 @@ With a `C-u` ARG, just jump to the headline."
 #+begin_src emacs-lisp
 (setq org-todo-keywords
        (quote ((sequence "TODO(t)" "PROJECT(p)" "NEXT(n!)" "|" "DONE(d)")
-               (sequence "WAITING(w!)" "HOLD(h!)" "MAYBE(m!)" "|" "CANCELLED(c@/!)" "DEFERRED(f@/!)" "NOGO(N!)"))))
+               (sequence "WAITING(w!)" "HOLD(h!)" "MAYBE(m!)" "|" "CANCELLED(c/!)" "DEFERRED(f/!)" "NOGO(N!)"))))
 
 (setq org-todo-keyword-faces
       (quote (("TODO" :foreground "red" :weight bold)
