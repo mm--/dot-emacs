@@ -2263,7 +2263,7 @@ See `org-clone-subtree-with-time-shift'."
 		   (scheduled :to today)
 		   (ts-active :on today)))
 	  (not (tags "ARCHIVE")))
-    :sort '(date priority todo)
+    :sort 'jmm/org-ql--tag-priority>
     :title "Basic Agenda 1 (Today, all)"
     :super-groups jmm/org-ql-basic-super-groups))
 
@@ -2546,29 +2546,92 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
    :buffer (get-buffer "gtd-test.org")))
 
 #+END_SRC
-** Comparators for sorting
+** Sorting
+*** Sorting by time
 
-   Sometimes I want to see entries sorted from oldest to newest.
+    Sometimes I want to see entries sorted from oldest to newest.
+ #+BEGIN_SRC emacs-lisp
+ (defun jmm/org-get-created-ts (elem)
+   "Get the timestamp of headline at point for created property."
+   (or (-some-> (plist-get elem 'headline)
+		(plist-get :CREATED)
+		(org-time-string-to-seconds))
+       (if org-sort-agenda-notime-is-late most-positive-fixnum -1)))
+
+ (defun jmm/org-ql--created< (a b)
+   "Return non-nil if A's created property is less than B's."
+   (let ((a-ts (jmm/org-get-created-ts a))
+	 (b-ts (jmm/org-get-created-ts b)))
+     (< a-ts b-ts)))
+
+ (defun jmm/org-ql--created> (a b)
+   "Return non-nil if A's created property is greater than B's."
+   (let ((a-ts (jmm/org-get-created-ts a))
+	 (b-ts (jmm/org-get-created-ts b)))
+     (> a-ts b-ts)))
+ #+END_SRC
+*** Sorting by tags
+
+    Org-mode's default "priority" feature is sometimes useful, but not
+    always super granular or modular. A headline can only have one
+    priority, even though you may want to sort on different
+    features. Does priority mean importance or how urgent something
+    is?
+
+    Sometimes I'd like to "bump" things higher in my org-ql agenda,
+    without saying anything about its importance. For example, it's
+    useful for me to create a "queue" of tasks I'll work on for the
+    day.
+
+    Here I create some tags that add or subtract a "weight" to a
+    headline. Tags with higher weights get bumped higher. Tags with
+    lower weights get bumped lower.
+
+    I still need to add functions for better bumping from the agenda,
+    as well as add the ability to compose/tiebreak different sorting
+    mechanisms.
+
 #+BEGIN_SRC emacs-lisp
-(defun jmm/org-get-created-ts (elem)
-  "Get the timestamp of headline at point for created property."
+(defvar jmm/org-tagged-priorities
+  '("p1" 4
+    "p2" 3
+    "p3" 2
+    "p4" 1
+    "n1" -1
+    "n2" -2
+    "n3" -3
+    "n4" -4)
+  "Some org-mode tags and associated priorities.
+Higher priorities are bumped higher. Negative priorities are buried.
+The normal priority is 0.")
+
+(defun jmm/org-get-tagged-priority (elem)
+  "Get the maximum priority number for an org-element.
+See `jmm/org-tagged-priorities'"
   (or (-some-> (plist-get elem 'headline)
-	       (plist-get :CREATED)
-	       (org-time-string-to-seconds))
-      (if org-sort-agenda-notime-is-late most-positive-fixnum -1)))
+      (plist-get :tags)
+      (->> (-map (lambda (prop) (lax-plist-get jmm/org-tagged-priorities prop))))
+      -non-nil
+      -min)
+    0))
 
-(defun jmm/org-ql--created< (a b)
-  "Return non-nil if A's created property is less than B's."
-  (let ((a-ts (jmm/org-get-created-ts a))
-	(b-ts (jmm/org-get-created-ts b)))
-    (< a-ts b-ts)))
+(defun jmm/org-ql--tag-priority> (a b)
+  "Return non-nil if a A has a higher tagged-priority than B.
 
-(defun jmm/org-ql--created> (a b)
-  "Return non-nil if A's created property is greater than B's."
-  (let ((a-ts (jmm/org-get-created-ts a))
-	(b-ts (jmm/org-get-created-ts b)))
-    (> a-ts b-ts)))
+This is different than normal org-mode priorities (which are in
+the properties drawer). Tag priorities are tags, so they don't
+conflict with the normal priority property. This should allow you
+to have multiple different types of \"priorities\" in the
+future. (Maybe like \"importance\" or \"urgent\", etc.)
+
+A and B are org elements, which you get with something like
+`org-element-at-point'.
+"
+  (let ((a-priority (jmm/org-get-tagged-priority a))
+	(b-priority (jmm/org-get-tagged-priority b)))
+    (> a-priority b-priority)))
 #+END_SRC
+
 ** An example of searching through plain TODOs with Ivy
 
 This is just a toy example of jumping to various "TODO" tasks, sorted
