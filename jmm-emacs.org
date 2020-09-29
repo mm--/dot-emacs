@@ -4301,6 +4301,27 @@ Note: This also messes up with multiple windows"
      (format "realpath $(which %s)" (shell-quote-argument commandname))))))
 #+END_SRC
 
+* LSP
+
+  The [[https://en.wikipedia.org/wiki/Language_Server_Protocol][Language Server Protocol]] seems like a decent way to unify code
+  editing facilities across different languages and editors. It kind
+  of reminds me of Emacs's version control mode, which is nice in that
+  you only need to learn one set of keybindings.
+
+#+BEGIN_SRC emacs-lisp
+;; See https://emacs-lsp.github.io/lsp-mode/page/performance/
+;; (setq gc-cons-threshold 100000000)
+(setq read-process-output-max (* 1024 1024)) ;; 1mb
+
+;; Adapted from https://emacs-lsp.github.io/lsp-mode/page/installation/
+(setq lsp-keymap-prefix "M-k")
+;; (define-key lsp-mode-map (kbd "M-k") lsp-command-map)
+
+(use-package lsp-mode
+  :if (not noninteractive)
+  :hook ((python-mode . lsp))
+  :commands lsp)
+#+END_SRC
 
 * Other modes
 ** Enriched Mode
@@ -5026,9 +5047,10 @@ obscuring other windows.
 (use-package symbol-overlay
   :if (not noninteractive)
   :diminish symbol-overlay-mode
+  :disabled t
   :ensure t
   :hook (prog-mode . symbol-overlay-mode)
   :bind (:map prog-mode-map
-	      ("M-k" . symbol-overlay-put)))
+	      ("M-r" . symbol-overlay-put)))
 #+END_SRC
 
