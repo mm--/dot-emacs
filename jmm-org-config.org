@@ -653,7 +653,7 @@ Also, here's a handy function like ~org-narrow-to-subtree~ but for narrowing to 
 #+BEGIN_SRC emacs-lisp
 (setq org-tag-persistent-alist '(("task" . ?t) ("drill" . ?d)
 				 ("IGNORE" . ?I)
-                                 ("breakdown" . ?b) ("IFBORED" . ?B)
+                                 ("breakdown" . ?b) ("blocked" . ?B)
 				 ("CANCELLED" . ?C)
                                  ("WAITING" . ?w) ("home" . ?h)
                                  ("REWARD" . ?R) ("SHOPPING" . ?s)
@@ -2506,14 +2506,16 @@ Taken from the org-ql examples.org, which was shared by reddit user \"emptymatri
   "Find unscheduled \"next\" tasks that are part of stuck projects."
   (interactive)
   (org-ql-search (org-agenda-files)
-  '(and (todo "NEXT")
-	(not (scheduled))
-	(ancestors (and (tags-local "project")
-			(not (descendants (and (todo)
-					       (scheduled)))))))
-  ;; TODO: This might need a bug fix
-  :sort #'jmm/org-ql--created<
-  :title "Next tasks that should be scheduled"))
+    '(and (todo "NEXT")
+	  (not (tags "HOLD"))
+	  (not (scheduled))
+	  (ancestors (and (tags-local "project")
+			  (todo)
+			  (not (descendants (and (todo)
+						 (scheduled)))))))
+    ;; TODO: This might need a bug fix
+    :sort #'jmm/org-ql--created<
+    :title "Next tasks that should be scheduled"))
 #+END_SRC
 
 #+BEGIN_SRC emacs-lisp
