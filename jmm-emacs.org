@@ -4608,6 +4608,7 @@ result into the current buffer."
   :mode ("\\.[pP][dD][fF]\\'" . pdf-view-mode)
   :init
   (setq pdf-view-continuous nil)
+  (advice-add 'abort-if-file-too-large :around #'jmm/dont-prompt-about-large-pdf-files)
   :config
   (pdf-tools-install)
   :bind (:map pdf-view-mode-map
@@ -4811,6 +4812,24 @@ With optional ARG, quote the string."
     (when arg (insert "\""))
     (fill-paragraph)))
 #+END_SRC
+*** Don't prompt if a PDF file is too large
+
+    Normally Emacs tries out ~abort-if-file-too-large~ to ask whether
+    you really want to open a large file. This is good normally,
+    because you don't want to open huge buffers that might contain
+    long lines and slow things down. We don't need this for PDF Tools
+    though because it's kind of opened/processed externally.
+
+#+begin_src emacs-lisp
+(defun jmm/dont-prompt-about-large-pdf-files (orig-fun &rest args)
+   "Advice for `abort-if-file-too-large' so
+`files--ask-user-about-large-file' doesn't prompt about PDFs."
+   (-let [(_size _op-type filename . rest) args]
+     ;; TODO: I probably need to strip out TRAMP stuff and backup extensions.
+     (unless (eq (assoc-default filename auto-mode-alist 'string-match)
+		 'pdf-view-mode)
+       (apply orig-fun args))))
+#+end_src
 
 ** Ace-window
 [[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
