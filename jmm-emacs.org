@@ -4348,6 +4348,17 @@ Note: This also messes up with multiple windows"
   :commands ledger-mode
   :ensure ledger-mode)
 #+end_src
+
+Seems like something changed (or I changed something) that stopped tab
+completion. This code from the manual brings it back.
+#+BEGIN_SRC emacs-lisp
+(add-hook 'ledger-mode-hook
+          (lambda ()
+            (setq-local tab-always-indent 'complete)
+            (setq-local completion-cycle-threshold t)
+            (setq-local ledger-complete-in-steps t)))
+#+END_SRC
+
 ** Swank-js
 #+begin_src emacs-lisp
   (add-hook 'css-mode-hook
