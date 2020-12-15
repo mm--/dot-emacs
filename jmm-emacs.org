@@ -1805,8 +1805,8 @@ paste into a terminal. Hopefully understandable by rsync or scp."
     (gui-set-selection 'PRIMARY string)   ;So I can middle click paste it into xterm
     (message "%s" string)))
 
-(eval-after-load 'dired
-                     '(define-key dired-mode-map (kbd "W") 'josh/dired-copy-remote-filename))
+;; (eval-after-load 'dired
+;;                      '(define-key dired-mode-map (kbd "W") 'josh/dired-copy-remote-filename))
 #+END_SRC
 
 ** Opening files with xdg-open
