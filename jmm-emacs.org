@@ -2691,11 +2691,12 @@ The SEARCH-TERMS should be a list"
     (when author
       (concat "from:" author))))
 
-(defun jmm/notmuch-search-limit-from-author ()
-  "Limit a search to the email address under the point."
-  (interactive)
+(defun jmm/notmuch-search-limit-from-author (&optional arg)
+  "Limit a search to the email address under the point.
+With optional prefix ARG, invert the search."
+  (interactive "P")
   (-when-let (authorq (jmm/notmuch-search-get-author-query))
-    (notmuch-search-filter authorq)))
+    (notmuch-search-filter (concat (when arg "not ") authorq))))
 
 (defun jmm/notmuch-search-all-from-author ()
   "Search all mail sent from the email address under the point."
@@ -2710,15 +2711,17 @@ The SEARCH-TERMS should be a list"
    them, and only want to look at emails for this week or month.
 
 #+BEGIN_SRC emacs-lisp
-(defun jmm/notmuch-search-limit-this-week ()
-  "Limit a search to the emails from this week."
-  (interactive)
-  (notmuch-search-filter "date:\"this week\""))
+(defun jmm/notmuch-search-limit-this-week (&optional arg)
+  "Limit a search to the emails from this week.
+With optional prefix ARG, invert the search."
+  (interactive "P")
+  (notmuch-search-filter (concat (when arg "not ") "date:\"this week\"")))
 
-(defun jmm/notmuch-search-limit-this-month ()
-  "Limit a search to the emails from this month."
-  (interactive)
-  (notmuch-search-filter "date:\"this month\""))
+(defun jmm/notmuch-search-limit-this-month (&optional arg)
+  "Limit a search to the emails from this month.
+With optional prefix ARG, invert the search."
+  (interactive "P")
+  (notmuch-search-filter (concat (when arg "not ") "date:\"this month\"")))
 #+END_SRC
 
 ** Decode Proofpoint urls
