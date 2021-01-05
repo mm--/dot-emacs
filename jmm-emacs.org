@@ -2766,6 +2766,21 @@ Also decode some explicitly tracking urls
 	url)))
 #+END_SRC
 
+Decode convertkit-mail.
+
+#+begin_src emacs-lisp
+(defun jmm/url-decode-convertkitmail (url)
+  "Parse convertkit-mail.com urls."
+  (let ((urlobj (url-generic-parse-url url)))
+    (if (s-equals? (url-host urlobj) "click.convertkit-mail.com")
+	(--> urlobj
+	     (car (url-path-and-query it))
+	     (nth 1 (s-match "/[^/]+/[^/]+/\\([^/]+\\)" it))
+	     (base64-decode-string it))
+      url)))
+#+end_src
+
+
 A query-parameter extracting function to be used for a more generic implementation later.
 
 #+BEGIN_SRC emacs-lisp
@@ -2788,7 +2803,8 @@ Useful for extracting redirects."
     (let* ((url (match-string 0))
 	   (decoded-url (save-match-data (-> url
 					     jmm/url-decode-proofpoint
-					     jmm/url-decode-appspot))))
+					     jmm/url-decode-appspot
+					     jmm/url-decode-convertkitmail))))
       (replace-match decoded-url
 		     nil t))))
 #+END_SRC
