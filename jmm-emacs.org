@@ -348,6 +348,14 @@ label (which can be different from the number for example if you're on page \"iv
 	 ("<f9> J" . jmm/helm-org-jump-project))
   :mode ("\\.org\\'" . org-mode))
 #+END_SRC
+** Free keys
+   
+#+begin_src emacs-lisp
+(use-package free-keys
+  :unless noninteractive
+  :bind ("C-h M-k" . free-keys))
+#+end_src
+
 
 * Autosaves and backups
 
@@ -5160,3 +5168,15 @@ obscuring other windows.
 	      ("M-r" . symbol-overlay-put)))
 #+END_SRC
 
+
+** savehist-mode
+
+   Save ~M-x~ history. Makes it easier to see frequently used commands for Helm ~M-x~.
+   Probably should clean up file history, though.
+   
+#+begin_src emacs-lisp
+(use-package savehist
+  :unless noninteractive
+  :init
+  (savehist-mode 1))
+#+end_src
