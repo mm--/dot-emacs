@@ -558,6 +558,13 @@ Make it easier to insert Greek symbols
 #+begin_src emacs-lisp
   (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
 #+end_src
+** Minor modes for LaTeX editing
+
+   Make it easier to visualize colors, for example with TikZ.
+
+#+begin_src emacs-lisp
+(add-hook 'LaTeX-mode-hook 'rainbow-mode)
+#+end_src
 
 ** Bibtex stuff (no longer needed?)
 #+begin_src emacs-lisp
@@ -577,6 +584,12 @@ Make it easier to insert Greek symbols
 		(tex-send-command tex-shell-cd-command file-dir)
 		(tex-send-command tex-bibtex-command tex-out-file))
 	      (tex-display-shell))))
+#+end_src
+
+** Biber/BibLaTeX
+   
+#+begin_src emacs-lisp
+(setq bibtex-dialect 'biblatex)
 #+end_src
 
 ** AUCTeX and skeletons
@@ -657,7 +670,7 @@ Sometimes AUCTex can't parse errors correctly, prompting you to create a directo
 
 I'm also adding ~--synctex=1~ so I can go to the LaTeX source by control-clicking in pdf-tools.
 #+begin_src emacs-lisp
-(setq LaTeX-command-style '(("" "%(PDF)%(latex) --synctex=1 -file-line-error %S%(PDFout)")))
+(setq LaTeX-command-style '(("" "%(PDF)%(latex) %(file-line-error) %(extraopts) --synctex=1 %S%(PDFout)")))
 #+end_src
 ** AUCTeX preview-latex scaling
 
@@ -1737,7 +1750,9 @@ Because dired-jump is pretty useful
 (use-package dired-x
   :init
   (setq dired-bind-jump nil)
-  :commands (dired-jump))
+  :config
+  (dolist (item '(".acn" ".acr" ".alg" ".bcf" ".glg" ".gls" ".ilg" ".ind" ".ist" ".run.xml" ".tdo"))
+    (add-to-list 'dired-omit-extensions item)))
 #+end_src
 ** Jump to dired buffer
    This is similar to ~dired-jump~, but it'll try to find the file in
@@ -4515,6 +4530,9 @@ completion. This code from the manual brings it back.
   :defer 4
   :init
   (progn (require 'smartparens-config)
+	 ;; Profiler seems to suggest "sp-show--pair-function" is
+	 ;; causing a bit of a slowdown when typing.
+	 (add-to-list 'sp-ignore-modes-list 'latex-mode)
          (smartparens-global-mode t)
 	 (fset 'my-wrap-with-paren "\C-](")
 
