@@ -3860,6 +3860,30 @@ If you provide KEY-TO-CHECK, pass it through `kbd' first."
 ;; "shift".
 (bind-key "C-S-S" 'jmm/isearch-forward-visible)
 #+END_SRC
+** Quick jumping to certain files
+
+   Some files I access really frequently. So frequently, in fact, that
+   even just using bookmarks is slow. Normally I use a register to
+   store their location, but that reduces the number of usable registers.
+
+#+begin_src emacs-lisp
+(defmacro jmm/bind-key-for-file-navigation (key nickname location)
+  "Make a function and a keybinding for navigating to some location"
+  (let ((newname (intern (format "jmm/navigate-to/%s" nickname))))
+    `(progn
+       (defun ,newname ()
+	 ,(format "Navigate to %s" location)
+	 (interactive)
+	 (find-file ,location))
+       (bind-key (kbd ,key) (quote ,newname)))))
+
+(jmm/bind-key-for-file-navigation "M-g D" download-tmp "~/Downloads/tmp")
+(jmm/bind-key-for-file-navigation "M-g d" downloads "~/Downloads")
+(jmm/bind-key-for-file-navigation "M-g f l" ledger "~/org/josh-ledger.dat")
+(jmm/bind-key-for-file-navigation "M-g f e" emacs-config "~/.emacs.d/jmm-emacs.org")
+(jmm/bind-key-for-file-navigation "M-g f o" org-config "~/.emacs.d/jmm-org-config.org")
+#+end_src
+
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
 ** Multiple Cursors
