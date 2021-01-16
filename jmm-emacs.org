@@ -2575,7 +2575,8 @@ current search results AND that are tagged with the given tag."
       message-sendmail-envelope-from 'header
       mail-envelope-from 'header)
 
-(require 'starttls)
+;; Starttls is deprecated
+;; (require 'starttls)
 ;; use org structures and tables in message mode
 ;; Thanks, pragmaticemacs!
 ;; (add-hook 'message-mode-hook 'turn-on-orgtbl)
@@ -4434,7 +4435,12 @@ completion. This code from the manual brings it back.
           (lambda ()
             (setq-local tab-always-indent 'complete)
             (setq-local completion-cycle-threshold t)
-            (setq-local ledger-complete-in-steps t)))
+            (setq-local ledger-complete-in-steps t)
+	    ;; Company-mode is messing up ledger.
+	    ;; See https://github.com/syl20bnr/spacemacs/issues/12024
+	    ;; TODO: Add this snippet in a section that depends on both ledger and company
+	    (company-mode -1)
+	    ))
 #+END_SRC
 
 ** Swank-js
@@ -5147,7 +5153,10 @@ obscuring other windows.
 (use-package fasd
   :if (not noninteractive)
   :ensure t
+  ;; ":after" doesn't force loading of required dependencies
+  ;; :after (helm-mode)
   :init
+  (require 'helm-mode)
   (setq fasd-enable-initial-prompt nil)
   (global-fasd-mode 1)
   :bind (("C-c f" . fasd-find-file)))
