@@ -2780,6 +2780,20 @@ Decode convertkit-mail.
       url)))
 #+end_src
 
+Decode pocket. I think this was more of an issue with earlier emails, as later emails were cleaned up.
+
+#+begin_src emacs-lisp
+(defun jmm/url-decode-pocket (url)
+  (let ((urlobj (url-generic-parse-url url)))
+    (if (string-match-p "getpocket\.com/save/" url)
+	(--> urlobj
+	     (cdr (url-path-and-query it)) ; Get the query
+	     (url-parse-query-string it)  ; Get an alist of query parameters
+	     (car (alist-get "url" it nil nil #'equal))	; Get "url" which holds the url
+	     (url-unhex-string it)) ; Unhex
+      url)))
+#+end_src
+
 
 A query-parameter extracting function to be used for a more generic implementation later.
 
@@ -2804,7 +2818,8 @@ Useful for extracting redirects."
 	   (decoded-url (save-match-data (-> url
 					     jmm/url-decode-proofpoint
 					     jmm/url-decode-appspot
-					     jmm/url-decode-convertkitmail))))
+					     jmm/url-decode-convertkitmail
+					     jmm/url-decode-pocket))))
       (replace-match decoded-url
 		     nil t))))
 #+END_SRC
