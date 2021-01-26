@@ -548,6 +548,22 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
    (define-key flyspell-mode-map (kbd "C-:") 'flyspell-accept-prev-save)
    ))
 #+end_src
+** Looking up dictionary words
+
+   Not directly related to spelling, but I have ~dictd~
+   installed. ~aspell~ still complains about a lot of words that I
+   think are valid, like "dimensionality". To make sure it's just an
+   issue with ~aspell~ and not actually my spelling (like if I typed
+   "dimensoinality"), I'm binding a key for ~dictionary-lookup-definition~.
+   
+#+begin_src emacs-lisp
+(bind-key (kbd "C-c z d") 'dictionary-lookup-definition)
+#+end_src
+
+   ~dictd~ can also (indirectly) suggest spelling corrections. It'd be
+   cool to use ~dictionary.el~ to suggest ~ispell~/~flyspell~
+   corrections in the future.
+
 
 * LaTeX
 
