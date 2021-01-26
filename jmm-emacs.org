@@ -2389,6 +2389,23 @@ the user answers 'help'.  Otherwise, default to `dired-delete-help'."
 ;; (set-default 'tramp-default-proxies-alist nil)
 ;; (add-to-list 'tramp-default-proxies-alist '((and (string-match system-name (tramp-file-name-host (car target-alist))) "DONTMATCHMEPLEASE") "\\`root\\'" "/ssh:%h:"))
 #+end_src
+** Speedups for TRAMP
+   See suggestions in the TRAMP FAQ.
+
+#+begin_src emacs-lisp
+(setq vc-ignore-dir-regexp
+      (format "\\(%s\\)\\|\\(%s\\)"
+              vc-ignore-dir-regexp
+              tramp-file-name-regexp))
+
+;; I'm not really using SVN anymore
+(setq vc-handled-backends '(Git))
+
+;; TODO: Don't know if this is a reasonable value. I'm caching for 5
+;; minutes. Maybe I should make this depend on the hosts I'm checking.
+(setq remote-file-name-inhibit-cache 300)
+#+end_src
+
 
 ** Kill Tramp buffers
    Sometimes, having Tramp buffers open will weirdly cause other Emacs
