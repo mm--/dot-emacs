@@ -2931,6 +2931,17 @@ this to ~text-scale-mode-hook~ as describe [[https://emacs.stackexchange.com/a/3
 
 
 #+END_SRC
+** Web URLs with org-web-tools
+
+   ~org-web-tools~ is handy for getting the titles for links.
+
+#+begin_src emacs-lisp
+(use-package org-web-tools
+  :bind (:map org-mode-map
+	      ("C-x i" . org-web-tools-insert-link-for-url)))
+#+end_src
+
+   
 * Attachments
 ** Attaching the last downloaded file
 
