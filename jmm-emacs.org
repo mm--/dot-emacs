@@ -2567,6 +2567,7 @@ If it isn't being accessed with sudo, return the same path that is."
 	   :map notmuch-show-mode-map
 	   ("b" . josh/notmuch-send-html-to-browser)
 	   ("B" . notmuch-show-resend-message)
+	   ("G" . jmm/notmuch-refresh-buffer-show-multipart-html)
 	   ("o" . jmm/notmuch-show-open-in-gmail)
 	   ("S")
 	   ("S F" . jmm/notmuch-search-from)
@@ -2580,6 +2581,8 @@ If it isn't being accessed with sudo, return the same path that is."
 	   ("L f" . jmm/notmuch-search-limit-from-author)
 	   ("L w" . jmm/notmuch-search-limit-this-week)
 	   ("L m" . jmm/notmuch-search-limit-this-month))
+    :init
+    (setq notmuch-multipart/alternative-discouraged 'jmm/notmuch-multipart/alternative-discouraged-from-tags)
     :config
     (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links)
     ;; Override `notmuch-search-filter-by-tag' so it only suggests
@@ -2967,6 +2970,58 @@ tracking parameters.
   (jmm/notmuch-wash-tracking-links msg depth)
   (jmm/notmuch-wash-superfluous-parameters msg depth))
 #+END_SRC
+** Occasionally show HTML multipart instead of text/plain
+
+   Some senders have a ~text/plain~ multipart, but it's so cluttered
+   and poorly formatted that it might as well not be there at
+   all. Usually the problem is that there are too many links, and
+   whatever they're using to convert HTML to plain text just doesn't
+   work at all. You see this a lot with mailing lists, where the
+   expected recipients are only using their personal Gmail.
+
+   This function is for hiding the ~text/plain~ part and allowing
+   ~text/html~ to be rendered.
+
+#+begin_src emacs-lisp
+(defun jmm/notmuch-refresh-buffer-show-multipart-html ()
+  "Run `notmuch-refresh-this-buffer', but discourage text/plain.
+
+See also `notmuch-multipart/alternative-discouraged'"
+  (interactive)
+  (let ((notmuch-multipart/alternative-discouraged '("text/plain")))
+    (notmuch-refresh-this-buffer)))
+#+end_src
+
+   Note: ~notmuch-multipart/alternative-discouraged~ is actually
+   allowed to be a function (though this isn't documented) that is
+   passed the message.
+
+   Here's how to check the tags to determine how to render it.
+
+#+begin_src emacs-lisp
+;; TODO: Add type: alist
+(defvar jmm/notmuch-multipart/alternative-discouraged-tags
+  '(("html" . ("text/plain"))
+    ("plain" . ("text/html"))
+    ;; Default value is nil.
+    (nil . ("text/html" "multipart/related")))
+  "Alist from a notmuch tag to a list of discouraged parts. See `notmuch-multipart/alternative-discouraged'")
+
+;; TODO: Check performance
+(defun jmm/notmuch-multipart/alternative-discouraged-from-tags (msg)
+  "Check tags against `jmm/notmuch-multipart/alternative-discouraged-from-tags' to determine discouraged parts."
+  (--> msg
+    (plist-get it :tags)
+    (-intersection (mapcar 'car jmm/notmuch-multipart/alternative-discouraged-tags)
+		   it) ;; Tags we can act on. TODO: Sort
+    (car it)		  ;; First tag
+    (cdr (assoc it jmm/notmuch-multipart/alternative-discouraged-tags))	  ;; Find list of discouraged parts.
+    ))
+
+;; Try with (jmm/notmuch-multipart/alternative-discouraged-tags (notmuch-show-get-message-properties))
+#+end_src
+
+
 
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
