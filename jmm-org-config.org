@@ -2859,6 +2859,41 @@ this to ~text-scale-mode-hook~ as describe [[https://emacs.stackexchange.com/a/3
 
 (advice-add 'org-latex-preview  :around #'jmm/org-latex-preview-fragment-size)
 #+END_SRC
+** Fixing ~org-read-date~'s burying of the ~*Calendar*~ buffer
+
+   When I'm scheduling org tasks in emails in ~notmuch~, one annoying
+   thing is that the ~*Calendar*~ buffer just keeps popping up, even
+   though it's supposed to be buried.
+
+   I think what's happening is that ~org-read-date~ is trying to call
+   ~bury-buffer~ in the wrong window.
+
+   This is my hack for fixing that.
+
+   Another approach would be to set ~switch-to-prev-buffer-skip~ to
+   always skip the calendar.
+   
+#+begin_src emacs-lisp
+(defun jmm/org-read-date-bury-calendar (orig-fun &rest args)
+   "It seems like `org-read-date' doesn't properly `bury-buffer' the calendar.
+This tries to fix that."
+   ;; Can't call this, as it's now done in the wrong window.
+   ;; (select-window (get-buffer-window "*Calendar*" 'visible))
+   ;; I'm not even sure if it's an issue with org or with the way notmuch is burying its own buffers.
+   ;; I think it is that `org-read-date' is trying to bury the buffer in the wrong window.
+   ;; I think it's an issue with a second "bury-buffer" calling `switch-to-prev-buffer', which is not what I want.
+   ;; From `switch-to-prev-buffer'
+   (save-selected-window
+     (when-let ((old-buffer (get-buffer "*Calendar*")))
+       (dolist (window (window-list))
+	 ;; (select-window window)
+	 ;; (bury-buffer old-buffer)
+	 ;; From `switch-to-prev-buffer'. Can't rebury the buffer when it's too late.
+	 (set-window-prev-buffers window
+				  (assq-delete-all old-buffer (window-prev-buffers window)))))))
+
+(advice-add 'org-read-date :after #'jmm/org-read-date-bury-calendar)
+#+end_src
 
 
 * Links
