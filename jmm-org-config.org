@@ -18,6 +18,7 @@ loaded ~org-plus-contrib~
 	 ("M-M" . josh/org-toggle-marked-tag)
 	 ("M-H" . jmm/org-hide-visible-properties-drawer)
 	 ("C-x n p" . jmm/org-narrow-to-parent-project)
+	 ("C-c M-w" . jmm/org-refile-to-register) ;; I don't really use org-refile-copy enough for its own key
 	 ;; I find it really annoying having to skip over SCHEDULED,
 	 ;; PROPERTIES, and LOGBOOK entries just to starting writing
 	 ;; text under a heading.
@@ -1182,6 +1183,26 @@ With a `C-u` ARG, just jump to the headline."
       (jmm/org-refile-to-buffer-pos buffer pos arg)))))
 
 #+END_SRC
+
+** Refiling to registers
+
+   A way quicker way of storing a few refile targets.
+
+#+begin_src emacs-lisp
+(defun jmm/org-refile-to-register (register &optional arg)
+  "Refile the current tree to the heading at the point stored in REGISTER.
+
+ARG gets passed to `jmm/org-refile-to-buffer-pos' which passes it to `org-refile'.
+It's probably not necessary."
+  (interactive (list (register-read-with-preview "Org refile to register: ")
+		     current-prefix-arg))
+  (-let (((buffer . pos) (save-window-excursion
+			   (save-excursion
+			     (jump-to-register register)
+			     (org-back-to-heading)
+			     (cons (current-buffer) (point))))))
+    (jmm/org-refile-to-buffer-pos buffer pos arg)))
+#+end_src
 
 
 * Better task states
