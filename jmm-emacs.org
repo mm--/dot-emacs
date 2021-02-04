@@ -715,6 +715,47 @@ following line.
 #+BEGIN_SRC emacs-lisp
 ;; (setq preview-pdf-color-adjust-method 'compatible)
 #+END_SRC
+** Custom faces for some custom LaTeX macros.
+
+   I have some custom macros in LaTeX that help me keep track of some
+   ~org-mode~ todos. This provides some nicer faces for them.
+
+#+begin_src emacs-lisp
+(defface jmm-latex-todo
+  '((t
+     ( :foreground "tomato"
+       ;; :weight bold
+       ;; :box (:line-width
+       ;; 	     (2 . 2)
+       ;; 	     :color "tomato"
+       ;; 	     :style nil)
+       )))
+  "For todos in `font-latex-user-keyword-classes'.")
+
+(defface jmm-latex-done
+  '((t
+     ( :foreground "sea green"
+       ;; :weight bold
+       ;; :box (:line-width
+       ;; 	     (2 . 2)
+       ;; 	     :color "sea green"
+       ;; 	     :style nil)
+       )))
+  "For completed todos in `font-latex-user-keyword-classes'.")
+
+(setq font-latex-user-keyword-classes
+      '(("my-reference"
+	 (("goalstatus" "{") ("goaldone" "{["))
+	 font-lock-constant-face command)
+	("my-todo"
+	 (("todo" "{") ("orgtodo" "*[{"))
+	 jmm-latex-todo command)
+	("my-done"
+	 (("orgtodoDONE" "[{"))
+	 jmm-latex-done command)))
+
+#+end_src
+
 
 * R/ESS
   This seems to be necessary when installing ESS from MELPA.
