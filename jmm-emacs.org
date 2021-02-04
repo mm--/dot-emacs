@@ -3908,10 +3908,12 @@ open up the PDF to that page."
 definition without bringing up a help buffer.
 
 If you provide KEY-TO-CHECK, pass it through `kbd' first."
-  (interactive (list (car (help-read-key-sequence))))
+  (interactive (list (caar (help--read-key-sequence))))
   (-if-let (xrefs (xref-backend-definitions 'elisp (nth 1 (help--analyze-key key-to-check nil))))
-      (xref--show-xrefs xrefs nil)
-    (user-error "Can't find definition for: %s" key-to-check)))
+      (progn
+	(xref--push-markers)
+	(xref-pop-to-location (car xrefs) nil))
+      (user-error "Can't find definition for: %s" key-to-check)))
 
 (bind-key "C-h C-k" 'jmm/jump-to-key-definition)
 #+END_SRC
