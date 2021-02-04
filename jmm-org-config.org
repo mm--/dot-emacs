@@ -58,7 +58,8 @@ loaded ~org-plus-contrib~
   :after org
   :defer t
   :bind (:map org-agenda-mode-map
-	      ("M-P" . josh/org-agenda-lock-to-parent-project))
+	      ("M-P" . josh/org-agenda-lock-to-parent-project)
+	      ("C-c M-w" . jmm/org-refile-to-register))
   :hook ((org-agenda-mode . hl-line-mode))
   :init
   (setq org-agenda-tags-column 0)
@@ -2249,6 +2250,8 @@ See `org-clone-subtree-with-time-shift'."
     (:priority "B")
     (:priority "C")
     (:priority "D" :order 7)
+    (:name "Blocked tasks" :tag "blocked" :order 7)
+    (:name "PhD Thesis" :tag "thesis")
     (:name "Personal" :tag "personal")
     (:name "Home" :tag "home")
     (:name "Habit" :tag "habit")
@@ -2752,7 +2755,8 @@ With prefix, display only TODO-keyword items."
 (defun jmm/org-end-planning-stuff ()
   "Return the point where planning, properties, and drawers end."
   (save-excursion
-    (let (already-jumped-heading)
+    (let (already-jumped-heading
+	  (post-blank 0))
       (while (let* ((element (org-element-at-point))
 		    (type (car element))
 		    (jumpto (case type
@@ -2766,8 +2770,14 @@ With prefix, display only TODO-keyword items."
 	       (setq already-jumped-heading t)
 	       (when jumpto
 		 (goto-char jumpto)
+		 (setq post-blank (org-element-property :post-blank element))
 		 (< jumpto (point-max))))
 	t)
+      ;; The org-element-property :end includes blank lines
+      ;; Go back over them.
+      ;; TODO: Maybe look at org-cycle-separator-lines for hiding
+      (when (< 0 post-blank)
+	(forward-line (- post-blank)))
       (point))))
 
 (defun jmm/org-goto-text-content ()
@@ -2777,9 +2787,6 @@ properties or logbook drawers."
   (goto-char (jmm/org-end-planning-stuff))
   (when (org-at-heading-p)
     (org-open-line 1)
-    ;; ;; TODO: There might only be blank lines
-    ;; (delete-blank-lines)
-    ;; (org-open-line 1)
     ;; Just hit tab
     (org-cycle))
   (back-to-indentation))

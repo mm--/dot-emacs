@@ -11,6 +11,7 @@
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
 	ace-jump-move
+	backward-sentence
 	c-electric-colon
 	c-electric-delete-forward
 	c-electric-paren

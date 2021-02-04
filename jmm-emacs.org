@@ -154,7 +154,8 @@ Enable all the disabled commands
 
 (setq browse-url-browser-function 'browse-url-generic
       browse-url-generic-program "firefox")
-(setq shr-external-browser 'browse-url-generic) ;For eww
+;; Obsolete variable
+;; (setq shr-external-browser 'browse-url-generic) ;For eww
 (setq epg-gpg-program "gpg2")
 
 ;; The *help* window default behavior is kinda annoying. Always select
@@ -767,6 +768,10 @@ following line.
 	 ("NAMESPACE\\'" . R-mode)
 	 ("\\.jl\\'" . ess-julia-mode)
 	 ("\\.[jJ][aA][gG]\\'" . ess-jags-mode))
+  :init
+  ;; See https://github.com/emacs-ess/ESS/issues/1074#issuecomment-762529812
+  ;; ESS isn't working well with Helm.
+  (setq ess-ask-for-ess-directory nil)
   :config 
    ;; I like how ESS previously indented continuations as it makes ggplot
    ;; code easier to read.
@@ -1840,6 +1845,9 @@ With optional argument KILLBUFFER, also kill the current buffer."
 				(with-current-buffer buf
 				  (member dir (-map 'car dired-subdir-alist))))
 			      (get-buffers-matching-mode 'dired-mode)))))
+    ;; Make it easier to jump back
+    (push-mark)
+    (xref-push-marker-stack)
     (if updir
 	(progn
 	  (switch-to-buffer updir)
