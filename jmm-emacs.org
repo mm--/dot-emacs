@@ -749,7 +749,7 @@ following line.
 	 (("goalstatus" "{") ("goaldone" "{["))
 	 font-lock-constant-face command)
 	("my-todo"
-	 (("todo" "{") ("orgtodo" "*[{"))
+	 (("todo" "{") ("todojeff" "{") ("orgtodo" "*[{"))
 	 jmm-latex-todo command)
 	("my-done"
 	 (("orgtodoDONE" "[{"))
