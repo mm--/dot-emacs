@@ -3071,6 +3071,21 @@ See also `notmuch-multipart/alternative-discouraged'"
 #+end_src
 
 
+** Remove trailing whitespace from HTML
+
+   ~shr~ leaves trailing whitespace when formatting. I find this kind
+   of annoying when trying to copy links or text.
+
+#+begin_src emacs-lisp
+(defun jmm/notmuch/delete-trailing-whitespace (msg part)
+  "This is just `delete-trailing-whitespace' with added arguments
+  for advising `notmuch-show--insert-part-text/html-shr'."
+  (delete-trailing-whitespace))
+
+(advice-add 'notmuch-show--insert-part-text/html-shr :after #'jmm/notmuch/delete-trailing-whitespace)
+;; (advice-remove 'notmuch-show--insert-part-text/html-shr #'jmm/notmuch/delete-trailing-whitespace)
+#+end_src
+
 
 * Elfeed
   [[https://github.com/skeeto/elfeed][elfeed]] is an RSS reader with a similar interface to [[https://notmuchmail.org/][notmuch]]. I used
