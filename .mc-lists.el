@@ -29,6 +29,7 @@
 	dired-maybe-insert-subdir
 	dired-next-line
 	dired-previous-line
+	dired-unmark-all-marks
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
 	ess-eval-line
@@ -123,6 +124,7 @@
 	transpose-sexps
 	transpose-words
 	unfill-paragraph
+	wdired--self-insert
 	wdired-capitalize-word
 	wdired-downcase-word
 	wdired-next-line
@@ -157,6 +159,7 @@
 	avy-mc-test-goto-word-1
 	buf-move-left
 	describe-key
+	dired-sort-toggle-or-edit
 	dired-toggle-read-only
 	dumb-jump-back
 	edebug-step-mode
