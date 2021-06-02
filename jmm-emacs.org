@@ -114,11 +114,16 @@ Enable all the disabled commands
 
 (xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
 
-(set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
-(set-register ?d '(file . "~/Downloads/"))
+;;(set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
+;;(set-register ?d '(file . "~/Downloads/"))
+
+(setq launchserver (when (member "--server" command-line-args)
+		 t))
+(setq command-line-args
+      (remove "--server" command-line-args))
 
 (use-package server
-  :unless noninteractive
+  :unless (or noninteractive (not launchserver))
   :defer 1
   :config
   (server-start))
@@ -227,12 +232,13 @@ Make scripts executable
 
 * Theme/Appearance
 #+begin_src emacs-lisp
-(when window-system
-  (load-theme 'zenburn))
+;; (when window-system
+;;   (load-theme 'zenburn))
 #+end_src
 ** Font
 Set my font
 #+BEGIN_SRC emacs-lisp
+;; TODO: Figure out how to undo this
 (defun josh/set-my-font (myfont)
   (when (and window-system (x-list-fonts myfont))
     (set-frame-font myfont)
@@ -240,7 +246,7 @@ Set my font
                  (cons 'font myfont))))
 
 ;; (josh/set-my-font "-unknown-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
-(josh/set-my-font "-PfEd-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
+;; (josh/set-my-font "-PfEd-DejaVu Sans Mono-normal-normal-normal-*-10-*-*-*-m-0-iso10646-1")
 #+END_SRC
 
 Set a reasonable font for Chinese, if we have it.
@@ -249,6 +255,17 @@ Set a reasonable font for Chinese, if we have it.
 (when (and window-system (x-family-fonts "Noto Sans Mono CJK SC"))
   (set-fontset-font t 'chinese-gbk (font-spec :family "Noto Sans Mono CJK SC")))
 #+END_SRC
+
+Show color emojis.
+
+#+begin_src emacs-lisp
+;; TODO: Make a macro out of this
+;; TODO: Maybe only if Cairo and Harfbuzz are enabled?
+;; TODO: Include ligatures/composition. See https://emacs.stackexchange.com/a/62220
+(when (and window-system (x-family-fonts "Noto Color Emoji"))
+  (set-fontset-font t 'symbol (font-spec :family "Noto Color Emoji")))
+#+end_src
+
 
 For whatever reason, when trying to view the HELLO file in Emacs 28 in NixOS, Emacs hangs.
 Using `csysdig`, I found a lot of accesses to an "Adobe Blank" font
@@ -269,6 +286,7 @@ shows how to work around this.
   :ensure t
   :if window-system
   :defer 1
+  :disabled
   :init
   (setq telephone-line-lhs
 	'((accent . (telephone-line-vc-segment
@@ -792,6 +810,7 @@ following line.
 (use-package ess-r-mode
   :bind (:map ess-r-mode-map
   	      ("C-c C-p" . jmm/ess-eval-pipe-paragraph-and-print)
+	      ("C-c C-l" . jmm/ess-show-last-value)
   	      ("C-%" . then_R_operator)
 	      ("_" . ess-insert-assign)
 	 :map inferior-ess-r-mode-map
@@ -893,6 +912,16 @@ And a handy [[https://emacs.stackexchange.com/questions/8041/how-to-implement-th
   (insert "%>%")
   (reindent-then-newline-and-indent))
 #+END_SRC
+** Show the last value
+
+#+begin_src emacs-lisp
+(defun jmm/ess-show-last-value ()
+  "Send \".Last.value\" to the R process.
+Handy when you assign something and don't want to wrap it in parens."
+  (interactive)
+  (ess-send-string (ess-get-process) ".Last.value" t))
+#+end_src
+
 
 * ERC
 I don't really use ERC anymore.
@@ -2824,13 +2853,13 @@ With optional prefix ARG, invert the search."
   "Limit a search to the emails from this week.
 With optional prefix ARG, invert the search."
   (interactive "P")
-  (notmuch-search-filter (concat (when arg "not ") "date:\"this week\"")))
+  (notmuch-search-filter (concat (when arg "not ") "date:1w..")))
 
 (defun jmm/notmuch-search-limit-this-month (&optional arg)
   "Limit a search to the emails from this month.
 With optional prefix ARG, invert the search."
   (interactive "P")
-  (notmuch-search-filter (concat (when arg "not ") "date:\"this month\"")))
+  (notmuch-search-filter (concat (when arg "not ") "date:1M..")))
 #+END_SRC
 
 ** Decode Proofpoint urls
@@ -4076,6 +4105,39 @@ If you provide KEY-TO-CHECK, pass it through `kbd' first."
 (jmm/bind-key-for-file-navigation "M-g f e" emacs-config "~/.emacs.d/jmm-emacs.org")
 (jmm/bind-key-for-file-navigation "M-g f o" org-config "~/.emacs.d/jmm-org-config.org")
 #+end_src
+** Printing a junior-sized PDF of the current buffer
+
+   Sometimes I like reading and editing things on paper.
+
+   I use a junior/A5 sized discbound notebook. I have a script called
+   ~junior-lpr~ that converts a PDF from letter-sized to junior-sized,
+   then prints it. This function is for printing the current buffer
+   (with fontification) as a junior-sized PDF. It's pretty useless
+   without ~junior-lpr~ though.
+
+#+begin_src emacs-lisp
+(defun jmm/print-junior-buffer-with-faces ()
+    "Print the current buffer (with font-lock) as a junior-sized pdf.
+
+Based off of Kaushal Modi's `modi/pdf-print-buffer-with-faces' from
+https://emacs.stackexchange.com/a/9373
+"
+    (interactive)
+    (let ((tempfile (make-temp-file "ps-file" nil ".ps"))
+	  (outfile (make-temp-file "ps-file" nil ".pdf")))
+      (unwind-protect
+	  (progn
+	    (ps-print-buffer-with-faces tempfile)
+	    (if (= (call-process "ps2pdf" nil nil nil tempfile outfile) 0)
+		(message "ps2pdf %s" outfile)
+	      (error "ps2pdf failed"))
+	    (if (= (call-process "junior-lpr" nil nil nil outfile) 0)
+		(message "junior-lpr succeeded")
+	      (error "junior-lpr failed"))
+	  (delete-file tempfile)
+	  (delete-file outfile)))))
+#+end_src
+
 
 * Emacs Rocks
   Things I got from watching "Emacs Rocks"
@@ -4696,6 +4758,7 @@ completion. This code from the manual brings it back.
   :if (not noninteractive)
   :ensure t
   :defer 4
+  :disabled
   :init
   (progn (require 'smartparens-config)
 	 ;; Profiler seems to suggest "sp-show--pair-function" is
@@ -5343,3 +5406,16 @@ obscuring other windows.
   :init
   (savehist-mode 1))
 #+end_src
+** plantuml-mode
+
+   This might not work right with ~direnv~ since ~plantuml-mode~ calls
+   some initialization stuff that might be shared.
+
+#+begin_src emacs-lisp
+(use-package plantuml-mode
+  :unless noninteractive
+  :init
+  (setq plantuml-default-exec-mode 'executable))
+
+#+end_src
+
