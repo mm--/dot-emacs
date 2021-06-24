@@ -71,9 +71,14 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 
   If I make any changes using Custom, I want them to be in a separate file.
 #+begin_src emacs-lisp
-  (setq custom-file "~/.emacs.d/custom.el")
-  (if (file-exists-p custom-file)
-      (load custom-file))
+;; TODO: This is slow. Defer this.
+;; Also, make a macro/function for:
+;; - [ ] Defering stuff
+;; - [ ] Byte compiling and loading (with timing) a file
+;; It looks like I can't immediately defer this because other things depend on this.
+(setq custom-file "~/.emacs.d/custom.el")
+   (if (file-exists-p custom-file)
+       (load custom-file))
 #+end_src
 
   Secret info. (Authentication info)
@@ -112,7 +117,18 @@ Enable all the disabled commands
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
 (blink-cursor-mode 0)
 
+(setq tab-bar-select-tab-modifiers '(control meta))
+(setq tab-bar-tab-hints t)
+
 (xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
+
+;; Some performance things for snappier redisplay
+(setq redisplay-skip-fontification-on-input t)
+(setq fast-but-imprecise-scrolling t)
+(setq jit-lock-defer-time 0)
+;; TODO: Maybe figure out a better setting for gc-cons-threshold
+;; I seem to need this in emacs-pgtkgcc, with some stuttering in helm-mode.
+(setq gc-cons-threshold 80000000)
 
 ;;(set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
 ;;(set-register ?d '(file . "~/Downloads/"))
@@ -198,6 +214,7 @@ Make scripts executable
    configuration options like setting ~user-full-name~.
 
 #+BEGIN_SRC emacs-lisp
+;; TODO: Should probably move this to a file with an autoload
 (require 'f)
 (defun jmm/org-maybe-tangle-el (file)
   "Tangle an org file to an .el file only if org file is newer."
@@ -333,6 +350,64 @@ label (which can be different from the number for example if you're on page \"iv
 	(message x)
       x)))
 #+END_SRC
+** Change theme depending on GTK theme
+
+   A great post from "noi-gai" [[https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_when_changing/][on Reddit]].
+   Allows Emacs to change with the [[https://extensions.gnome.org/extension/2236/night-theme-switcher/][Night Theme Switcher]] extension for GNOME.
+
+#+begin_src emacs-lisp
+;; D'oh. I changed "call-process-string" because I didn't see it was defined later.
+(defun jmm/is-gtk-theme-dark ()
+  "Return t if GTK theme is dark.
+Based off of code from noi-gai on Reddit.
+https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_when_changing/"
+  (let ((gtk-theme (->
+		       (with-output-to-string
+			 (call-process "gsettings"
+				       nil standard-output nil
+				       "get"
+				       "org.gnome.desktop.interface"
+				       "gtk-theme"))
+		     (string-trim-right)
+		     (downcase))))
+    (or (string-match-p "dark"  gtk-theme)
+	(string-match-p "black" gtk-theme))))
+
+(defun gtk-theme-changed (path _one _two)
+  "DBus handler to detect when the GTK theme has changed."
+  (when (string-equal path "/org/gnome/desktop/interface/gtk-theme")
+    ;; (message (format "%s %s %s" path _one _two))
+    ;; I'm not sure what _one is, but _two looks like the address of
+    ;; some D-bus listener
+    (set-modus-theme-from-gtk)))
+
+(defun set-modus-theme-from-gtk ()
+  "Set modus theme by checking whether GTK theme is dark."
+  (if (jmm/is-gtk-theme-dark)
+      (progn
+	;; Otherwise we can't find modus-themes (it seems to be in a different path)
+	(require-theme 'modus-vivendi-theme)
+	(modus-themes-load-vivendi))
+    (disable-theme 'modus-vivendi)
+    ;; (modus-themes-load-operandi)
+    ))
+
+;; TODO: Maybe do this on idle.
+(run-with-idle-timer
+ 3 nil
+ (lambda ()
+   (when (memq window-system '(pgtk))
+     (require 'dbus)
+     (dbus-register-signal
+      :session
+      "ca.desrt.dconf"
+      "/ca/desrt/dconf/Writer/user"
+      "ca.desrt.dconf.Writer"
+      "Notify"
+      #'gtk-theme-changed)
+     (set-modus-theme-from-gtk))))
+#+end_src
+
 
 * Keybindings
 
@@ -450,6 +525,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Compiling conveniences
 
 #+begin_src emacs-lisp
+;; TODO: Should probably move this in its own autoload file
 (require 'compile)
 (add-hook 'c++-mode-hook
 	  (lambda ()
@@ -507,6 +583,12 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 (add-hook `tex-mode-hook `flyspell-mode)
 (add-hook `bibtex-mode-hook `flyspell-mode)
 (add-hook 'prog-mode 'flyspell-prog-mode)
+#+end_src
+
+Right click to correct a word (instead of middle click).
+
+#+begin_src emacs-lisp
+(setq flyspell-use-mouse-3-for-menu t)
 #+end_src
 
 ** Accepting previous misspelled words
@@ -1274,10 +1356,13 @@ You'll need to manually connect the REPL afterwards."
 	      (jmm/eshell-maybe-add-alias "fd" "cd ${fasd -dl1 $*}")
 	      ;; Switch to dired in the current directory. Or show files in dired.
 	      (jmm/eshell-maybe-add-alias "d" "dired {default-val $* \".\"}")
+	      (jmm/eshell-maybe-add-alias "dow" "dired-other-window {default-val $* \".\"}")
 	      ;; Make it easy to switch to the project root
 	      (jmm/eshell-maybe-add-alias "cdp" "cd ${projectile-project-root}")
 	      ;; Easily make a directory and switch to it
 	      (jmm/eshell-maybe-add-alias "mcd" "mkdir -p $1 && cd $1")
+	      ;; Run "visual" commands without adding them to `eshell-visual-commands'
+	      (jmm/eshell-maybe-add-alias "eev" "eshell-exec-visual")
 	      ;; We want $PAGER to be "cat" ("less" messes up stuff for us. Especially with nix-env)
 	      (make-local-variable 'process-environment)
 	      (setenv "PAGER" "cat"))))
@@ -1836,7 +1921,9 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 ** Other settings
    I usually want to copy recursively. Don't ask me each time.
 #+BEGIN_SRC emacs-lisp
-  (setq dired-recursive-copies 'always)
+(setq dired-recursive-copies 'always)
+(setq dired-copy-dereference t)
+(setq dired-do-revert-buffer t)
 #+END_SRC
 
   Apparently you can change permissions in ~wdired~
@@ -1849,6 +1936,7 @@ Because dired-jump is pretty useful
 (use-package dired-x
   :init
   (setq dired-bind-jump nil)
+  :defer 2
   :config
   (dolist (item '(".acn" ".acr" ".alg" ".bcf" ".glg" ".gls" ".ilg" ".ind" ".ist" ".run.xml" ".tdo"))
     (add-to-list 'dired-omit-extensions item)))
@@ -1984,12 +2072,46 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 (add-hook 'dired-mode-hook '(lambda ()
                               (local-set-key (kbd "J") 'josh/open-with-mpv)))
 #+END_SRC
+** Show files in the File Manager
+
+   Sometimes you want to view a file in a GUI file manager like
+   GNOME's Nautilus or KDE's Dolphin. Maybe it's because it makes
+   thumbnails easier to see, or it makes some operations (like
+   dragging and dropping) easier to do.
+
+#+begin_src emacs-lisp
+(defun jmm/show-file-in-file-manager (filename)
+  "Use org.freedesktop.FileManager1 to show files."
+  (interactive (list (read-file-name "File: " nil nil nil (buffer-file-name))))
+  (dbus-call-method :session "org.freedesktop.FileManager1"
+		    "/org/freedesktop/FileManager1"
+		    "org.freedesktop.FileManager1"
+		    "ShowItems"
+		    (list (xdg-thumb-uri filename)) ""))
+
+(defun jmm/dired-show-files-in-file-manager ()
+  "Show files with org.freedesktop.FileManager1."
+  (interactive)
+  (dbus-call-method :session "org.freedesktop.FileManager1"
+		    "/org/freedesktop/FileManager1"
+		    "org.freedesktop.FileManager1"
+		    "ShowItems"
+		    (mapcar #'xdg-thumb-uri
+			    (dired-get-marked-files))
+		    ;; I don't really know what StartupID is.
+		    ""))
+
+(eval-after-load 'dired
+  '(bind-key "M-N" #'jmm/dired-show-files-in-file-manager dired-mode-map))
+#+end_src
+
 ** git-annex
    I'm messing around with git-annex, and it's nice to be able to view
    locked files by their name and not as a giant symlink in dired.
 #+BEGIN_SRC emacs-lisp
 (use-package git-annex
   :ensure t
+  :defer 2
   :config
   (git-annex-dired-do-to-files "lock" "Annex: locked %d file(s)")
   (git-annex-dired-do-to-files "unlock" "Annex: unlocked %d file(s)")
@@ -2471,6 +2593,11 @@ the user answers 'help'.  Otherwise, default to `dired-delete-help'."
 
 (fset 'dired--yes-no-all-quit-help 'jmm/dired--y-n-a-q-h)
 #+END_SRC
+* Emacs lisp
+
+#+begin_src emacs-lisp
+(add-hook 'emacs-lisp-mode-hook 'rainbow-mode)
+#+end_src
 
 
 * Tramp
@@ -3180,6 +3307,7 @@ See also `notmuch-multipart/alternative-discouraged'"
 (bind-key "C-c h" 'helm-mini)
 (use-package helm-mode
   :diminish helm-mode
+  :defer 1
   :bind (("M-x" . helm-M-x)
 	 ("C-x b" . helm-buffers-list)
 	 ;; ("C-x C-f" . helm-find-files)
@@ -3399,6 +3527,7 @@ Make an easy way to find files in open dired buffers
 
 (use-package ivy-hydra
   :if (not noninteractive)
+  :defer 2
   :ensure t)
 
 (use-package swiper
@@ -3412,6 +3541,7 @@ Make an easy way to find files in open dired buffers
   :ensure t
   ;; Require counsel for jmm/counsel-fasd-directories
   :defer 3
+  :after (dired)
   :bind (("C-x l" . counsel-locate)
 	 ("C-c k" . counsel-ag)
 	 ("C-x C-f" . counsel-find-file)
@@ -3616,6 +3746,7 @@ Works with remote (Tramp) files as well."
 #+BEGIN_SRC emacs-lisp
 (use-package magit
   :ensure t
+  :after (dired)
   :bind (("C-x g" . magit-status)
 	 ("C-x M-g" . magit-dispatch-popup)
 	 :map dired-mode-map
@@ -5259,6 +5390,7 @@ It also provides functions for swapping and moving windows, which is super helpf
   :init (global-company-mode 1)
 
   :bind (:map company-active-map
+	 ("TAB" . nil)
 	 ("C-n" . company-select-next)
 	 ("C-p" . company-select-previous)))
 #+END_SRC

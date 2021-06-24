@@ -1219,7 +1219,7 @@ It's probably not necessary."
               ("DONE" :foreground "forest green" :weight bold)
               ("WAITING" :foreground "orange" :weight bold)
               ("HOLD" :foreground "magenta" :weight bold)
-	      ("MAYBE" :foreground "yellow" :weight bold)
+	      ("MAYBE" :foreground "DarkGoldenrod1" :weight bold)
               ("CANCELLED" :foreground "forest green" :weight bold)
               ("DEFERRED" :foreground "tomato" :weight bold))))
 
