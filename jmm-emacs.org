@@ -2104,6 +2104,49 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 (eval-after-load 'dired
   '(bind-key "M-N" #'jmm/dired-show-files-in-file-manager dired-mode-map))
 #+end_src
+** Show File Manager in Dired
+
+   Sometimes you want to go the other way around and quickly open
+   whatever Nautilus is viewing in Dired.
+
+#+begin_src emacs-lisp
+(defun jmm/file-manager-mark-copied-files ()
+  "Get a list of copied files in the clipboard. Mark them in dired."
+  (interactive)
+  (let ((selected-files (->> (pgtk-get-selection-internal 'CLIPBOARD 'STRING)
+			  (s-split "\n")
+			  ;; This is a weird hack to unescape unicode
+			  ;; TODO: Find a better way to unescape unicode
+			  (mapcar (lambda (s) (json-read-from-string (format "\"%s\"" s))))
+			  )))
+    (dired-mark-if
+     (-contains? selected-files (dired-get-filename nil t))
+     "copied file")))
+
+(defun jmm/file-manager-get-filename ()
+  "Get the (first) location the FileManager is currently viewing."
+  (->
+      (dbus-get-property :session "org.freedesktop.FileManager1"
+			 "/org/freedesktop/FileManager1"
+			 "org.freedesktop.FileManager1"
+			 "OpenLocations")
+    ;; TODO: Handle multiple open locations
+    (car)
+    ;; TODO: Handle other open locations like WebDAV, Google Drive, etc
+    (url-generic-parse-url)
+    (url-filename)))
+
+(defun jmm/file-manager-to-dired (showcopied)
+  "Open the location the FileManager is currently viewing in Dired.
+With SHOWCOPIED, mark files that are in the clipboard."
+  (interactive "P")
+  (dired (jmm/file-manager-get-filename))
+  (when showcopied
+    (jmm/file-manager-mark-copied-files)))
+
+(bind-key "<f9> n" #'jmm/file-manager-to-dired)
+#+end_src
+
 
 ** git-annex
    I'm messing around with git-annex, and it's nice to be able to view
