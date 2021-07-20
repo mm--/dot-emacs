@@ -5398,10 +5398,14 @@ It also provides functions for swapping and moving windows, which is super helpf
 
    ~[[https://github.com/justbur/emacs-which-key][which-key]]~ displays keybindings for prefixes. Handy if you forget which key maps to what.
 
+   This does seem to cause some significant performance issues with something in my org-mode config.
+   Like, I think it's somehow calling ~require~ and ~apply~ a lot. Maybe to look at what different keys do.
+
 #+BEGIN_SRC emacs-lisp
 (use-package which-key
   :ensure
   :defer 5
+  :disabled t
   :diminish which-key-mode
   :init
   (setq which-key-use-C-h-commands nil)
