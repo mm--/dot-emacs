@@ -733,7 +733,7 @@ Make it easier to insert Greek symbols
 
 (defun jmm/latex-configuration ()
   ;; View with PDF Tools by default
-  (setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
+  ;; (setf (alist-get 'output-pdf TeX-view-program-selection) (list "PDF Tools"))
   ;; Automatically revert PDF buffer. Works better than my old
   ;; solution of turning on auto-revert-mode.
   (add-hook 'TeX-after-compilation-finished-functions
