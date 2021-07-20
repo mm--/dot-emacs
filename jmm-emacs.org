@@ -2104,6 +2104,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
 (eval-after-load 'dired
   '(bind-key "M-N" #'jmm/dired-show-files-in-file-manager dired-mode-map))
 #+end_src
+
 ** Show File Manager in Dired
 
    Sometimes you want to go the other way around and quickly open
