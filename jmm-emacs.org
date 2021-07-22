@@ -4520,7 +4520,9 @@ This is also handy when using multiple cursors."
 	  (?C . avy-action-copy)
 	  (?\C-c . jmm/avy-action-copy-line)
 	  (?I . avy-action-ispell)
-	  (?Z . avy-action-zap-to-char)))
+	  (?Z . avy-action-zap-to-char)
+	  (?\C-z . jmm/avy-action-zap-up-to-yank-with-avy)
+	  (?\M-z . jmm/avy-action-zap-up-to-yank)))
   (advice-add 'avy--read-candidates :around #'jmm/avy--hide-timer-overlays))
 #+END_SRC
 
@@ -4568,7 +4570,7 @@ Avy has a really cool feature where you can change what action will
 happen to the candidate select. This makes it really easy to copy a
 symbol to the point you're currently at.
 
-Here I ad some other convenience functions like teleporting and
+Here I add some other convenience functions like teleporting and
 yanking the rest of a line, which is helpful sometimes in command
 prompts. Theoretically you should be able just to switch
 ~avy-command~, but I haven't found out how to do that on the fly.
@@ -4648,6 +4650,77 @@ Note: This also messes up with multiple windows"
   (yank)
   t)
 #+END_SRC
+
+Here are some functions for yanking some text from a remote point by
+zapping to a character.
+
+#+begin_src emacs-lisp
+(defun jmm/avy-action-zap-up-to (pt)
+  "Zap up to character. Copy it."
+  (save-excursion
+    (goto-char pt)
+    (let ((direction 1)
+	  (char (read-char-from-minibuffer "Avy zap up to char: "
+					   nil 'read-char-history))
+	  str)
+      (setq str (buffer-substring (point)
+				  (progn
+				    (forward-char direction)
+				    (unwind-protect
+					(search-forward (char-to-string char))
+				      (backward-char direction))
+				    (point))))
+      (kill-new str)
+      (message "Copied: %s" str)))
+  (let ((dat (ring-ref avy-ring 0)))
+    (select-frame-set-input-focus
+     (window-frame (cdr dat)))
+    (select-window (cdr dat))
+    (goto-char (car dat))))
+
+(defun jmm/avy-action-zap-up-to-with-avy (pt)
+  "Avy-zap up to character. Copy it."
+  (save-excursion
+    (goto-char pt)
+    (let ((direction 1)
+	  (char (read-char-from-minibuffer "Avy zap up to char: "
+					   nil 'read-char-history))
+	  (avy-all-windows nil)
+	  str)
+      (setq str (buffer-substring (point)
+				  (progn
+				    (avy-with avy-goto-char
+				      (avy-jump
+				       (if (= 13 char)
+					   "\n"
+					 (regexp-quote (string char)))
+				       :beg (point)
+				       :end (save-excursion
+					      (forward-paragraph)
+					      (point))))
+				    (point))))
+      (kill-new str)
+      (message "Copied: %s" str)))
+  (let ((dat (ring-ref avy-ring 1)))
+    (select-frame-set-input-focus
+     (window-frame (cdr dat)))
+    (select-window (cdr dat))
+    (goto-char (car dat))))
+
+(defun jmm/avy-action-zap-up-to-yank (pt)
+  "Zap up to character and yank"
+  (jmm/avy-action-zap-up-to pt)
+  (yank)
+  t)
+
+(defun jmm/avy-action-zap-up-to-yank-with-avy (pt)
+  "Avy-zap up to character and yank"
+  (jmm/avy-action-zap-up-to-with-avy pt)
+  (yank)
+  t)
+
+#+end_src
+
 
 * Nix
 
