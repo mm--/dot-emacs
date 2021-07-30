@@ -1348,6 +1348,11 @@ You'll need to manually connect the REPL afterwards."
   ;; TODO: Automatically load eshell-hist-ex
   ;; (add-to-list 'eshell-modules-list 'eshell-hist-ex)
   :config
+  ;; Need to wait until eshell-hist-mode-map is defined.
+  (bind-keys :package em-hist
+	     :map eshell-hist-mode-map
+	     ("<up>")
+	     ("<down>"))
   (add-hook 'eshell-mode-hook
 	    (lambda ()
 	      ;; TODO: Don't rewrite aliases that already exist.
@@ -2641,6 +2646,9 @@ the user answers 'help'.  Otherwise, default to `dired-delete-help'."
 
 #+begin_src emacs-lisp
 (add-hook 'emacs-lisp-mode-hook 'rainbow-mode)
+(bind-keys :package elisp-mode
+	   :map emacs-lisp-mode-map
+	   ("C-c C-m" . pp-macroexpand-last-sexp))
 #+end_src
 
 
@@ -3356,12 +3364,11 @@ See also `notmuch-multipart/alternative-discouraged'"
 (use-package helm-mode
   :diminish helm-mode
   :defer 1
-  :bind (("M-x" . helm-M-x)
+  :bind (;;("M-x" . helm-M-x)
 	 ("C-x b" . helm-buffers-list)
 	 ;; ("C-x C-f" . helm-find-files)
 	 ;; ("C-x f" . helm-for-files)
 	 ("C-x C-i" . helm-semantic-or-imenu)
-	 ("M-x" . helm-M-x)
 	 ("M-y" . helm-show-kill-ring)
 	 ("M-s o" . helm-occur)
 	 ("M-g s" . helm-do-grep)
@@ -3590,7 +3597,9 @@ Make an easy way to find files in open dired buffers
   ;; Require counsel for jmm/counsel-fasd-directories
   :defer 3
   :after (dired)
-  :bind (("C-x l" . counsel-locate)
+  :bind (("M-x" . counsel-M-x)
+	 ("C-x b" . counsel-switch-buffer)
+	 ("C-x l" . counsel-locate)
 	 ("C-c k" . counsel-ag)
 	 ("C-x C-f" . counsel-find-file)
 	 ("<f2> u" . counsel-unicode-char)
@@ -4995,7 +5004,11 @@ completion. This code from the manual brings it back.
   :if (not noninteractive)
   :ensure t
   :commands (yas-global-mode yas-minor-mode)
-  :init (setq yas-triggers-in-field t))
+  :init
+  (setq yas-triggers-in-field t)
+  (add-hook 'text-mode-hook 'yas-minor-mode)
+  :config
+  (yas-reload-all))
 #+end_src
 ** Switch window
    A visual way to switch windows. Kind of like ace-jump, but for windows.
