@@ -3631,7 +3631,7 @@ Make an easy way to find files in open dired buffers
   ;; Require counsel for jmm/counsel-fasd-directories
   :defer 3
   :after (dired)
-  :bind (("M-x" . counsel-M-x)
+  :bind (;; ("M-x" . counsel-M-x)
 	 ("C-x b" . counsel-switch-buffer)
 	 ("C-x l" . counsel-locate)
 	 ("C-c k" . counsel-ag)
@@ -3643,7 +3643,9 @@ Make an easy way to find files in open dired buffers
 	 ("C-c d" . jmm/counsel-fasd-directories)
 	 ("C-c j" . jmm/counsel-dired-file)
 	 :map dired-mode-map
-	 ("M-F" . jmm/counsel-files-in-directory))
+	 ("M-F" . jmm/counsel-files-in-directory)
+	 :map minibuffer-local-map
+	 ("M-x" . jmm/counsel-M-x-from-M-x))
   :init
   ;; Suggest the file at point, if it's a path
   (setq counsel-find-file-at-point t)
@@ -3831,6 +3833,23 @@ Works with remote (Tramp) files as well."
       (find-file file-name))))
 #+END_SRC
 
+** Run counsel-M-x if I press M-x twice
+
+   The idea here is that the default ~M-x~
+   (~execute-extended-command~) is pretty fast because it doesn't have
+   to generate completions.  Sometimes, though, I want completions, so
+   a second ~M-x~ should trigger the counsel version with the current
+   input.
+
+#+begin_src emacs-lisp
+;; TODO: Pass current prefix!
+;; Oh, somehow this works without it?
+(defun jmm/counsel-M-x-from-M-x ()
+  "Quit the minibuffer, run `counsel-M-x' with current contents."
+  (interactive)
+  (setq jmm/tmp/curr-minibuffer-contents (minibuffer-contents))
+  (ivy-quit-and-run (counsel-M-x jmm/tmp/curr-minibuffer-contents)))
+#+end_src
 
 * Magit
   [[https://magit.vc/][Magit]] is probably the best [[http://stackoverflow.com/a/6976506][git porcelain]] out there. I've been using it for a while.
