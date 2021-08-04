@@ -57,6 +57,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       ))
 ;; TODO move elsewhere.
 (setq save-abbrevs 'silently)
+(setq abbrev-file-name "~/.emacs.d/abbrev_defs")
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
@@ -521,6 +522,21 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
     (setq he-expand-list (cdr he-expand-list))
     t))
 #+end_src
+** Skeletons
+
+   Some setup for skeletons.
+
+#+begin_src emacs-lisp
+;; Adapted from https://www.emacswiki.org/emacs/AbbrevMode
+(defun dont-insert-expansion-char ()
+  "This function does nothing. Used for `define-abbrev' hook.
+It just has the property 'no-self-insert set."
+  ;; (declare (no-self-insert t)) ; Doesn't work.
+  t)
+(put 'dont-insert-expansion-char 'no-self-insert t)
+(setq skeleton-end-newline nil)
+#+end_src
+
 
 * Compiling conveniences
 
@@ -747,7 +763,6 @@ Make it easier to insert Greek symbols
 
 Makes entering some symbols easier.
 #+begin_src emacs-lisp
-(setq skeleton-end-newline nil)
 (add-hook 'LaTeX-mode-hook
  (lambda ()
    (define-key LaTeX-mode-map (kbd "` v (") 'latex-skeleton-left-paren)
@@ -897,7 +912,26 @@ following line.
 	      ("_" . ess-insert-assign)
 	 :map inferior-ess-r-mode-map
 	      ("C-%" . then_R_operator)
-	      ("_" . ess-insert-assign)))
+	      ("_" . ess-insert-assign))
+  :config
+  (define-skeleton jmm/R/pipe
+    "Inserts a magrittr pipe."
+    nil
+    "%>%" \n _)
+
+  (define-skeleton jmm/R/left-assign
+    "Previous paragraph left assignment"
+    "Variable name: "
+    '(setq v1 (point))
+    '(backward-paragraph)
+    '(when (looking-at-p "^$") (forward-line))
+    str " <- "
+    '(indent-region (point) v1))
+
+  (define-abbrev ess-r-mode-abbrev-table "pp" "" 'jmm/R/pipe)
+  (define-abbrev ess-r-mode-abbrev-table "ra" "->")
+  (define-abbrev ess-r-mode-abbrev-table "la" "" 'jmm/R/left-assign)
+  (add-hook 'ess-r-mode-hook #'abbrev-mode))
 #+end_src
 
 #+begin_src emacs-lisp
