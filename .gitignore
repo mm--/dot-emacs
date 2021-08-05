@@ -31,3 +31,6 @@ transient/history.el
 %backup%~
 company-statistics-cache.el
 /.lsp-session-v1
+/projects
+/quickurls
+/eln-cache/
