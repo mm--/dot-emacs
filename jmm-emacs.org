@@ -183,6 +183,9 @@ Enable all the disabled commands
 ;; The *help* window default behavior is kinda annoying. Always select
 ;; it so I can quickly close it by pressing "q"
 (setq help-window-select t)
+
+;; Sometimes I like to pipe the output of `shell-command' into `find-file'
+(setq enable-recursive-minibuffers t)
 #+end_src
 
 Make scripts executable
@@ -3860,7 +3863,11 @@ Works with remote (Tramp) files as well."
   :bind (("C-x g" . magit-status)
 	 ("C-x M-g" . magit-dispatch-popup)
 	 :map dired-mode-map
-	 ("C-c C-l" . magit-dired-log)))
+	 ("C-c C-l" . magit-dired-log))
+  :init
+  (defalias 'mlr 'magit-list-repositories)
+  (defalias 'mlb 'magit-log-buffer-file)
+  (defalias 'mgb 'magit-blame))
 #+END_SRC
 
 * Flycheck
@@ -3904,13 +3911,8 @@ Works with remote (Tramp) files as well."
 
 ** Aliases
 #+begin_src emacs-lisp
-(defun afm ()				;Shorter than typing auto-fill-mode
-  (interactive)
-  (auto-fill-mode))
-
-(defun ttl ()
-  (interactive)
-  (toggle-truncate-lines))
+(defalias 'afm 'auto-fill-mode)
+(defalias 'ttl 'toggle-truncate-lines)
 #+end_src
 
 ** Killing buffers
