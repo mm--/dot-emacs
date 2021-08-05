@@ -2585,18 +2585,18 @@ copy ring." (s-capitalize actionname) (s-downcase actionname))
     browser dialog box. This function makes it easy to add a file to
     ~dired-ranger~'s copy ring.
 #+BEGIN_SRC emacs-lisp
-(defcustom jmm/downloads-directory "~/Downloads"
+(defcustom jmm/downloads-directory (list "~/Downloads" "~/Downloads/tmp")
   "Directory where downloads are usually stored."
-  :type 'directory)
+  :type '(repeat directory))
 
 (defun jmm/latest-download-to-ranger ()
   "Add the latest file in `jmm/downloads-directory' to dired-ranger's copy ring.
 Like `dired-ranger-copy' but I don't have to manually select the latest download."
   (interactive)
-  (let ((latest-file (josh/latest-file jmm/downloads-directory "[:alpha:]")))
+  (let ((latest-file (jmm/latest-file jmm/downloads-directory "[:alpha:]")))
     (ring-insert
      dired-ranger-copy-ring
-     (cons (list (dired-noselect jmm/downloads-directory)) (list latest-file)))
+     (cons (list (dired-noselect (file-name-directory latest-file))) (list latest-file)))
     (message (format "Copied %s into copy ring." latest-file))))
 #+END_SRC
 ** Finding files in subdirectories with ivy/counsel
@@ -4162,13 +4162,23 @@ open up the PDF to that page."
    directory. For example, if I wanted to get the most recently
    downloaded PDF in "~/Downloads"
 #+BEGIN_SRC emacs-lisp
-(defun josh/latest-file (path glob)
-  "Get the latest file in PATH matching the regex GLOB"
-  (caar
-   (sort (mapcar (lambda (file)
-		  (cons (car file) (float-time (file-attribute-modification-time file))))
-		(directory-files-and-attributes path 'full glob 'nosort))
-	(lambda (file1 file2) (> (cdr file1) (cdr file2))))))
+(defun jmm/latest-file (paths glob)
+  "Get the latest file in PATHS matching the regex GLOB.
+PATHS can be a list of paths or one path as a string."
+  (let ((paths2 (-as-> paths X
+		       (if (listp X) X (list X))
+		       (-map #'expand-file-name X))))
+    (-as-> paths2 X
+	   (--mapcat (directory-files-and-attributes it 'full glob 'nosort) X)
+	   ;; Don't include paths themselves for consideration
+	   (--reject (-contains? paths2 (car it)) X)
+	   (mapcar (lambda (file)
+		     ;; Note: You need to use the cdr of file to get the attributes.
+		     ;; Otherwise you get an off-by-one error
+		     (cons (car file) (float-time (file-attribute-modification-time (cdr file)))))
+		   X)
+	   (sort X (lambda (file1 file2) (> (cdr file1) (cdr file2))))
+	   caar)))
 #+END_SRC
 ** Unfill Paragraph
    From https://www.emacswiki.org/emacs/UnfillParagraph
