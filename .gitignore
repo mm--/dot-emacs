@@ -34,3 +34,5 @@ company-statistics-cache.el
 /projects
 /quickurls
 /eln-cache/
+/split/
+.autoloads/

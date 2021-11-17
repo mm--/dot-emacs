@@ -129,7 +129,7 @@ See also `eshell-read-history' and `eshell-write-history'."
   "Information about the last alert.
 Useful if we want to go to the buffer the last alert came from.")
 
-(defvar jmm/eshell-expanded-history-ring nil
+(defvar jmm/eshell-expanded-history-ring (make-ring 500)
   "A history ring that is shared among all eshell buffers.
 Unlike em-hist.el, I want this to be global across all buffers.")
 

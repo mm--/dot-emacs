@@ -32,9 +32,11 @@
 	dired-unmark-all-marks
 	dired-unmark-backward
 	electric-newline-and-maybe-indent
+	end-of-visual-line
 	ess-eval-line
 	ess-indent-or-complete
 	ess-insert-assign
+	ess-roxy-goto-end-of-roxy-comment
 	ess-roxy-move-beginning-of-line
 	ess-smart-S-assign
 	ess-smart-comma
@@ -179,11 +181,14 @@
 	mc/vertical-align
 	mc/vertical-align-with-space
 	menu-bar-open
+	org-insert-heading-respect-content
 	orgtbl-hijacker-command-100
 	orgtbl-hijacker-command-102
 	orgtbl-hijacker-command-25
 	orgtbl-hijacker-command-5
+	overwrite-mode
 	revert-buffer
+	set-input-method
 	start-xterm
 	text-scale-adjust
 	undefined

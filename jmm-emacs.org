@@ -1,5 +1,8 @@
 #+TITLE: Josh Moller-Mara's Emacs configuration
 #+OPTIONS: toc:1 h:4
+#+PROPERTY: header-args:emacs-lisp  :comments both
+#+PROPERTY: header-args             :mkdirp t
+
 
 The whole org-babel setup is shamelessly stolen from Sacha Chua.
 
@@ -11,6 +14,11 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 (setq use-package-verbose t)
 (add-to-list 'load-path "~/elisp")
 (add-to-list 'load-path "~/.emacs.d/elisp")
+;; (make-directory-autoloads "~/.emacs.d/elisp/" "~/.emacs.d/.autoloads/jmmloaddefs.el")
+(add-to-list 'load-path "~/.emacs.d/.autoloads/")
+(require 'jmmloaddefs nil t) ;; Load my personal autoloads, if they exist
+(require 'jmmloadsplit nil t) ;; Autoloads generated from splitting out tangled code
+
 
 (require 'package)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
@@ -43,12 +51,12 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       expand-region
                       async
                       auto-complete
-                      projectile
+                      ;; projectile
                       ledger-mode
                       f
 		      dash
-                      helm-projectile
-                      helm-swoop
+                      ;; helm-projectile
+                      ;; helm-swoop
 		      hydra
                       js2-mode
                       flycheck
@@ -72,7 +80,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 
   If I make any changes using Custom, I want them to be in a separate file.
 #+begin_src emacs-lisp
-;; TODO: This is slow. Defer this.
+;; TODO: This is slow. Defer this. It seems to be loading org-mode already.
 ;; Also, make a macro/function for:
 ;; - [ ] Defering stuff
 ;; - [ ] Byte compiling and loading (with timing) a file
@@ -95,6 +103,38 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   (interactive)
   (byte-recompile-directory "~/.emacs.d" 0)
   (byte-recompile-directory "~/elisp" 0))
+#+end_src
+
+* Splitting out files and autoloading
+
+  One issue with having all my elisp code in org is that all the
+  ~(require ...)~ statements get evaluated at init. This is the reason
+  I had to split out my org config into its own file, as it took too
+  long to load when I wasn't even using org.
+
+  The proper way to do things is to split code out into their own
+  packages and provide autoloads. To do this while keeping the org
+  babel stuff, we just supply a ~:tangle~ header argument, add
+  autoload comments, and make sure the ~(provide ...)~ matches the
+  tangled filename.
+
+#+begin_src emacs-lisp :tangle "split/jmm-elisp-stuff.el"
+(require 'org)
+
+;; TODO: Probably should delete/clean the files in "split"
+
+;;;###autoload
+(defun jmm/elisp-recompile ()
+  "Tangle, byte-compile, make autoloads."
+  (interactive)
+  (org-babel-tangle-file "~/.emacs.d/jmm-emacs.org" "~/.emacs.d/jmm-emacs.el")
+  (org-babel-tangle-file "~/.emacs.d/jmm-org-config.org" "~/.emacs.d/jmm-org-config.el")
+  (byte-recompile-directory "~/.emacs.d" 0)
+  (byte-recompile-directory "~/.emacs.d/split" 0)
+  (make-directory-autoloads "~/.emacs.d/elisp/" "~/.emacs.d/.autoloads/jmmloaddefs.el")
+  (make-directory-autoloads "~/.emacs.d/split/" "~/.emacs.d/.autoloads/jmmloadsplit.el"))
+
+(provide 'jmm-elisp-stuff)
 #+end_src
 
 * Basic configuration
@@ -124,9 +164,9 @@ Enable all the disabled commands
 (xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
 
 ;; Some performance things for snappier redisplay
-(setq redisplay-skip-fontification-on-input t)
-(setq fast-but-imprecise-scrolling t)
-(setq jit-lock-defer-time 0)
+;; (setq redisplay-skip-fontification-on-input t)
+;; (setq fast-but-imprecise-scrolling t)
+;; (setq jit-lock-defer-time 0)
 ;; TODO: Maybe figure out a better setting for gc-cons-threshold
 ;; I seem to need this in emacs-pgtkgcc, with some stuttering in helm-mode.
 (setq gc-cons-threshold 80000000)
@@ -186,6 +226,12 @@ Enable all the disabled commands
 
 ;; Sometimes I like to pipe the output of `shell-command' into `find-file'
 (setq enable-recursive-minibuffers t)
+
+;; Some better completions for M-x and find-file
+;; I particularly like "initials"
+(setq completion-styles '(basic partial-completion emacs22 initials))
+;; TODO: I need to figure out a way to signal that other completions exist
+(setq completion-cycle-threshold nil)
 #+end_src
 
 Make scripts executable
@@ -488,8 +534,9 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 #+end_src
 
 * Autocompletion, Hippie expand
-
+  
 #+begin_src emacs-lisp
+;; TODO: Maybe should re-bind this, as by default it should be xref-find-references
 (bind-key "M-?" 'hippie-expand)
 #+end_src
 
@@ -543,12 +590,12 @@ It just has the property 'no-self-insert set."
 
 * Compiling conveniences
 
-#+begin_src emacs-lisp
-;; TODO: Should probably move this in its own autoload file
+#+begin_src emacs-lisp :tangle "split/jmm-cpp.el"
 (require 'compile)
-(add-hook 'c++-mode-hook
-	  (lambda ()
-	    (unless (file-exists-p "Makefile")
+
+;;;###autoload
+(defun jmm-old-c++-mode-hook ()
+ (unless (file-exists-p "Makefile")
 	      (set (make-local-variable 'compile-command)
 		   ;; emulate make's .c.o implicit pattern rule, but with
 		   ;; different defaults for the CC, CPPFLAGS, and CFLAGS
@@ -560,14 +607,14 @@ It just has the property 'no-self-insert set."
 			     (or (getenv "CFLAGS") "-g -Os")
 			     file
 			     (file-name-sans-extension file)
-			     ))))))
+			     )))))
+
+(provide 'jmm-cpp)
 #+end_src
 
 #+begin_src emacs-lisp
+(add-hook 'c++-mode-hook #'jmm-old-c++-mode-hook)
 (bind-key "<f9> <f9>" 'recompile)
-#+end_src
-
-#+begin_src emacs-lisp
 (setq compilation-scroll-output 1)
 #+end_src
 
@@ -1353,7 +1400,7 @@ You'll need to manually connect the REPL afterwards."
    ;; (other-window 1)
    (shell (concat (buffer-name) " shell")))
 
-(bind-key "C-x 4 s" 'run-half-shell)
+;; (bind-key "C-x 4 s" 'run-half-shell)
 #+end_src
 ** Shell pop
    [[https://github.com/kyagi/shell-pop-el][Shell pop]] is kinda handy for shells. I still mostly just use xterms
@@ -1362,6 +1409,7 @@ You'll need to manually connect the REPL afterwards."
 (use-package shell-pop
   :if window-system
   :unless noninteractive
+  :disabled t
   :ensure t
   :bind ("C-c t" . shell-pop)
   :init
@@ -1973,7 +2021,8 @@ Sometimes IMAP freezes, so I like to be able to kill it.
 (setq wdired-allow-to-change-permissions t)
 #+END_SRC
 ** Dired-X
-Because dired-jump is pretty useful
+Because dired-jump is pretty useful.
+Note that ~dired-jump~ got promoted from ~dired-x~ to ~dired~ recently, like Emacs 28 or 29.
 #+begin_src emacs-lisp
 (use-package dired-x
   :init
@@ -1989,7 +2038,7 @@ Because dired-jump is pretty useful
    listed in a subdirectory of a dired buffer). Otherwise it just
    calls ~~dired-jump~.
 #+BEGIN_SRC emacs-lisp
-(autoload 'get-buffers-matching-mode "helm-swoop")
+;; (autoload 'get-buffers-matching-mode "helm-swoop")
 (defun jmm/dired-jump (&optional killbuffer file)
   "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir.
 With optional argument KILLBUFFER, also kill the current buffer."
@@ -3396,11 +3445,12 @@ See also `notmuch-multipart/alternative-discouraged'"
 #+end_src
 * Helm
 #+begin_src emacs-lisp
-(require 'helm-config)
-(bind-key "C-c h" 'helm-mini)
+;;(require 'helm-config)
+;;(bind-key "C-c h" 'helm-mini)
 (use-package helm-mode
   :diminish helm-mode
   :defer 1
+  :disabled t
   :bind (;;("M-x" . helm-M-x)
 	 ("C-x b" . helm-buffers-list)
 	 ;; ("C-x C-f" . helm-find-files)
@@ -3493,6 +3543,7 @@ Set up hotkeys and stuff for helm-swoop
 #+BEGIN_SRC emacs-lisp
 (use-package helm-swoop
   :ensure t
+  :disabled t
   :bind (("M-i" . helm-swoop)
          ("M-I" . helm-swoop-back-to-last-point)
          ("C-c M-i" . helm-multi-swoop)
@@ -3522,6 +3573,7 @@ Make an easy way to find files in open dired buffers
 (use-package helm-descbinds
   :ensure t
   :defer t
+  :disabled t
   :bind (("C-h b" . helm-descbinds)
          ("C-h w" . helm-descbinds)))
 #+END_SRC
@@ -3530,6 +3582,7 @@ Make an easy way to find files in open dired buffers
 #+BEGIN_SRC emacs-lisp
 (use-package helm-org-rifle
   :ensure t
+  :disabled t
   :after (org)
   :bind (("C-c R" . helm-org-rifle-occur)
          ("C-c r" . helm-org-rifle)
@@ -3635,10 +3688,10 @@ Make an easy way to find files in open dired buffers
   :defer 3
   :after (dired)
   :bind (;; ("M-x" . counsel-M-x)
-	 ("C-x b" . counsel-switch-buffer)
+	 ;; ("C-x b" . counsel-switch-buffer)
 	 ("C-x l" . counsel-locate)
 	 ("C-c k" . counsel-ag)
-	 ("C-x C-f" . counsel-find-file)
+	 ;; ("C-x C-f" . counsel-find-file)
 	 ("<f2> u" . counsel-unicode-char)
 	 ("<f1> f" . counsel-describe-function)
 	 ("<f1> v" . counsel-describe-variable)
@@ -3865,9 +3918,10 @@ Works with remote (Tramp) files as well."
 	 :map dired-mode-map
 	 ("C-c C-l" . magit-dired-log))
   :init
-  (defalias 'mlr 'magit-list-repositories)
-  (defalias 'mlb 'magit-log-buffer-file)
-  (defalias 'mgb 'magit-blame))
+  ;; (defalias 'mlr 'magit-list-repositories)
+  ;; (defalias 'mlb 'magit-log-buffer-file)
+  ;; (defalias 'mgb 'magit-blame)
+  )
 #+END_SRC
 
 * Flycheck
@@ -3910,9 +3964,14 @@ Works with remote (Tramp) files as well."
 #+end_src
 
 ** Aliases
+   These are aliases for commands I use a lot.
+
 #+begin_src emacs-lisp
 (defalias 'afm 'auto-fill-mode)
-(defalias 'ttl 'toggle-truncate-lines)
+(defalias 'arm 'auto-revert-mode)
+(defalias 'ttl 'toggle-truncate-lines)	; Not needed with "initials" completion
+(defalias 'tdoe 'toggle-debug-on-error)	; Same
+(defalias 'wsm 'whitespace-mode)
 #+end_src
 
 ** Killing buffers
@@ -4046,7 +4105,7 @@ specifies the list of buffers to kill, asking for approval for each one."
    (rename-uniquely)
    (other-window -1))
 
-(bind-key "C-x 4 t" 'run-half-term)
+;; (bind-key "C-x 4 t" 'run-half-term)
 #+end_src
 ** Search Gregg Shorthand Dictionary
 #+begin_src emacs-lisp
@@ -5021,7 +5080,7 @@ completion. This code from the manual brings it back.
    your javascript files as well as tell you the type of variable.
 
 #+begin_src emacs-lisp
-(add-to-list 'load-path "~/Downloads/tern/emacs")
+;; (add-to-list 'load-path "~/Downloads/tern/emacs")
 (use-package tern
   :commands tern-mode
   :config (add-hook 'js2-mode-hook (lambda () (tern-mode t))))
@@ -5035,6 +5094,7 @@ completion. This code from the manual brings it back.
 #+begin_src emacs-lisp
 (use-package projectile
   :ensure t
+  :disabled t
   :diminish projectile-mode
   :bind-keymap ("C-c p" . projectile-command-map)
   :bind (:map projectile-command-map
@@ -5050,6 +5110,7 @@ completion. This code from the manual brings it back.
 
 (use-package helm-projectile
   :ensure t
+  :disabled t
   :after projectile
   :config
   (helm-projectile-toggle 1))
@@ -5143,6 +5204,7 @@ completion. This code from the manual brings it back.
 #+BEGIN_SRC emacs-lisp
 (use-package helm-ag
   :ensure t
+  :disabled t
   :bind ("<f9> a" . helm-ag)
   :config
   (advice-add 'helm-ag--persistent-action :after #'jmm/helm-ag-org-reveal))
@@ -5470,6 +5532,7 @@ With optional ARG, quote the string."
 It also provides functions for swapping and moving windows, which is super helpful.
 #+BEGIN_SRC emacs-lisp
 (use-package ace-window
+  :disabled t
   :bind (("C-9" . ace-window)
 	 ("C-(" . ace-swap-window))
   :init
@@ -5489,6 +5552,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 #+BEGIN_SRC emacs-lisp
 (use-package emojify
   :ensure t
+  :disabled t
   :defer t
   :init
   (setq emojify-emoji-styles '(unicode))
@@ -5502,7 +5566,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 
    Here's a setup for Maxima, from EmacsWiki.
  #+BEGIN_SRC emacs-lisp
-   (add-to-list 'load-path "/usr/share/emacs/site-lisp/maxima/")
+   ;; (add-to-list 'load-path "/usr/share/emacs/site-lisp/maxima/")
    (autoload 'maxima-mode "maxima" "Maxima mode" t)
    (autoload 'imaxima "imaxima" "Frontend for maxima with Image support" t)
    (autoload 'maxima "maxima" "Maxima interaction" t)
@@ -5525,6 +5589,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 #+BEGIN_SRC emacs-lisp
 (use-package dumb-jump
   :ensure
+  :disabled t
   :bind (("M-g o" . dumb-jump-go-other-window)
 	 ("M-g j" . dumb-jump-go)
 	 ("M-'" . dumb-jump-quick-look)
@@ -5620,6 +5685,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 (use-package eyebrowse
   :if (not noninteractive)
   :ensure t
+  :disabled t
   :bind-keymap ("C-c w" . eyebrowse-mode-map)
   :init
   ;; So we don't override "refile" for org-mode
@@ -5694,6 +5760,7 @@ obscuring other windows.
 #+BEGIN_SRC emacs-lisp
 (use-package org-bookmark-heading
   :ensure t
+  :disabled t
   :init
   (autoload #'org-bookmark-jump "org-bookmark-heading" nil)
   :after (org))
