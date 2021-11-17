@@ -96,15 +96,6 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
     (if (file-exists-p secrets) (load-file secrets)))
 #+end_src
 
-** Byte compile stuff?
-
-#+begin_src emacs-lisp
-(defun emacs/byte-recompile ()
-  (interactive)
-  (byte-recompile-directory "~/.emacs.d" 0)
-  (byte-recompile-directory "~/elisp" 0))
-#+end_src
-
 * Splitting out files and autoloading
 
   One issue with having all my elisp code in org is that all the
@@ -129,7 +120,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   (interactive)
   (org-babel-tangle-file "~/.emacs.d/jmm-emacs.org" "~/.emacs.d/jmm-emacs.el")
   (org-babel-tangle-file "~/.emacs.d/jmm-org-config.org" "~/.emacs.d/jmm-org-config.el")
-  (byte-recompile-directory "~/.emacs.d" 0)
+  ;; (byte-recompile-directory "~/.emacs.d" 0)
   (byte-recompile-directory "~/.emacs.d/split" 0)
   (make-directory-autoloads "~/.emacs.d/elisp/" "~/.emacs.d/.autoloads/jmmloaddefs.el")
   (make-directory-autoloads "~/.emacs.d/split/" "~/.emacs.d/.autoloads/jmmloadsplit.el"))
@@ -1212,12 +1203,14 @@ of erc-modified-channels-alist"
 ** Load rcirc-notify
 #+begin_src emacs-lisp
 (use-package rcirc-notify
+  :disabled t
   :after rcirc)
 #+end_src
 
 ** Load rcirc color
 #+begin_src emacs-lisp
 (use-package rcirc-colo
+  :disabled t
   :after rcirc)
 #+end_src
 
@@ -1898,15 +1891,6 @@ For example, ARGS could be \"--in=here\""
   (jka-compr-update))
 #+END_SRC
 
-* BBDB
-#+begin_src emacs-lisp
-(use-package bbdb
-  :defer t
-  :config (progn
-	    (bbdb-initialize 'gnus 'message)
-	    (setq bbdb-use-pop-up nil)              ;Don't pop up
-	    (setq bbdb-quiet-about-name-mismatches nil)))
-#+end_src
 * GNUS
   I don't really use GNUS much anymore. I used to use it for email,
   news groups (when CS classes at Berkeley had them before Piazza),
@@ -2038,7 +2022,6 @@ Note that ~dired-jump~ got promoted from ~dired-x~ to ~dired~ recently, like Ema
    listed in a subdirectory of a dired buffer). Otherwise it just
    calls ~~dired-jump~.
 #+BEGIN_SRC emacs-lisp
-;; (autoload 'get-buffers-matching-mode "helm-swoop")
 (defun jmm/dired-jump (&optional killbuffer file)
   "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir.
 With optional argument KILLBUFFER, also kill the current buffer."
@@ -2049,10 +2032,12 @@ With optional argument KILLBUFFER, also kill the current buffer."
 		   default-directory))
 	 (dir (if file (file-name-directory file) default-directory))
 	 ;; TODO: Sort this based on specificity or recency
-	 (updir (car (-filter (lambda (buf)
-				(with-current-buffer buf
-				  (member dir (-map 'car dired-subdir-alist))))
-			      (get-buffers-matching-mode 'dired-mode)))))
+	 ;; TODO: Short circuit instead of finding all matches. cl-loop might be useful here.
+	 (updir (car (->> (buffer-list)
+			  (--filter (with-current-buffer it
+				      (eq major-mode 'dired-mode)))
+			  (--filter (with-current-buffer it
+				      (member dir (-map 'car dired-subdir-alist))))))))
     ;; Make it easier to jump back
     (push-mark)
     (xref-push-marker-stack)
@@ -3692,10 +3677,10 @@ Make an easy way to find files in open dired buffers
 	 ("C-x l" . counsel-locate)
 	 ("C-c k" . counsel-ag)
 	 ;; ("C-x C-f" . counsel-find-file)
-	 ("<f2> u" . counsel-unicode-char)
-	 ("<f1> f" . counsel-describe-function)
-	 ("<f1> v" . counsel-describe-variable)
-	 ("C-h C-b" . counsel-descbinds)
+	 ;; ("<f2> u" . counsel-unicode-char)
+	 ;; ("<f1> f" . counsel-describe-function)
+	 ;; ("<f1> v" . counsel-describe-variable)
+	 ;; ("C-h C-b" . counsel-descbinds)
 	 ("C-c d" . jmm/counsel-fasd-directories)
 	 ("C-c j" . jmm/counsel-dired-file)
 	 :map dired-mode-map
@@ -3896,6 +3881,9 @@ Works with remote (Tramp) files as well."
    to generate completions.  Sometimes, though, I want completions, so
    a second ~M-x~ should trigger the counsel version with the current
    input.
+
+   This is kind of obviated by using ~mct.el~ for completion, which
+   allows for a minimum number of characters plus a delay.
 
 #+begin_src emacs-lisp
 ;; TODO: Pass current prefix!
@@ -5136,20 +5124,12 @@ completion. This code from the manual brings it back.
   :config
   (yas-reload-all))
 #+end_src
-** Switch window
-   A visual way to switch windows. Kind of like ace-jump, but for windows.
-#+BEGIN_SRC emacs-lisp
-  (use-package switch-window
-    :disabled t
-    :bind ("C-x o" . switch-window))
-#+END_SRC
 ** Smartparens
 #+BEGIN_SRC emacs-lisp
 (use-package smartparens
   :if (not noninteractive)
   :ensure t
   :defer 4
-  :disabled
   :init
   (progn (require 'smartparens-config)
 	 ;; Profiler seems to suggest "sp-show--pair-function" is
@@ -5201,6 +5181,8 @@ completion. This code from the manual brings it back.
 	      ("M-B" . sp-backward-symbol)))
 #+END_SRC
 ** Ag
+
+   I've mostly replaced ~helm-ag~ with ~project-find-regexp~, which supports ripgrep.
 #+BEGIN_SRC emacs-lisp
 (use-package helm-ag
   :ensure t
@@ -5263,14 +5245,6 @@ result into the current buffer."
   :commands (skewer-mode skewer-html-mode skewer-css-mode run-skewer)
   :config
   (define-key skewer-mode-map (kbd "C-x C-e") 'skewer-eval-last-expression-or-region))
-#+END_SRC
-** diff-hl
-   Diff-hl seems to be a useful way to visualize uncommitted changes in a file.
-#+BEGIN_SRC emacs-lisp
-  (use-package diff-hl
-    :disabled t
-    :config
-    (add-hook 'dired-mode-hook 'diff-hl-dired-mode))
 #+END_SRC
 ** Octave mode
    Open ".m" files with ~octave-mode~ by default
@@ -5527,18 +5501,6 @@ With optional ARG, quote the string."
        (apply orig-fun args))))
 #+end_src
 
-** Ace-window
-[[https://github.com/abo-abo/ace-window][ace-window]] seems to provide a good way to switch between different windows.
-It also provides functions for swapping and moving windows, which is super helpful.
-#+BEGIN_SRC emacs-lisp
-(use-package ace-window
-  :disabled t
-  :bind (("C-9" . ace-window)
-	 ("C-(" . ace-swap-window))
-  :init
-  (setq aw-scope 'visible))
-#+END_SRC
-
 ** Web-mode
    Web-mode is a pretty good mode for editing HTML and JSX files.
 #+BEGIN_SRC emacs-lisp
@@ -5549,6 +5511,7 @@ It also provides functions for swapping and moving windows, which is super helpf
 
 ** Emojify
    Emoji are very important.
+   This is mostly obsolete in Emacs 29, which has built-in emoji support that feels much nicer.
 #+BEGIN_SRC emacs-lisp
 (use-package emojify
   :ensure t
@@ -5580,25 +5543,6 @@ It also provides functions for swapping and moving windows, which is super helpf
  #+begin_src emacs-lisp
    (setq processing-location "~/Downloads/processing-2.1.2/processing-java")
  #+end_src
-** Dumb jump
-
-   I tried using [[https://github.com/jacktasia/dumb-jump][dumb-jump]] a bit, but didn't like its default keybindings.
-
-   [[https://cestlaz.github.io/posts/using-emacs-33-projectile-jump/][Mike Zamansky]] has a post with some good bindings for it.
-
-#+BEGIN_SRC emacs-lisp
-(use-package dumb-jump
-  :ensure
-  :disabled t
-  :bind (("M-g o" . dumb-jump-go-other-window)
-	 ("M-g j" . dumb-jump-go)
-	 ("M-'" . dumb-jump-quick-look)
-	 ("M-g a" . dumb-jump-back)
-	 ("M-g x" . dumb-jump-go-prefer-external)
-	 ("M-g z" . dumb-jump-go-prefer-external-other-window))
-  :config
-  (setq dumb-jump-selector 'helm))
-#+END_SRC
 ** goto-last-change
 
    ~goto-last-change~ is a simple, but pretty handy, function. I find
@@ -5677,48 +5621,6 @@ It also provides functions for swapping and moving windows, which is super helpf
   :mode ("\\.\\(e?ya?\\|ra\\)ml\\'" . yaml-mode))
 #+END_SRC
 
-** Eyebrowse
-
-   [[https://github.com/wasamasa/eyebrowse][Eyebrowse]] seems like a decent way to manage window configurations.
-
-#+BEGIN_SRC emacs-lisp
-(use-package eyebrowse
-  :if (not noninteractive)
-  :ensure t
-  :disabled t
-  :bind-keymap ("C-c w" . eyebrowse-mode-map)
-  :init
-  ;; So we don't override "refile" for org-mode
-  (setq eyebrowse-keymap-prefix (kbd "C-c w"))
-  ;; Switch to scratch buffer for a new workspace
-  (setq eyebrowse-new-workspace t)
-  :config
-  (eyebrowse-mode t)
-  ;; Make it easier to clone slots
-  (advice-add 'eyebrowse-switch-to-window-config :around #'jmm/eyebrowse-temporarily-clone-slot)
-  ;; Since we defer loading, we'll need to initialize all frames when we first call it.
-  (--each (frame-list) (with-selected-frame it (eyebrowse-init))))
-#+END_SRC
-
-*** Cloning slots
-
-    I usually just prefer to switch to the "scratch" buffer for new
-    slots, but occasionally I'll want to clone the old one. For
-    example, I often like cloning window configurations if I'm working
-    in a projectile project. This allows me to use keys like ~C-c w 2~
-    and ~C-c w c~ like normal, but when I provide a prefix like ~C-u
-    C-c w c~ it'll clone the last window configuration instead of
-    switching to "scratch".
-
-#+BEGIN_SRC emacs-lisp
-(defun jmm/eyebrowse-temporarily-clone-slot (orig-fun &rest args)
-  "With a prefix arg, set `eyebrowse-new-workspace' to nil in order to \"clone\" windows."
-   (if current-prefix-arg
-       (let* ((eyebrowse-new-workspace nil)) ;Nil means clone
-	 (apply orig-fun args))
-     (apply orig-fun args)))
-#+END_SRC
-
 ** Markdown mode
    I'm using markdown mode to edit markdown and Rmarkdown files.
 
@@ -5744,14 +5646,6 @@ obscuring other windows.
   ;; Conflicts with ESS
   (unbind-key "C-c C-c" edit-indirect-mode-map))
 #+END_SRC
-** Resize-window
-
-   Trying out ~[[https://github.com/dpsutton/resize-window][resize-window]]~ for resizing.
-#+BEGIN_SRC emacs-lisp
-(use-package resize-window
-  :ensure t
-  :bind (("C-c ;" . resize-window)))
-#+END_SRC
 ** org-bookmark-heading
 
    Great way to add headings to bookmarks.  I'm putting this here
@@ -5765,37 +5659,6 @@ obscuring other windows.
   (autoload #'org-bookmark-jump "org-bookmark-heading" nil)
   :after (org))
 #+END_SRC
-
-** fasd
-   Useful for navigating to frequently visited files and directories
-#+BEGIN_SRC emacs-lisp
-(use-package fasd
-  :if (not noninteractive)
-  :ensure t
-  ;; ":after" doesn't force loading of required dependencies
-  ;; :after (helm-mode)
-  :init
-  (require 'helm-mode)
-  (setq fasd-enable-initial-prompt nil)
-  (global-fasd-mode 1)
-  :bind (("C-c f" . fasd-find-file)))
-#+END_SRC
-** symbol-overlay
-
-   It's sometimes nice to have the symbol at point automatically
-   highlighted, to see where it's used.
-
-#+BEGIN_SRC emacs-lisp
-(use-package symbol-overlay
-  :if (not noninteractive)
-  :diminish symbol-overlay-mode
-  :disabled t
-  :ensure t
-  :hook (prog-mode . symbol-overlay-mode)
-  :bind (:map prog-mode-map
-	      ("M-r" . symbol-overlay-put)))
-#+END_SRC
-
 
 ** savehist-mode
 
