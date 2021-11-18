@@ -5,7 +5,7 @@
   (let* ((messageid (notmuch-show-get-message-id))
 	 (default-directory "~/org")
 	 (xref-auto-jump-to-first-xref nil)
-	 (newbuf (project-find-regexp messageid)))
+	 (newbuf (project-find-regexp (regexp-quote messageid))))
     (switch-to-buffer newbuf)
     ;; I think there's some issue with the buffer not "having" all matches yet at this point.
     (current-buffer)
@@ -28,14 +28,20 @@ Like `jmm/notmuch-search-org', but jumps directly to the first one."
 	 (xref-auto-jump-to-first-xref nil)
 	 (orgfiles (->> (project-files (project-current nil "~/org"))
 			(--filter (string-equal "org" (file-name-extension it)))))
-	 (xrefmatches (xref-matches-in-files messageid orgfiles)))
+	 (xrefmatches (xref-matches-in-files (regexp-quote messageid) orgfiles))
+	 (nmatches (length xrefmatches)))
     (let* ((xref (car xrefmatches))
 	   (xref--current-item xref))
       (if xref
 	  (progn
+	    (notmuch-show-tag (list "+inorg"))
 	    (xref--show-location (xref-item-location xref) t)
-	    (org-reveal))
-	(user-error "No link found for this notmuch message ID.")))))
+	    (org-reveal)
+	    (when (> nmatches 1)
+	      (message "Found %d matches for this email." nmatches)))
+	(progn
+	  (notmuch-show-tag (list "-inorg"))
+	  (user-error "No link found for this notmuch message ID."))))))
 
 (fset 'jmm/notmuch-mark-all-previous-read
       (kmacro-lambda-form [?\C-e ?\C-  ?\C-a ?\M-< ?k ?U ?\C-x ?\C-x] 0 "%d"))
