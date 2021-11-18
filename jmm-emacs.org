@@ -3170,7 +3170,8 @@ Decode convertkit-mail.
 	(--> urlobj
 	     (car (url-path-and-query it))
 	     (nth 1 (s-match "/[^/]+/[^/]+/\\([^/]+\\)" it))
-	     (base64-decode-string it))
+	     ;; It's usually base64url
+	     (base64-decode-string it t))
       url)))
 #+end_src
 
