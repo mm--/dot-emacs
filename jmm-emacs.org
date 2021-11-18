@@ -2900,6 +2900,8 @@ If it isn't being accessed with sudo, return the same path that is."
 	   ("S")
 	   ("S F" . jmm/notmuch-search-from)
 	   ("S f" . jmm/notmuch-search-from)
+	   ("S o" . jmm/notmuch-search-org)
+	   ("S O" . jmm/notmuch-search-org-jump)
 	   :map notmuch-search-mode-map
 	   ("S")
 	   ("S F" . jmm/notmuch-search-all-from-author)
