@@ -2721,6 +2721,7 @@ With prefix, display only TODO-keyword items."
    check whether elements are visible.
 
 #+BEGIN_SRC emacs-lisp
+(require 'cl-lib)
 (defun jmm/org-end-planning-stuff ()
   "Return the point where planning, properties, and drawers end."
   (save-excursion
@@ -2728,7 +2729,7 @@ With prefix, display only TODO-keyword items."
 	  (post-blank 0))
       (while (let* ((element (org-element-at-point))
 		    (type (car element))
-		    (jumpto (case type
+		    (jumpto (cl-case type
 			      (headline (unless already-jumped-heading
 					  (or (org-element-property :contents-begin element)
 					      (org-element-property :end element))))
