@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# .envrc files are run in bash,
+# They just set any variables that are exported.
+
+if [ ! -d "myenv" ]; then
+    echo "You should build the myenv directory"
+else
+    
+fi
+
+PATH_add myenv/bin
+
+# Local Variables:
+# mode: sh
+# sh-shell: bash
+# End:

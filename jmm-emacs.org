@@ -577,7 +577,13 @@ It just has the property 'no-self-insert set."
 (put 'dont-insert-expansion-char 'no-self-insert t)
 (setq skeleton-end-newline nil)
 #+end_src
+** Auto-insert
 
+   See [[./elisp/jmm-autotype.el][this file]]. Allows me to not have to remember some boilerplate for new files.
+   
+#+begin_src emacs-lisp
+(require 'jmm-autotype)
+#+end_src
 
 * Compiling conveniences
 
