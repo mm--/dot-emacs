@@ -3312,6 +3312,18 @@ tracking parameters.
   (jmm/notmuch-wash-tracking-links msg depth)
   (jmm/notmuch-wash-superfluous-parameters msg depth))
 #+END_SRC
+** Link washing where we remove links
+This is used for espeak, since I normally don't want links to be read out loud.
+
+#+begin_src emacs-lisp
+(defun jmm/notmuch-wash-remove-links (msg depth)
+  "Remove links and replace them with the word \"link\"."
+  (goto-char (point-min))
+  (while (re-search-forward goto-address-url-regexp nil t)
+    (replace-match "link" nil t)))
+#+end_src
+
+
 ** Occasionally show HTML multipart instead of text/plain
 
    Some senders have a ~text/plain~ multipart, but it's so cluttered
