@@ -470,7 +470,7 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 
 #+BEGIN_SRC emacs-lisp
 (use-package org
-  :ensure org-plus-contrib
+  ;; :ensure org-plus-contrib
   :bind (("C-c c" . org-capture)
 	 ("C-c a" . org-agenda)
 	 ("C-c l" . org-store-link)

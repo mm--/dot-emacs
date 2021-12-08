@@ -10,7 +10,7 @@ loaded ~org-plus-contrib~
 
 #+BEGIN_SRC emacs-lisp
 (use-package org
-  :ensure org-plus-contrib
+  ;; :ensure org-plus-contrib
   :defer t				;Deferring doesn't matter since we needed org to tangle a file
   :bind (:map org-mode-map
 	 ("M-T" . josh/org-convert-added-to-created-property)
@@ -47,12 +47,15 @@ loaded ~org-plus-contrib~
   (add-to-list 'org-tag-faces '("unsched" :foreground "gold"))
   (advice-add 'org-open-at-point :around #'jmm/org-open-link-alternate-browser)
   (advice-add 'org-open-at-point-global :around #'jmm/org-open-link-alternate-browser)
-  (require 'org-screenshot)
+  ;; (require 'org-screenshot)
   ;; (require 'org-depend) 		;Replace with org-edna
-  (require 'org-expiry)
-  (require 'org-inlinetask)
-  (require 'org-collector)
-  (require 'ox))
+  ;; (require 'org-expiry)
+  ;; (require 'org-inlinetask)
+  ;; (require 'org-collector)
+  (require 'ox)
+  (require 'oc)	;; For citations. Requires a pretty recent version of org.
+  (require 'oc-basic)
+  (require 'oc-biblatex))
 
 (use-package org-agenda
   :after org
