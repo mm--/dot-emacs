@@ -2901,6 +2901,7 @@ If it isn't being accessed with sudo, return the same path that is."
 	   :map notmuch-show-mode-map
 	   ("b" . josh/notmuch-send-html-to-browser)
 	   ("B" . notmuch-show-resend-message)
+	   ("E" . jmm/notmuch-show-espeak)
 	   ("G" . jmm/notmuch-refresh-buffer-show-multipart-html)
 	   ("o" . jmm/notmuch-show-open-in-gmail)
 	   ("S")
