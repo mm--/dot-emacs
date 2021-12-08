@@ -4,8 +4,9 @@
 
 if [ ! -d "myenv" ]; then
     echo "You should build the myenv directory"
+    echo "Probably using: nix build -vL -f . myenv -o myenv"
 else
-    
+    :
 fi
 
 PATH_add myenv/bin
