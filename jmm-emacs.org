@@ -1902,7 +1902,8 @@ For example, ARGS could be \"--in=here\""
   news groups (when CS classes at Berkeley had them before Piazza),
   and reading RSS feeds.
 #+begin_src emacs-lisp
-(setq mail-user-agent 'gnus-user-agent)	;Uses Message mode instead of mail mode
+;; Disabled since I use Notmuch now
+;; (setq mail-user-agent 'gnus-user-agent)	;Uses Message mode instead of mail mode
 #+end_src
 ** Spoofing dates
 #+begin_src emacs-lisp
@@ -2921,6 +2922,15 @@ If it isn't being accessed with sudo, return the same path that is."
     :init
     (setq notmuch-multipart/alternative-discouraged 'jmm/notmuch-multipart/alternative-discouraged-from-tags)
     :config
+    ;; This provides address completion, like in the "To:" field
+    ;; TODO: This doesn't make it autoload notmuch-mua though.
+    ;; notmuch-mua calls define-mail-user-agent
+    (setq mail-user-agent 'notmuch-user-agent)
+    (require 'notmuch-mua)
+    ;; TODO: This is only called with notmuch-mua-new-mail, which isn't called by "compose-mail"
+    ;; Maybe define the composefunc of notmuch-user-agent to be notmuch-mua-new-mail
+    (setq notmuch-always-prompt-for-sender t)
+
     (add-to-list 'notmuch-show-insert-text/plain-hook #'jmm/notmuch-wash-links)
     ;; Override `notmuch-search-filter-by-tag' so it only suggests
     ;; tags that occur in the current search.
