@@ -4469,6 +4469,19 @@ https://emacs.stackexchange.com/a/9373
 	  (delete-file tempfile)
 	  (delete-file outfile)))))
 #+end_src
+** Incrementing things
+
+It's kind of hard to do sequences like "A, B, C..." with normal macros. (Though there's a hack that involves setting the format to ~%c~ and starting at ASCII 65 or 97.)
+
+These keybindings allow easier ways to increment things.
+See the file ~increment-stuff.el~
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-c i i") 'increment-number-or-char)
+(global-set-key (kbd "C-c i r") 'increment-number-roman)
+(global-set-key (kbd "C-c i C-y") 'yank-increment-number-or-char)
+(global-set-key (kbd "C-c i y") 'yank-then-increment-number-or-char)
+#+end_src
 
 
 * Emacs Rocks
