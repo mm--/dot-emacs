@@ -527,14 +527,41 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 * Autocompletion, Hippie expand
   
 #+begin_src emacs-lisp
-;; TODO: Maybe should re-bind this, as by default it should be xref-find-references
-(bind-key "M-?" 'hippie-expand)
+;; This used to be "M-?", but now that's used by default for xref-find-references
+(bind-key "M-/" 'hippie-expand)
 #+end_src
 
 ** Hippie Expand stuff:
 
 #+begin_src emacs-lisp
-(setq hippie-expand-try-functions-list (quote (try-complete-file-name-partially try-complete-file-name try-expand-all-abbrevs try-expand-list try-expand-line try-expand-dabbrev try-expand-dabbrev-all-buffers try-expand-dabbrev-from-kill try-complete-lisp-symbol-partially try-complete-lisp-symbol try-expand-dict-command)))
+(setq hippie-expand-try-functions-list
+      '(try-minibuffer-expand-bookmark
+	try-minibuffer-expand-buffer
+	try-expand-multiabbrevs
+	;; try-expand-all-abbrevs
+	try-expand-local-abbrevs2
+	try-expand-global-abbrevs
+	try-expand-acronym
+	try-expand-dabbrev2
+	;; try-expand-flex-dabbrev
+	try-expand-flex-dabbrev
+	try-complete-lisp-symbol-partially
+	try-complete-lisp-symbol
+	try-complete-file-name-partially
+	try-complete-file-name
+	try-expand-list
+	try-expand-line
+	try-expand-whole-kill
+	;; Issue: try-expand-dabbrev-visible doesn't take distance
+	;; into account, so it needs to come after try-expand-dabbrev
+	try-expand-dabbrev-visible
+	try-expand-dabbrev-all-buffers
+	try-expand-dabbrev-from-kill
+	try-expand-flex-dabbrev-all-buffers
+	try-complete-project-file-name
+	try-expand-acronym-all-buffers
+	;; try-expand-dict-command ;; This isn't working in Nix, as there's no /usr/share/dict
+	))
 #+end_src
 
 #+begin_src emacs-lisp
