@@ -3233,6 +3233,28 @@ Decode pocket. I think this was more of an issue with earlier emails, as later e
       url)))
 #+end_src
 
+Decode ProPublica links
+
+#+begin_src emacs-lisp
+;; TODO: Make an overarching group for notmuch link-washing configuration
+(defvar jmm/notmuch-base64-decodable-urls
+  '(("link\\.propublica\\.\\(org\\|net\\)/click/[^/]+/\\([^/]+\\)/" 2))
+  "A list of (regex capturegroup). Capture group should be the base64 encoded URL")
+
+(defun jmm/url-decode-base64url (url)
+  "Parse base64 decodable URLs."
+  (save-match-data
+    (let ((returl url))
+      ;; TODO: Repeat loop until nothing changes
+      (dolist (x jmm/notmuch-base64-decodable-urls)
+	(pcase-let ((`(,regex ,capturegroup) x))
+	  (when (string-match regex returl)
+	    (setq returl
+		  (--> (match-string-no-properties capturegroup returl)
+		       (base64-decode-string it t))))))
+      returl)))
+#+end_src
+
 
 A query-parameter extracting function to be used for a more generic implementation later.
 
@@ -3258,7 +3280,9 @@ Useful for extracting redirects."
 					     jmm/url-decode-proofpoint
 					     jmm/url-decode-appspot
 					     jmm/url-decode-convertkitmail
-					     jmm/url-decode-pocket))))
+					     jmm/url-decode-pocket
+					     jmm/url-decode-base64url
+					     ))))
       (replace-match decoded-url
 		     nil t))))
 #+END_SRC
