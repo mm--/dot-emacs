@@ -238,6 +238,16 @@ Instead of passing a function that goes to the point, you have to initialize the
 
 (defvar jmm/he-last-expanded-function nil)
 
+;; FIXME: No way to undo this, for now.
+;; Check out atomic change groups `prepare-change-group'.
+;; - Oh! Skeletons use `atomic-change-group'! Nice.
+;; FIXME: Intercept quitting. Reset if not.
+(defun jmm/he-substitute-function (funsym)
+    (goto-char he-string-beg)
+    (setq he-tried-table (cons (concat "jmm-command " (symbol-name funsym)) he-tried-table))
+    (delete-region (point) he-string-end)
+    (funcall funsym))
+
 ;; TODO: Split out expanding of normal text. This should probably only expand functions.
 ;; TODO: Mark this function with some kind if "impure" metadata, so other completions can avoid this.
 ;; TODO: Detect if the skeleton aborted with a quit. If so, return nil.
@@ -324,14 +334,17 @@ The abbrev needs to be associated with the symbol 'jmm-command."
 (defun he-acronym-search (pattern &optional reverse limit)
   "Like `he-dabbrev-search', but searches for acronyms."
   (let ((result ())
+	(case-fold-search nil)
 	(regpat (apply #'concat
 		       (-interpose
 			;; FIXME: Other types of hyphens or word separators?
 			"\\(\\s *\\|[-/]\\|\n\\s *\\)"
 			(mapcar (lambda (char)
-				  (format "\\b[%s%s]\\sw*\\b"
-					  (regexp-quote (downcase char))
-					  (regexp-quote (upcase char))))
+				  (if (string-match-p "[[:upper:]]" char)
+				      (format "\\b%s[[:alpha:]]*\\b" char)
+				      (format "\\b[%s%s][[:alpha:]]*\\b"
+					      (regexp-quote (downcase char))
+					      (regexp-quote (upcase char)))))
 				(string-glyph-split pattern))))))
     (while (and (not result)
 		(if reverse
@@ -366,26 +379,69 @@ Needs to have that period at the end."
 
 ;;; Flex expansion
 
+(defvar he-flex-memoized-patterns '())
+
+
+(defun he-flex-beg ()
+  (let ((op (point)))
+    (save-excursion
+      (if (= (skip-chars-backward "a-zA-Z.") 0)
+	  op
+	(point)))))
+
 ;; DONE: Flex should only work for alpha characters. It should refuse to expand things like "tg."
 (defun he-flex-init ()
-  (he-init-string (he-dabbrev-beg) (point))
-  (unless (string-match-p "^[-a-z]+$" he-search-string)
+  (he-init-string (he-flex-beg) (point))
+  (if (string-match-p "^[-a-z.]+[a-z]$" he-search-string)
+      (setq he-flex-memoized-patterns '())
     (setq he-search-string "")))
 
 ;; Maybe the pattern should be created outside?
 ;; Not sure how often this runs, or if it matters.
 ;; TODO: Would be cool to have this do something different in the minibuffer. Like, only search symbols.
-;; MAYBE: Allow multiword flex search by using periods.
+;; DONE: Allow multiword flex search by using periods.
+;; TODO: See if this pattern creation is slow. Maybe memoize it.
 (defun he-flex-search (pattern &optional reverse limit)
   "Like `he-dabbrev-search', but with a flex pattern.
 Allows you to expand lisp symbols that contain a hyphen or slash."
   (let* ((result ())
+	 (case-fold-search nil)
 	 (separator (if (eq major-mode 'emacs-lisp-mode)
 			"[-/a-zA-Z]*" ;; Only allow slashes from Emacs Lisp.
 		      "[-a-zA-Z]*"))
-	 (regpat (format "\\b%s\\b"
-			 (apply #'concat
-				(-interpose separator (string-glyph-split pattern))))))
+	 ;; TODO: This memoization is wrong, since it doesn't change for lisp mode.
+	 ;; TODO: This memoization might be unnecessary 
+	 (regpat (with-memoization (alist-get pattern he-flex-memoized-patterns nil nil #'equal)
+		   (let* ((glyphlist (string-glyph-split pattern))
+			  (res '())
+			  lastchar first hasspace)
+		     (while glyphlist
+		       (let ((char (car glyphlist)))
+			 (when (not first)
+			   (push "\\b" res)
+			   (setq first t))
+
+			 (if (string-equal char ".")
+			     (progn
+			       (setq hasspace t)
+			       (when (string-equal lastchar ".")
+				 (push separator res))
+			       (push "\\([[:space:]]\\|\n\\)+" res))
+			   (progn
+			     (when (string-equal lastchar ".")
+			       (push "\\b" res))
+			     (if (string-match-p "[[:upper:]]" char)
+				 (push (regexp-quote char) res)
+				 (push (format "[%s%s]"
+					      (regexp-quote (downcase char))
+					      (regexp-quote (upcase char)))
+				       res))
+			     (push separator res)))
+			 (setq lastchar char)
+			 (setq glyphlist (cdr glyphlist))))
+		     (unless hasspace
+		       (push "\\b" res))
+		     (apply #'concat (reverse res))))))
     (while (and (not result)
 		(if reverse
 		    (re-search-backward regpat limit t)
@@ -404,14 +460,14 @@ Allows you to expand lisp symbols that contain a hyphen or slash."
 ;;;###autoload
 (defun try-expand-flex-dabbrev-all-buffers (old)
   "It's `try-expand-flex-dabbrev', with all buffers."
-  (he--all-buffers2 old #'he-flex-init #'he-flex-search #'he-substitute-string-transcase))
+  (he--all-buffers2 old #'he-flex-init #'he-flex-search #'he-substitute-string))
 
 ;;;###autoload
 (defun try-expand-flex-dabbrev (old)
     "A flexible type of dynamic abbreviation.
 For example \"rblty\" could expand to \"reproducibility\".
 Kind of like `try-expand-dabbrev'."
-  (he--one-buffer old #'he-flex-init #'he-flex-search #'he-substitute-string-transcase))
+  (he--one-buffer old #'he-flex-init #'he-flex-search #'he-substitute-string))
 
 
 ;;; "dabbrev2"

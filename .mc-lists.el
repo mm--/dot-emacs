@@ -45,6 +45,7 @@
 	fill-paragraph
 	forward-sexp
 	helm-dabbrev
+	increment-number-or-char
 	indent-for-tab-command
 	indent-region
 	insert-register
@@ -173,7 +174,9 @@
 	handle-switch-frame
 	helm-M-x
 	helm-buffers-list
+	helm-man-woman
 	helm-swoop
+	insert-file
 	isearch-forward-regexp
 	js2-mode-show-node
 	keyboard-escape-quit

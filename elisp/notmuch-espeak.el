@@ -12,7 +12,11 @@
 	   (part (notmuch-show-get-part-properties)))
       (with-temp-buffer
 	(notmuch-show-insert-part-text/plain msg part "text/plain" nil 0 nil)
-	(buffer-substring-no-properties (point-min) (point-max))
+	(goto-char (point-min))
+	(or (re-search-forward "---Begin Email---" nil t) ;; Skip over introductory text
+	    ;; Other skip conditions would be here.
+	    )
+	(buffer-substring-no-properties (point) (point-max))
 	))))
 
 (defun jmm/notmuch-show-get-text-no-links ()

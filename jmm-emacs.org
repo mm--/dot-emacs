@@ -460,6 +460,16 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (define-key (current-global-map) [remap imenu] 'helm-imenu)
 ;; Replaced with helm
 (bind-key "C-c q" #'bury-buffer)
+;; These are unbound for now, maybe I should put them on a protected C-c x keybinding.
+(bind-key "C-x x w" #'toggle-word-wrap)
+(bind-key "C-x x v" #'variable-pitch-mode)
+;; Minibuffer keybindings
+;; I don't normally fill paragraphs in the minibuffer, and I'd like
+;; some way to clear the contents without adding to my kill ring.
+(define-key minibuffer-local-map (kbd "M-q") 'delete-minibuffer-contents)
+(define-key minibuffer-local-map (kbd "M-i") 'jmm/minibuffer-complete-cycle)
+(define-key minibuffer-local-filename-completion-map (kbd "M-A") 'jmm/file-minibuffer-project-root-dir)
+(define-key minibuffer-local-filename-completion-map (kbd "M-a") 'jmm/file-minibuffer-up-dir)
 #+end_src
 ** Keybindings to load org
    Again, most of my org-mode configuration is [[./jmm-org-config.org][here]], but for some dumb
@@ -560,6 +570,7 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 	try-expand-flex-dabbrev-all-buffers
 	try-complete-project-file-name
 	try-expand-acronym-all-buffers
+	;; try-expand-acronym-all-buffers-count
 	;; try-expand-dict-command ;; This isn't working in Nix, as there's no /usr/share/dict
 	))
 #+end_src
@@ -991,7 +1002,17 @@ following line.
   (define-skeleton jmm/R/pipe
     "Inserts a magrittr pipe."
     nil
-    "%>%" \n _)
+    "%>%"
+    ;; Don't add a new line if the next line isn't blank.
+    '(if (save-excursion
+	   (beginning-of-line 2)
+	   (looking-at-p "^$"))
+	 (newline)
+       (beginning-of-line 2))
+    ;; Indent the next line and then go to the end of it
+    >
+    '(end-of-line)
+    _)
 
   (define-skeleton jmm/R/left-assign
     "Previous paragraph left assignment"
@@ -3255,6 +3276,10 @@ Decode ProPublica links
       returl)))
 #+end_src
 
+Still need to figure out how to decode HubSpot tracking links, which
+contain the pattern ~/e3t/Btc/XX+113/~, where ~XX~ is two uppercase.
+It's definitely encoded somehow, as the URLs vary in length, and they
+tend to have the same prefix.  For now, I just block them.
 
 A query-parameter extracting function to be used for a more generic implementation later.
 
@@ -4533,6 +4558,13 @@ See the file ~increment-stuff.el~
 (global-set-key (kbd "C-c i C-y") 'yank-increment-number-or-char)
 (global-set-key (kbd "C-c i y") 'yank-then-increment-number-or-char)
 #+end_src
+** Show shells in other windows
+
+#+begin_src emacs-lisp
+(global-set-key (kbd "C-x 4 A") 'jmm/ansi-term-other-window)
+(global-set-key (kbd "C-x 4 E") 'jmm/eshell-other-window)
+(global-set-key (kbd "C-x 4 S") 'jmm/shell-other-window)
+#+end_src
 
 
 * Emacs Rocks
@@ -5231,6 +5263,7 @@ completion. This code from the manual brings it back.
 	 ;; Profiler seems to suggest "sp-show--pair-function" is
 	 ;; causing a bit of a slowdown when typing.
 	 (add-to-list 'sp-ignore-modes-list 'latex-mode)
+	 (add-to-list 'sp-ignore-modes-list 'mhtml-mode)
          (smartparens-global-mode t)
 	 (fset 'my-wrap-with-paren "\C-](")
 
@@ -5599,10 +5632,12 @@ With optional ARG, quote the string."
 
 ** Web-mode
    Web-mode is a pretty good mode for editing HTML and JSX files.
+
+   Though these days I'm using the built-in ~mhtml-mode~.
 #+BEGIN_SRC emacs-lisp
-(use-package web-mode
-  :ensure t
-  :mode ("\\.html?\\'" . web-mode))
+;; (use-package web-mode
+;;   :ensure t
+;;   :mode ("\\.html?\\'" . web-mode))
 #+END_SRC
 
 ** Emojify
