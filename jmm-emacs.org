@@ -1004,6 +1004,7 @@ following line.
     nil
     "%>%"
     ;; Don't add a new line if the next line isn't blank.
+    ;; TODO: Check if there's a newline
     '(if (save-excursion
 	   (beginning-of-line 2)
 	   (looking-at-p "^$"))
@@ -1053,19 +1054,63 @@ following line.
 
 ** View an object
 #+begin_src emacs-lisp
-  (defun ess-dump-object-into-view-buffer (object)
-    "Edit an ESS object in its view buffer."
-    (interactive
-     (progn
-       (ess-force-buffer-current "Process to dump from: ")
-       (if (ess-ddeclient-p)
-           (list (read-string "Object to edit: "))
-         (ess-read-object-name "Object to edit"))))
-    (ess-execute (ess-rdired-get object)
-               nil "R view" ))
+(defun ess-dump-object-into-view-buffer (object)
+  "Edit an ESS object in its view buffer."
+  (interactive
+   (progn
+     (ess-force-buffer-current "Process to dump from: ")
+     (if (ess-ddeclient-p)
+         (list (read-string "Object to edit: "))
+       (ess-read-object-name "Object to edit"))))
+  (ess-execute (ess-rdired-get object)
+             nil "R view" ))
 
-  (eval-after-load "ess-mode"
-    '(define-key ess-mode-map (kbd "C-c v") 'ess-dump-object-into-view-buffer))
+(defun jmm/ess-eval-symbol-at-point ()
+  "Send the symbol at point to the subprocess."
+  (interactive)
+  (when-let ((object (thing-at-point 'symbol)))
+    (ess-send-string (ess-get-process) object t)))
+
+(defun jmm/ess-eval-formatted-symbol-at-point (formatstr)
+  "Apply a FORMATSTR (see `format') to an object, send to subprocess."
+  (interactive)
+  (when-let ((object (or (thing-at-point 'symbol)
+			 (thing-at-point 'line))))
+    (ess-send-string (ess-get-process) (format formatstr object) t)))
+
+(defun jmm/ess-eval-symbol-at-point-names ()
+  "Get the names (columns) of an object."
+  (interactive)
+  (jmm/ess-eval-formatted-symbol-at-point "names(%s)"))
+
+(defun jmm/ess-eval-symbol-at-point-dim ()
+  "Get the dimension of an object."
+  (interactive)
+  (jmm/ess-eval-formatted-symbol-at-point "dim(%s)"))
+
+(defun jmm/ess-eval-symbol-at-point-summary ()
+  "Get the summary of an object."
+  (interactive)
+  (jmm/ess-eval-formatted-symbol-at-point "summary(%s)"))
+
+(defvar jmm/ess-function-history '()
+  "A minibuffer history of functions to call on an object.")
+
+(defun jmm/ess-eval-symbol-at-point-function (funcstr)
+  "Get the FUNCSTR of an object."
+  (interactive (list
+		(completing-read (format-prompt "Function"  (car jmm/ess-function-history))
+				 jmm/ess-function-history nil nil nil 'jmm/ess-function-history (car jmm/ess-function-history))))
+  (jmm/ess-eval-formatted-symbol-at-point (format "%s(%%s)" funcstr)))
+
+(eval-after-load "ess-mode"
+  '(progn (define-key ess-mode-map (kbd "C-c v") 'ess-dump-object-into-view-buffer)
+	  (define-key ess-mode-map (kbd "C-c C-a C-a") 'jmm/ess-eval-symbol-at-point)
+	  (define-key ess-mode-map (kbd "C-c C-a a") 'jmm/ess-eval-symbol-at-point)
+	  (define-key ess-mode-map (kbd "C-c C-a n") 'jmm/ess-eval-symbol-at-point-names)
+	  (define-key ess-mode-map (kbd "C-c C-a d") 'jmm/ess-eval-symbol-at-point-dim)
+	  (define-key ess-mode-map (kbd "C-c C-a f") 'jmm/ess-eval-symbol-at-point-function)
+	  (define-key ess-mode-map (kbd "C-c C-a s") 'jmm/ess-eval-symbol-at-point-summary)))
 #+end_src
 
 ** Clear the shell
