@@ -311,7 +311,8 @@ Set a reasonable font for Chinese, if we have it.
 
 #+BEGIN_SRC emacs-lisp
 (when (and window-system (x-family-fonts "Noto Sans Mono CJK SC"))
-  (set-fontset-font t 'chinese-gbk (font-spec :family "Noto Sans Mono CJK SC")))
+  (set-fontset-font t 'chinese-gbk (font-spec :family "Noto Sans Mono CJK SC"))
+  (set-fontset-font t 'hangul (font-spec :family "Noto Sans Mono CJK SC")))
 #+END_SRC
 
 Show color emojis.
@@ -5309,6 +5310,7 @@ completion. This code from the manual brings it back.
 	 ;; causing a bit of a slowdown when typing.
 	 (add-to-list 'sp-ignore-modes-list 'latex-mode)
 	 (add-to-list 'sp-ignore-modes-list 'mhtml-mode)
+	 (add-to-list 'sp-ignore-modes-list 'nxml-mode)
          (smartparens-global-mode t)
 	 (fset 'my-wrap-with-paren "\C-](")
 
