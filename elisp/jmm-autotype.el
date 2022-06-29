@@ -4,7 +4,7 @@
 ;; isn't immediately defined.
 (auto-insert-mode t)
 
-;; TODO: What's the proper wayt to add to variables not yet defined?
+;; TODO: What's the proper way to add to variables not yet defined?
 ;; Do I make an autoload declaration for it? Or do I use customize?
 (add-to-list 'auto-insert-alist
 	     '(("\\.envrc\\'" . "direnv envrc")
