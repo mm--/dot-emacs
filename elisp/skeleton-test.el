@@ -1,3 +1,12 @@
+(defun jmm/nix-get-keys-of (attrset)
+  "Get the keys of ATTRSET in nixpkgs.
+Example: you get get a list of all rPackages."
+  (json-parse-string
+   (shell-command-to-string
+    (format "nix eval --raw \"(with import <nixpkgs> {}; builtins.toJSON (builtins.attrNames %s))\""
+	    (shell-quote-argument attrset)))
+   :array-type 'list))
+
 ;;;###autoload (autoload 'nix-myenv "skeleton-test" nil t nil)
 (define-skeleton nix-myenv
   "Kind of like what you'd do with a shell.nix"
@@ -18,8 +27,10 @@
   "}" >)
 
 (defvar jmm/r-suggested-packages
-  '("rstan" "ggplot2" "devtools" "RSQLite" "data_table" "tidyverse" "dplyr")
-  "Completions for R packages, for a skeleton.")
+  (lazy-completion-table jmm/r-suggested-packages
+			 (lambda ()
+			   (jmm/nix-get-keys-of "rPackages")))
+  "Completion table for R packages, for a skeleton.")
 
 ;;;###autoload (autoload 'nix-default-r-skeleton "skeleton-test" nil t nil)
 (define-skeleton nix-default-r-skeleton
@@ -58,9 +69,18 @@ with pkgs;
 }"
 )
 
+
 (defvar jmm/latex-suggested-packages
-  '("pdfcomment" "IEEEtran")
+  (lazy-completion-table jmm/latex-suggested-packages
+			 (lambda ()
+			   (jmm/nix-get-keys-of "texlive")))
   "Completions for LaTeX packages, for a skeleton.")
+
+(defvar jmm/nix-all-suggested-packages
+  (lazy-completion-table jmm/nix-all-suggested-packages
+			 (lambda ()
+			   (jmm/nix-get-keys-of "pkgs")))
+  "Completion table of all nixpkgs.")
 
 ;;;###autoload (autoload 'nix-default-latex-skeleton "skeleton-test" nil t nil)
 (define-skeleton nix-default-latex-skeleton
@@ -73,11 +93,10 @@ with pkgs; rec {
 texenv = texlive.combine {
    inherit (texlive) scheme-medium standalone todonotes
       glossaries
-      glossaries-extra
-"
+      glossaries-extra"
 ;; Not sure why there needs to be whitespace below
 ;; Otherwise it seems to want to interpret it as Elisp
-  ((completing-read "LaTeX package: " jmm/r-suggested-packages nil nil) \n str >)
+  ((completing-read "LaTeX package: " jmm/latex-suggested-packages nil nil) \n str >)
 ";
 };
 
@@ -85,11 +104,15 @@ texenv = texlive.combine {
       name = \"texpackages\";
       paths = [
         texenv
-        biber
+        biber"
+;; Still need whitespace here.
+  ((completing-read "Package: " jmm/nix-all-suggested-packages nil nil) \n str >)
+"
       ];
     };
 }
 "
+'(indent-region (point-min) (point-max))
 )
 
 (provide 'skeleton-test)
