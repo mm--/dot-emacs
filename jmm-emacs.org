@@ -3187,11 +3187,24 @@ The SEARCH-TERMS should be a list"
     (->> (apply #'notmuch-call-notmuch-sexp (append args search-terms))
 	 (--map (plist-get it :address)))))
 
+(defun jmm/notmuch-get-email-addresses2 (search-terms)
+  "Like `jmm/notmuch-get-email-addresses', but if the address is from Firefox Relay, get the true email.
+"
+  (let ((args '("address" "--format=sexp" "--format-version=4")))
+    (cl-loop for addr1 in (apply #'notmuch-call-notmuch-sexp (append args search-terms))
+	     collect (let* ((addr (plist-get addr1 :address))
+			    (name (plist-get addr1 :name)))
+		       (if (string-equal addr "replies@relay.firefox.com")
+			   (save-match-data
+			     (when (string-match "\\(.*\\) \\[via Relay\\]" name)
+			       (match-string-no-properties 1 name)))
+			 addr)))))
+
 (defun jmm/notmuch-search-get-author-query ()
   "Get a query for the author/email address under point."
   (let ((author (--> (notmuch-search-find-stable-query)
 		     (list (car it))
-		     (jmm/notmuch-get-email-addresses it)
+		     (jmm/notmuch-get-email-addresses2 it)
 		     (car it))))
     (when author
       (concat "from:" author))))
