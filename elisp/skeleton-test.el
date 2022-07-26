@@ -1,3 +1,5 @@
+;; TODO: Move `jmm/nix-get-keys-of' elsewhere
+;;;###autoload
 (defun jmm/nix-get-keys-of (attrset)
   "Get the keys of ATTRSET in nixpkgs.
 Example: you get get a list of all rPackages."
