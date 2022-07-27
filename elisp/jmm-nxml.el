@@ -407,22 +407,28 @@ If region isn't active, wrap the point."
 		     (e2 (progn (nxml-forward-single-balanced-item)
 				(point-marker)))
 		     (s2 (save-excursion
-			   (nxml-token-before)
 			   (goto-char xmltok-start)
 			   (point-marker))))
-    (atomic-change-group
-      (when (= a1 s2)
-      (set-marker-insertion-type a1 nil))
-      (goto-char s2)
-      (unless (= (point) (save-excursion (back-to-indentation) (point)))
-	(insert "\n")
-	(nxml-indent-line))
-      (when (= a1 e1)
-	(set-marker-insertion-type a1 t))
-      (goto-char e1)
-      (insert "\n")
-      (nxml-indent-line)
-      (goto-char a1))))
+    (let ((was-empty (= e1 (1- s2))))
+      (atomic-change-group
+	(when (= a1 s2)
+	  (set-marker-insertion-type a1 nil))
+	(goto-char s2)
+	(unless (= (point) (save-excursion (back-to-indentation) (point)))
+	  (insert "\n")
+	  (nxml-indent-line))
+	(when (= a1 e1)
+	  (set-marker-insertion-type a1 t))
+	(goto-char e1)
+	(when (or was-empty
+		  (not (eolp)))
+	  (insert "\n")
+	  (nxml-indent-line))
+	;; Should we indent the entire block?
+	;; (let ((inhibit-message t))
+	;;   (indent-region s1 e2)
+	  )
+	(goto-char a1))))
 
 (defun jnx-inline-element ()
   "Ensure the current element is inline, not a block element."
@@ -434,15 +440,37 @@ If region isn't active, wrap the point."
 		     (s2 (progn (nxml-forward-single-balanced-item)
 				(goto-char xmltok-start)
 				(point-marker))))
-    (atomic-change-group
-      (goto-char s2)
-      (while (> (progn (forward-line 0) (point)) s1)
-	(back-to-indentation)
-	(delete-horizontal-space t)
-	(if (= (preceding-char) ?\n)
-	    (delete-char -1)
-	  (error "I didn't work out the logic correctly. Rewrite this function.")))
-      (goto-char a1))))
+    (let ((sentence-end-regex (sentence-end))
+	  (no-space-join '(start-tag end-tag empty-element))
+	  at-sentence)
+      (atomic-change-group
+	(goto-char s2)
+	(while (> (progn (forward-line 0) (point)) s1)
+	  (back-to-indentation)
+	  (when sentence-end-double-space
+	    ;; Check if the previous line end is the end of a sentence.
+	    (save-excursion
+	      (forward-line -1)
+	      (end-of-line)
+	      ;; The line might end with whitespace
+	      (skip-syntax-backward " " (line-beginning-position))
+	      (setq at-sentence
+		    (unless (bolp)
+		      (backward-char)
+		      (looking-at-p sentence-end-regex)))))
+	  (delete-horizontal-space t)
+	  (if (= (preceding-char) ?\n)
+	      (delete-char -1)
+	    (error "I didn't work out the logic correctly. Rewrite this function."))
+	  ;; If we're joining at text, we need to add whitespace back in.
+	  (when (and (not (memq (progn (nxml-token-after) xmltok-type) no-space-join))
+		     (not (memq (progn (nxml-token-before) xmltok-type) no-space-join)))
+	    (fixup-whitespace)
+	    ;;  Use two spaces if we're at the end of a sentence, and
+	    ;;  `sentence-end-double-space' is set.
+	    (when at-sentence
+	      (insert ?\s))))
+	(goto-char a1)))))
 
 (defun jnx-add-element (tagname attrs &rest children)
   "Insert a new element at point.
