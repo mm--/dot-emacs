@@ -84,6 +84,14 @@ It's the parent element, or current element if looking at the start of a tag."
 		   `(set-marker ,(if (consp binder) (car binder) binder) nil))
 		 binders))))
 
+(defun jnx--delete-blank-line ()
+  "Delete the current line if it's blank.
+Like `delete-blank-lines', but only for one line."
+  (save-excursion
+  (beginning-of-line)
+  (when (looking-at "[ \t]*$")
+    (delete-region (line-beginning-position) (progn (forward-line 1) (point))))))
+
 
 ;;; Navigating between tags
 
@@ -288,6 +296,17 @@ Allows you to enter in spaces."
 
 ;;; Moving and modifying the nXML buffer
 
+(defun jnx--element-bounds ()
+  "Returns a cons of the `xmltok-start' and position of matching end tag."
+  (let ((start xmltok-start))
+    (cons
+     start
+     (save-excursion
+       (xmltok-save
+	 (goto-char start)
+	 (nxml-forward-single-balanced-item)
+	 (point))))))
+
 (defun jnx-beginning-of-inner-sexp ()
   "Go to the first element of sexp.
 Doesn't move outside current level."
@@ -341,14 +360,19 @@ NEWELEM is a string, which can also have attribute values."
 (defun jnx-wrap (elemstr &optional block beg end)
   "Tries to wrap region with element.
 With BLOCK, it'll add a newline and indent the region..
-If region isn't active, wrap the point."
-  (interactive (let ((mystr (jmm/nxml-prompt-element "Element with attrs")))
+If region isn't active, wrap the point.
+Returns the bounds of what's been inserted."
+  (interactive (let* ((block current-prefix-arg)
+		      (mystr (jmm/nxml-prompt-element
+			      (format "%s element with attrs"
+				      (if block "Block" "Inline")))))
 		 (if (use-region-p)
-		     (list mystr current-prefix-arg (region-beginning) (region-end))
-		   (list mystr current-prefix-arg nil nil)))
+		     (list mystr block (region-beginning) (region-end))
+		   (list mystr block nil nil)))
 	       nxml-mode)
   (let ((beg (or beg (point)))
 	(end (or end (point)))
+	(instr (format "<%s>" elemstr))
 	qname)
     (jnx-let-markers* ((s1 (progn (goto-char beg)
 				  (point-marker)))
@@ -359,7 +383,11 @@ If region isn't active, wrap the point."
       (set-marker-insertion-type e1 t)
       (atomic-change-group
 	(goto-char s1)
-	(insert (format "<%s>" elemstr))
+	(insert-before-markers instr)
+	;; Inserting before messes up s1, so we need to adjust it.
+	(save-excursion
+	  (backward-char (length instr))
+	  (set-marker s1 (point)))
 	(setq qname (progn (nxml-token-before) (xmltok-start-tag-qname)))
 	(when block (newline))
 	(setq m1 (point-marker))
@@ -369,10 +397,18 @@ If region isn't active, wrap the point."
 	(when block (newline))
 	(insert (format "</%s>" qname))
 	;; (nxml-finish-element)
-	(when block (indent-region s1 e1))
-	;; (goto-char s1)
-	;; (nxml-down-element)
-	(goto-char m1)))))
+	(when block
+	  ;; TODO: Messages still displayed. Something else for
+	  ;; indenting the region without prompting?
+	  (let ((inhibit-message t))
+	    (indent-region s1 e1)))
+	(goto-char s1)
+	;; Ensure the last scanned element is the element we just
+	;; created.
+	(nxml-token-after)
+	(goto-char m1)
+	(cons (marker-position s1)
+	      (marker-position e1))))))
 
 (defun jnx-unwrap ()
   "Delete the surrounding element, keeping children."
@@ -390,12 +426,23 @@ If region isn't active, wrap the point."
 			     (goto-char xmltok-start)
 			     (point-marker))))
       (atomic-change-group
+	(goto-char s1)
 	(delete-region s1 e1)
-	(delete-region s2 e2)))))
+	(jnx--delete-blank-line)
+	(goto-char s2)
+	(delete-region s2 e2)
+	(jnx--delete-blank-line)
+	(let ((inhibit-message t))
+	  (indent-region s1 e2))
+	(cons (marker-position s1)
+	      (marker-position e2))))))
 
-;; TODO: Convert empty-element?
+;; MAYBE: Convert empty-element?
 (defun jnx-blockify-element ()
-  "Ensure the current element is a block element, not inline."
+  "Ensure the current element is a block element, not inline.
+Should be idempotent.
+Last scanned element will be the start-tag of the blockified element.
+Returns boundaries of element from `jmm/nxml--element-bounds'. "
   (interactive nil nxml-mode)
   (jnx-let-markers* ((a1 (point-marker))
 		     (s1 (progn
@@ -427,11 +474,21 @@ If region isn't active, wrap the point."
 	;; Should we indent the entire block?
 	;; (let ((inhibit-message t))
 	;;   (indent-region s1 e2)
-	  )
-	(goto-char a1))))
+	;; Ensure last scanned item is the element we're blockifying
+	(goto-char s1)
+	(nxml-token-after)
+	(prog1
+	    (jnx--element-bounds)
+	    (goto-char a1))))))
 
 (defun jnx-inline-element ()
-  "Ensure the current element is inline, not a block element."
+  "Ensure the current element is inline, not a block element.
+Folds all elements onto one line.
+Tries to maintain spaces between words and double spaces between
+  sentences if `sentence-end-double-space' is set.
+Should be idempotent.
+Last scanned element will be the start-tag of the blockified element.
+Returns boundaries of element from `jmm/nxml--element-bounds'."
   (interactive nil nxml-mode)
   (jnx-let-markers* ((a1 (point-marker))
 		     (s1 (progn
@@ -470,7 +527,12 @@ If region isn't active, wrap the point."
 	    ;;  `sentence-end-double-space' is set.
 	    (when at-sentence
 	      (insert ?\s))))
-	(goto-char a1)))))
+	;; Ensure last scanned item is the element we're blockifying
+	(goto-char s1)
+	(nxml-token-after)
+	(prog1
+	    (jnx--element-bounds)
+	  (goto-char a1))))))
 
 (defun jnx-add-element (tagname attrs &rest children)
   "Insert a new element at point.
@@ -487,8 +549,7 @@ Children is some children, like used in `xml-debug-print'."
     (indent-region start end)
     (save-excursion
       (goto-char start)
-      (nxml-token-after))
-    ))
+      (nxml-token-after))))
 
 
 ;;; Attributes
@@ -556,11 +617,12 @@ See `xml-debug-print-internal'."
   "Sets attribute.
 This assumes you've already scanned and set xmltok-attributes.
 Will rescan after setting."
-  (save-excursion
-    (let* ((origstart xmltok-start)
-	   foundattr)
-      (prog1
-	  (if (catch 'attrval
+  (with-buffer-unmodified-if-unchanged
+    (save-excursion
+      (let* ((origstart xmltok-start)
+	     foundattr)
+	(prog1
+	    (if (catch 'attrval
 		  (cl-loop for attr in xmltok-attributes
 			   do (when (string= attrname (xmltok-attribute-local-name attr))
 				(setq foundattr attr)
@@ -572,8 +634,8 @@ Will rescan after setting."
 		    (jnx--last-attribute-pos)
 		  (goto-char xmltok-name-end))
 		(jnx--attribute-insert attrname attrval)))
-	(when origstart
-	  (nxml-scan-element-forward origstart))))))
+	  (when origstart
+	    (nxml-scan-element-forward origstart)))))))
 
 ;; A fun way to use `jnx--attribute-value' for `setf'
 (gv-define-setter jnx--attribute-value (val attrname)
