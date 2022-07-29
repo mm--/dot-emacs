@@ -387,26 +387,23 @@ Returns the bounds of what's been inserted."
 	;; Inserting before messes up s1, so we need to adjust it.
 	(save-excursion
 	  (backward-char (length instr))
-	  (set-marker s1 (point)))
+	  (set-marker s1 (point))
+	  ;; If we indent (like in blockifying), we need to make sure s1 moves correctly.
+	  (set-marker-insertion-type s1 t))
 	(setq qname (progn (nxml-token-before) (xmltok-start-tag-qname)))
-	(when block (newline))
 	(setq m1 (point-marker))
 	(unless (= beg end)
 	  (set-marker-insertion-type m1 t))
 	(goto-char e1)
-	(when block (newline))
 	(insert (format "</%s>" qname))
-	;; (nxml-finish-element)
+	(goto-char m1)
 	(when block
-	  ;; TODO: Messages still displayed. Something else for
-	  ;; indenting the region without prompting?
-	  (let ((inhibit-message t))
-	    (indent-region s1 e1)))
-	(goto-char s1)
+	  (jnx-blockify-element))
 	;; Ensure the last scanned element is the element we just
 	;; created.
-	(nxml-token-after)
-	(goto-char m1)
+	(save-excursion
+	  (goto-char s1)
+	  (xmltok-forward))
 	(cons (marker-position s1)
 	      (marker-position e1))))))
 
@@ -446,7 +443,8 @@ Returns boundaries of element from `jmm/nxml--element-bounds'. "
   (interactive nil nxml-mode)
   (jnx-let-markers* ((a1 (point-marker))
 		     (s1 (progn
-			   (jnx--element-for-point)
+			   ;; (jnx--element-for-point)
+			   (nxml-backward-up-element)
 			   (point-marker)))
 		     (e1 (save-excursion
 			   (xmltok-forward)
@@ -456,8 +454,10 @@ Returns boundaries of element from `jmm/nxml--element-bounds'. "
 		     (s2 (save-excursion
 			   (goto-char xmltok-start)
 			   (point-marker))))
-    (let ((was-empty (= e1 (1- s2))))
+    (let ((was-empty (= e1 s2)))
       (atomic-change-group
+	(set-marker-insertion-type s1 t)
+	(set-marker-insertion-type s2 t)
 	(when (= a1 s2)
 	  (set-marker-insertion-type a1 nil))
 	(goto-char s2)
@@ -472,13 +472,15 @@ Returns boundaries of element from `jmm/nxml--element-bounds'. "
 	  (insert "\n")
 	  (nxml-indent-line))
 	;; Should we indent the entire block?
-	;; (let ((inhibit-message t))
-	;;   (indent-region s1 e2)
+	(let ((inhibit-message t))
+	  (indent-region s1 e2))
 	;; Ensure last scanned item is the element we're blockifying
 	(goto-char s1)
 	(nxml-token-after)
 	(prog1
 	    (jnx--element-bounds)
+	    ;; (cons (marker-position s1)
+	    ;; 	  (marker-position e2))
 	    (goto-char a1))))))
 
 (defun jnx-inline-element ()
