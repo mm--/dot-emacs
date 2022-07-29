@@ -130,6 +130,18 @@ Like `delete-blank-lines', but only for one line."
 	    (goto-char start))
 	nil))))
 
+(defun jnx--prev-tag-same-level ()
+  "Find previous start tag (or empty element) at same level."
+  (when-let* ((pos (ignore-errors
+		     (save-excursion
+		       (catch 'found
+			 (while (progn
+				  (nxml-backward-single-balanced-item)
+				  (when (memq xmltok-type '(start-tag empty-element))
+				    (throw 'found xmltok-start))
+				  t)))))))
+    (goto-char pos)))
+
 (defun jnx--next-tagname (tagname-or-pred)
   "Find next tag with string tagname.
 TAGNAME-OR-PRED can also be a predicate of no arguments that inspects xmltok.
@@ -552,6 +564,47 @@ Children is some children, like used in `xml-debug-print'."
     (save-excursion
       (goto-char start)
       (nxml-token-after))))
+
+(defun jnx-transpose-element (from-pos to-pos)
+  "FROM-POS is the position of the start-tag of where we're starting from.
+TO-POS is the position of the start-tag of where we want to move to.
+Tries to keep the relative position of point in \"from\" the same."
+  (jnx-let-markers* ((m1 (copy-marker to-pos)))
+    (let* ((bounds1 (save-excursion
+		      (goto-char from-pos)
+		      (nxml-token-after)
+		      (jnx--element-bounds)))
+	   (bounds2 (save-excursion
+		      (goto-char to-pos)
+		      (nxml-token-after)
+		      (jnx--element-bounds)))
+	   (offset (when (<= (car bounds1) (point) (cdr bounds1))
+		     (- (point) (car bounds1)))))
+      (save-excursion
+	(transpose-subr-1 bounds1 bounds2))
+      (goto-char (+ m1 offset)))))
+
+(defun jnx-transpose-element-down ()
+  "Move this element down to next element at same level."
+  (interactive nil nxml-mode)
+  (let (pos1 pos2)
+    (jnx-at-element-start
+      (setq pos1 (point))
+      (if (jmm/nxml--next-tag-same-level)
+	  (setq pos2 (point))
+	(user-error "No next element")))
+    (jmm/nxml-transpose-element pos1 pos2)))
+
+(defun jnx-transpose-element-up ()
+  "Move this element up to previous element at same level."
+  (interactive nil nxml-mode)
+  (let (pos1 pos2)
+    (jnx-at-element-start
+      (setq pos1 (point))
+      (if (jmm/nxml--prev-tag-same-level)
+	  (setq pos2 (point))
+	(user-error "No previous element")))
+    (jmm/nxml-transpose-element pos1 pos2)))
 
 
 ;;; Attributes
