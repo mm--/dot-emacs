@@ -3137,7 +3137,7 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 #+BEGIN_SRC emacs-lisp
 (defcustom jmm/tracking-link-regexps
   '("links.ealert" "click.engage.frontiersin.com")
-  "Regular expressions for annoyingly long tracking links."
+  "Regular expressions for annoyingly long tracking links that I can't decode."
   :type '(repeat string))
 
 ;; TODO: Add a button or something to show where it would be?
@@ -3269,6 +3269,21 @@ proofpoint defends against."
       url)))
 #+END_SRC
 
+Decode ~urldefense.com~.
+
+#+begin_src emacs-lisp
+(defun jmm/url-decode-urldefense (url)
+  "Parse urldefense.com urls.
+
+Note: You'll have to be careful not to be phished, which is what
+urldefense defends against."
+  (let ((urlobj (url-generic-parse-url url)))
+    (if-let* ((_ (string= (url-host urlobj) "urldefense.com"))
+	      (_ (string-match (rx (seq "/v3/__" (group (1+ any)) "__;")) url)))
+	(match-string 1 url)
+      url)))
+#+end_src
+
 Also decode some explicitly tracking urls
 
 #+BEGIN_SRC emacs-lisp
@@ -3360,13 +3375,15 @@ Useful for extracting redirects."
   (goto-char (point-min))
   (while (re-search-forward goto-address-url-regexp nil t)
     (let* ((url (match-string 0))
-	   (decoded-url (save-match-data (-> url
-					     jmm/url-decode-proofpoint
-					     jmm/url-decode-appspot
-					     jmm/url-decode-convertkitmail
-					     jmm/url-decode-pocket
-					     jmm/url-decode-base64url
-					     ))))
+	   (decoded-url (save-match-data
+			  (thread-first url
+			      jmm/url-decode-proofpoint
+			      jmm/url-decode-urldefense
+			      jmm/url-decode-appspot
+			      jmm/url-decode-convertkitmail
+			      jmm/url-decode-pocket
+			      jmm/url-decode-base64url
+			      ))))
       (replace-match decoded-url
 		     nil t))))
 #+END_SRC
