@@ -110,6 +110,16 @@ Like `delete-blank-lines', but only for one line."
       (when (memq xmltok-type '(start-tag empty-element))
 	(throw 'found t)))))
 
+(defun jnx--prev-tag ()
+  "Go to previous start-tag or empty-element."
+  (catch 'found
+    (while (progn
+	     (nxml-token-before)
+	     (goto-char xmltok-start)
+	     xmltok-type)
+      (when (memq xmltok-type '(start-tag empty-element))
+	(throw 'found t)))))
+
 (defun jnx--next-tag-same-level ()
   "Find next start tag (or empty element) at same level."
   (let ((end (nxml-token-after))
@@ -130,6 +140,7 @@ Like `delete-blank-lines', but only for one line."
 	    (goto-char start))
 	nil))))
 
+;; `nxml-backward-element' might be a better version of this.
 (defun jnx--prev-tag-same-level ()
   "Find previous start tag (or empty element) at same level."
   (when-let* ((pos (ignore-errors
@@ -156,6 +167,23 @@ If TAGNAME-OR-PRED is nil, just runs `jmm/nxml--next-tag'"
    (t
     (catch 'found
       (while (jnx--next-tag)
+	(when (funcall tagname-or-pred)
+	  (throw 'found t)))))))
+
+(defun jnx--prev-tagname (tagname-or-pred)
+  "Find previous tag with string tagname.
+TAGNAME-OR-PRED can also be a predicate of no arguments that inspects xmltok.
+If TAGNAME-OR-PRED is nil, just runs `jmm/nxml--prev-tag'"
+  (cond
+   ((null tagname-or-pred) (jnx--prev-tag))
+   ((stringp tagname-or-pred)
+    (catch 'found
+      (while (jnx--prev-tag)
+	(when (string= (xmltok-start-tag-qname) tagname-or-pred)
+	  (throw 'found t)))))
+   (t
+    (catch 'found
+      (while (jnx--prev-tag)
 	(when (funcall tagname-or-pred)
 	  (throw 'found t)))))))
 
@@ -319,6 +347,15 @@ Allows you to enter in spaces."
 	 (nxml-forward-single-balanced-item)
 	 (point))))))
 
+(defun jnx-down-element-dwim (&optional arg)
+  "Like `nxml-down-element', but go to the first non-space point."
+  (interactive "^p" nxml-mode)
+  (nxml-down-element arg)
+  (let (token-end)
+    (while (progn (setq token-end (nxml-token-after))
+		  (eq xmltok-type 'space))
+      (goto-char token-end))))
+
 (defun jnx-beginning-of-inner-sexp ()
   "Go to the first element of sexp.
 Doesn't move outside current level."
@@ -339,7 +376,8 @@ It'll go to the point after the last inner end-tag."
 NEWELEM is a string, which can also have attribute values."
   (interactive (list (jnx-prompt-tagname (format "Change \"%s\" to"
 						 (jnx-at-element-start
-						   (xmltok-start-tag-qname)))))
+						   (xmltok-start-tag-qname)))
+					 (car jnx-element-history)))
 	       nxml-mode)
   (jnx-at-element-start
     (let* ((origtype xmltok-type)
@@ -375,9 +413,10 @@ With BLOCK, it'll add a newline and indent the region..
 If region isn't active, wrap the point.
 Returns the bounds of what's been inserted."
   (interactive (let* ((block current-prefix-arg)
-		      (mystr (jmm/nxml-prompt-element
+		      (mystr (jmm/nxml-prompt-tagname
 			      (format "%s element with attrs"
-				      (if block "Block" "Inline")))))
+				      (if block "Block" "Inline"))
+			      (car jnx-element-history))))
 		 (if (use-region-p)
 		     (list mystr block (region-beginning) (region-end))
 		   (list mystr block nil nil)))
@@ -668,10 +707,11 @@ See `xml-debug-print-internal'."
       (goto-char (1+ (xmltok-attribute-value-end lastattr)))
     (goto-char xmltok-name-end)))
 
-(defun jnx--set-attribute-value (attrname attrval &optional append)
+(defun jnx--set-attribute-value (attrname attrval &optional prepend)
   "Sets attribute.
+With PREPEND, adds it to the beginning of the list of attributes.
 This assumes you've already scanned and set xmltok-attributes.
-Will rescan after setting."
+Will try to rescan after setting."
   (with-buffer-unmodified-if-unchanged
     (save-excursion
       (let* ((origstart xmltok-start)
@@ -685,26 +725,29 @@ Will rescan after setting."
 		(jnx--attribute-replace foundattr attrval)
 	      ;; None found
 	      (progn
-		(if append
-		    (jnx--last-attribute-pos)
-		  (goto-char xmltok-name-end))
+		(if prepend
+		    (goto-char xmltok-name-end)
+		  (jnx--last-attribute-pos))
 		(jnx--attribute-insert attrname attrval)))
 	  (when origstart
-	    (nxml-scan-element-forward origstart)))))))
+	    (save-excursion
+	      (goto-char origstart)
+	      (nxml-ensure-scan-up-to-date)
+	      (xmltok-forward))))))))
 
 ;; A fun way to use `jnx--attribute-value' for `setf'
 (gv-define-setter jnx--attribute-value (val attrname)
   `(progn
-     (jnx--set-attribute-value ,attrname ,val t)
+     (jnx--set-attribute-value ,attrname ,val)
      ,val))
 
-(defun jnx--update-attribute-value (attrname fun &optional append &rest funargs)
+(defun jnx--update-attribute-value (attrname fun &optional prepend &rest funargs)
   "Update the attribute ATTRNAME.
 Fun takes in the previous value and adds a new value.
 Assumes you've already scanned."
   (let* ((prevval (jnx--attribute-value attrname))
 	 (newval (xmltok-save (apply fun prevval funargs))))
-    (jnx--set-attribute-value attrname newval append)))
+    (jnx--set-attribute-value attrname newval prepend)))
 
 (defun jnx--get-all-attribute-values (tagname-or-pred attrname)
   "Get all attribute values that appear in TAGNAME-OR-PRED.
@@ -733,29 +776,66 @@ TAGNAME-OR-PRED can be nil to get the attribute value anywhere."
 		   do (push x values)))))
     (delete-dups values)))
 
-(defun jnx-edit-attribute (attrname attrval &optional append)
+(defun jnx--edit-attribute-interactive ()
+  "Suggest the default name and attribute if we're inside an attribute tag.
+Tries to go to the correct position inside an attribute value, taking entity refs into account."
+  (save-excursion
+    (let ((end (nxml-token-after))
+	  attr1 val1 pos1)
+      (when (and (eq xmltok-type 'start-tag)
+	     (< xmltok-name-end (point) end))
+	(catch 'found
+	  ;; Try to find the attribute containing point
+	  (seq-doseq (att xmltok-attributes)
+	    (when (<= (xmltok-attribute-name-start att) (point) (xmltok-attribute-value-end att))
+	      (setf attr1 (buffer-substring-no-properties
+			   (xmltok-attribute-name-start att)
+			   (xmltok-attribute-name-end att))
+		    val1 (jnx--xmltok-attribute-unescaped-value att))
+	      (let* ((vstart (xmltok-attribute-value-start att))
+		     (pos (point))
+		     (vend (xmltok-attribute-value-end att)))
+		(when (<= vstart pos vend)
+		  (setf pos1 (- pos vstart))
+		  (catch 'done
+		    (seq-doseq (ref (xmltok-attribute-refs att))
+		      (pcase-let* ((`[_ ,refstart ,refend] ref))
+			(cond
+			 ((<= refend pos)
+			  ;; I'm assuming entity references are only replaced with one character.
+			  ;; Otherwise, change "1+"
+			  (setf pos1 (1+ (- pos1 (- refend refstart)))))
+			 ((<= refstart pos refend)
+			  (setf pos1 (- pos1 (- pos refstart))))
+			 (t (throw 'done t))))))))
+	      (throw 'found t)))))
+      (let* ((attrname (completing-read (format-prompt "Attribute name" attr1)
+					(jnx--completions-for-attribute-names nil)
+					nil nil nil nil
+					attr1))
+	     (attrval (jnx--string-or-nil
+		       (let ((minibuffer-local-completion-map jnx-minibuffer-local-completion-with-spaces-map))
+			 (completing-read "Attribute value: "
+					  (jnx--completions-for-attribute-values nil attrname)
+					  nil
+					  nil
+					  (if (string= attrname attr1)
+					      (if pos1
+						  (cons val1 pos1)
+						  val1)
+					    (jnx-at-element-start
+					      (jnx--attribute-value attrname))))))))
+	(list attrname attrval)))))
+
+(defun jnx-edit-attribute (attrname attrval &optional prepend)
   "Edit attribute for tag at or around point.
-With APPEND, add new attributes to the end."
+With prepend, add new attributes to the beginning."
   (interactive
-   (let* ((attrname (completing-read "Attribute name: "
-				     ;; Attributes for specific tag.
-				     ;; (jnx-dynamic-completion
-				     ;;   (save-mark-and-excursion
-				     ;;     (jnx--element-for-point)
-				     ;;     (jnx--attribute-names)))
-				     (jnx--completions-for-attribute-names nil)))
-	  (attrval (jnx--string-or-nil
-		    (let ((minibuffer-local-completion-map minibuffer-local-completion-with-spaces-map))
-		      (completing-read "Attribute value: "
-				       (jnx--completions-for-attribute-values nil attrname)
-				       nil
-				       nil
-				       (jnx-at-element-start
-					 (jnx--attribute-value attrname)))))))
+   (pcase-let* ((`(,attrname ,attrval) (jnx--edit-attribute-interactive)))
      (list attrname attrval current-prefix-arg))
    nxml-mode)
   (jnx-at-element-start
-    (jnx--set-attribute-value attrname attrval append)))
+    (jnx--set-attribute-value attrname attrval prepend)))
 
 
 ;; TODO: This actually isn't great since not all of the buffer will be fontified if we run "flyspell-buffer"
