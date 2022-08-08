@@ -153,13 +153,17 @@ SEARCH-TERMS should be a list, or it'll be converted to one.
 		   (format-time-string "%Y")
 		   string-to-number)))
 
+(defun nmd--as-list (x)
+  "If X isn't a list, embed it in a list."
+  (if (listp x) x (list x)))
+
 (defun nmd-find-date ()
   "Find a date in the current search buffer. Return an encoded time."
   (interactive nil notmuch-search-mode)
   (let (found)
     (while (and (not found)
 		(re-search-forward (rx nmd-date-any) nil t))
-      (and (memq 'notmuch-search-subject (get-text-property (point) 'face))
+      (and (memq 'notmuch-search-subject (nmd--as-list (get-text-property (point) 'face)))
 	   (setq found (encode-time `(0 0 0
 					,(string-to-number (match-string-no-properties 2))
 					,(nmd-month-to-num (match-string-no-properties 1))
