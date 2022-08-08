@@ -166,7 +166,7 @@ Enable all the disabled commands
 ;;(set-register ?d '(file . "~/Downloads/"))
 
 (setq launchserver (when (member "--server" command-line-args)
-		 t))
+		     t))
 (setq command-line-args
       (remove "--server" command-line-args))
 
@@ -199,6 +199,9 @@ Enable all the disabled commands
 ;;(set-frame-font "-misc-fixed-medium-r-normal-*-11-*-*-*-*-*-*-*")
 (setq visual-line-fringe-indicators '(nil right-curly-arrow))
 (setq mouse-yank-at-point t)
+;; Make right click open a context menu. (Which you can otherwise access with S-<f10>)
+;; I don't really use `mouse-save-then-kill'.
+(unless noninteractive (context-menu-mode 1))
 
 (setq history-length 1000)
 (setq history-delete-duplicates t)
@@ -464,6 +467,8 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 ;; These are unbound for now, maybe I should put them on a protected C-c x keybinding.
 (bind-key "C-x x w" #'toggle-word-wrap)
 (bind-key "C-x x v" #'variable-pitch-mode)
+(bind-key "C-h M-k" #'find-function-on-key)
+(bind-key "C-h M-f" #'find-function)
 ;; Minibuffer keybindings
 ;; I don't normally fill paragraphs in the minibuffer, and I'd like
 ;; some way to clear the contents without adding to my kill ring.
@@ -499,6 +504,7 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 #+begin_src emacs-lisp
 (use-package free-keys
   :unless noninteractive
+  :disabled
   :bind ("C-h M-k" . free-keys))
 #+end_src
 
