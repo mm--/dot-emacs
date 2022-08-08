@@ -73,6 +73,17 @@ It's the parent element, or current element if looking at the start of a tag."
      (jnx--element-for-point)
      ,@body))
 
+;; TODO: Maybe do some `unwind-protect'
+(defmacro jnx--maybe-save-excursion (&rest body)
+  "Kind of like `save-excursion', but only resets point if body returns nil."
+  (declare (indent 0) (debug t))
+  (let ((start (make-symbol "start")))
+    `(let ((,start (point)))
+       (or (progn
+	     ,@body)
+	   (progn (goto-char ,start)
+		  nil)))))
+
 ;; Should this be an `unwind-protect'?
 (defmacro jnx-let-markers* (binders &rest body)
   "Like `let*', but each marker is freed afterward."
@@ -103,42 +114,45 @@ Like `delete-blank-lines', but only for one line."
 	   (/= pos pos2))
     nil))
 
+;; Does the excursion slow things down?
 (defun jnx--next-tag ()
-  "Go to next start-tag or empty-element."
-  (catch 'found
-    (while (xmltok-forward)
-      (when (memq xmltok-type '(start-tag empty-element))
-	(throw 'found t)))))
+  "Go to next start-tag or empty-element.
+Leaves point after start tag. Returns point of the start of the tag.
+Doesn't move if not found."
+  (jnx--maybe-save-excursion
+    (catch 'found
+      (while (xmltok-forward)
+	(when (memq xmltok-type '(start-tag empty-element))
+	  (throw 'found xmltok-start))))))
 
 (defun jnx--prev-tag ()
-  "Go to previous start-tag or empty-element."
-  (catch 'found
-    (while (progn
-	     (nxml-token-before)
-	     (goto-char xmltok-start)
-	     xmltok-type)
-      (when (memq xmltok-type '(start-tag empty-element))
-	(throw 'found t)))))
+  "Go to previous start-tag or empty-element.
+Leaves point after start tag. Returns point of the start of the tag.
+Doesn't move if not found.
+Note: This is actually much slower than `jnx--next-tag', probably
+  because we use `nxml-token-before'.
+"
+  (jnx--maybe-save-excursion
+    (catch 'found
+      (while (progn
+	       (nxml-token-before)
+	       (goto-char xmltok-start)
+	       xmltok-type)
+	(when (memq xmltok-type '(start-tag empty-element))
+	  (throw 'found xmltok-start))))))
+
 
 (defun jnx--next-tag-same-level ()
-  "Find next start tag (or empty element) at same level."
-  (let ((end (nxml-token-after))
-	start lasttype)
-    (when (memq xmltok-type '(start-tag empty-element))
-      (nxml-forward-single-balanced-item)
-      (setq end (nxml-token-after)))
-    (while (not (memq xmltok-type '(end-tag partial-end-tag start-tag empty-element)))
-      (when (eq xmltok-type 'space)
-	(setq start (point)))
-      (setq lasttype xmltok-type)
-      (goto-char end)
-      (setq end (nxml-token-after)))
-    (if (memq xmltok-type '(start-tag empty-element))
-	end
-      (progn
-	(if (eq lasttype 'space)
-	    (goto-char start))
-	nil))))
+  "Find next start tag (or empty element) at same level.
+Leaves point after the element, returns start of the element.
+Returns nil if not found and leaves point at start.
+Last scanned item is the start-tag or empty-element.
+"
+  (when-let* ((end (nxml-scan-element-forward (nxml-token-before))))
+    (goto-char end)
+    (save-excursion
+      (nxml-backward-single-balanced-item)
+      (point))))
 
 ;; `nxml-backward-element' might be a better version of this.
 (defun jnx--prev-tag-same-level ()
@@ -153,95 +167,140 @@ Like `delete-blank-lines', but only for one line."
 				  t)))))))
     (goto-char pos)))
 
+(defun jnx--last-tag-same-level ()
+  "Find last start tag (or empty element) at same level.
+Leaves point after the element, returns start of the element.
+Returns nil if not found and leaves point at start.
+Last scanned item is the start-tag or empty-element.
+"
+  (let (curend)
+    (while (when-let* ((end (nxml-scan-element-forward (nxml-token-before))))
+	     (goto-char end)
+	     (setf curend end)))
+    (when curend
+      (save-excursion
+	(nxml-backward-single-balanced-item)
+	(point)))))
+
 (defun jnx--next-tagname (tagname-or-pred)
   "Find next tag with string tagname.
 TAGNAME-OR-PRED can also be a predicate of no arguments that inspects xmltok.
-If TAGNAME-OR-PRED is nil, just runs `jmm/nxml--next-tag'"
-  (cond
-   ((null tagname-or-pred) (jnx--next-tag))
-   ((stringp tagname-or-pred)
-    (catch 'found
-      (while (jnx--next-tag)
-	(when (string= (xmltok-start-tag-qname) tagname-or-pred)
-	  (throw 'found t)))))
-   (t
-    (catch 'found
-      (while (jnx--next-tag)
-	(when (funcall tagname-or-pred)
-	  (throw 'found t)))))))
+See `jmm/nxml--next-tag'.
+Doesn't move point if not found."
+  (jnx--maybe-save-excursion
+    (let (e1)
+      (catch 'found
+	(cond
+	 ((null tagname-or-pred) (jnx--next-tag))
+	 ((stringp tagname-or-pred)
+	  (while (setf e1 (jnx--next-tag))
+	    (when (string= (xmltok-start-tag-qname) tagname-or-pred)
+	      (throw 'found e1))))
+	 (t
+	  (while (setf e1 (jnx--next-tag))
+	    (when (funcall tagname-or-pred)
+	      (throw 'found e1)))))))))
 
 (defun jnx--prev-tagname (tagname-or-pred)
   "Find previous tag with string tagname.
 TAGNAME-OR-PRED can also be a predicate of no arguments that inspects xmltok.
 If TAGNAME-OR-PRED is nil, just runs `jmm/nxml--prev-tag'"
-  (cond
-   ((null tagname-or-pred) (jnx--prev-tag))
-   ((stringp tagname-or-pred)
-    (catch 'found
-      (while (jnx--prev-tag)
-	(when (string= (xmltok-start-tag-qname) tagname-or-pred)
-	  (throw 'found t)))))
-   (t
-    (catch 'found
-      (while (jnx--prev-tag)
-	(when (funcall tagname-or-pred)
-	  (throw 'found t)))))))
+  (jnx--maybe-save-excursion
+    (cond
+     ((null tagname-or-pred) (jnx--prev-tag))
+     ((stringp tagname-or-pred)
+      (catch 'found
+	(while (jnx--prev-tag)
+	  (when (string= (xmltok-start-tag-qname) tagname-or-pred)
+	    (throw 'found t)))))
+     (t
+      (catch 'found
+	(while (jnx--prev-tag)
+	  (when (funcall tagname-or-pred)
+	    (throw 'found t))))))))
 
 (defun jnx--ancestor-tagname (tagname-or-pred)
   "Find ancestor tag with string tagname.
 TAGNAME-OR-PRED can also be a predicate of no arguments that inspects xmltok.
 If TAGNAME-OR-PRED is nil, tries to go up one level.
 Returns t if something was found."
-  (cond
-   ((null tagname-or-pred)
-    (let ((start (point)))
-      (nxml-backward-up-element)
-      (/= start (point))))
-   ((stringp tagname-or-pred)
-    (catch 'found
-      (jnx--move-while
-       (lambda ()
-	 (nxml-backward-up-element)
-	 (when (string-equal (xmltok-start-tag-qname) tagname-or-pred)
-	   (throw 'found t))))))
-   (t
-    (catch 'found
-      (jnx--move-while
-       (lambda ()
-	 (nxml-backward-up-element)
-	 (when (funcall tagname-or-pred)
-	   (throw 'found t))))))))
+  (jnx--maybe-save-excursion
+    (cond
+     ((null tagname-or-pred)
+      (let ((start (point)))
+	(nxml-backward-up-element)
+	(/= start (point))))
+     ((stringp tagname-or-pred)
+      (catch 'found
+	(jnx--move-while
+	 (lambda ()
+	   (nxml-backward-up-element)
+	   (when (string-equal (xmltok-start-tag-qname) tagname-or-pred)
+	     (throw 'found t))))))
+     (t
+      (catch 'found
+	(jnx--move-while
+	 (lambda ()
+	   (nxml-backward-up-element)
+	   (when (funcall tagname-or-pred)
+	     (throw 'found t)))))))))
 
 (defun jnx--next-tagname-same-level (tagname-or-pred)
-  "Find tagname-or-pred at same level."
-  (cond
-   ((stringp tagname-or-pred)
+  "Find tagname-or-pred at same level.
+Leaves point after end tag.
+Returns the start of the tag if found.
+Returns nil and leaves point in last position if not.
+See `jnx--next-tag-same-level'
+"
+  (jnx--maybe-save-excursion
+    (let (s1)
+      (catch 'found
+	(cond
+	 ((stringp tagname-or-pred)
+	  (while (setf s1 (jnx--next-tag-same-level))
+	    (when (string= (xmltok-start-tag-qname) tagname-or-pred)
+	      (throw 'found s1))))
+	 (t
+	  (while (setf s1 (jnx--next-tag-same-level))
+	    (when (funcall tagname-or-pred)
+	      (throw 'found s1)))))))))
+
+(defun jnx--prev-tagname-same-level (tagname-or-pred)
+  "Find tagname-or-pred at same level.
+Leaves point at start of tag, if found.
+Returns nil and leaves point in last position if not."
+  (jnx--maybe-save-excursion
     (catch 'found
-      (while (jnx--next-tag-same-level)
-	(when (string= (xmltok-start-tag-qname) tagname-or-pred)
-	  (throw 'found (point))))))
-   (t
-    (catch 'found
-      (while (jnx--next-tag-same-level)
-	(when (funcall tagname-or-pred)
-	  (throw 'found (point))))))))
+      (cond
+       ((stringp tagname-or-pred)
+	(while (jnx--prev-tag-same-level)
+	  (when (string= (xmltok-start-tag-qname) tagname-or-pred)
+	    (throw 'found (point)))))
+       (t
+	(while (jnx--prev-tag-same-level)
+	  (when (funcall tagname-or-pred)
+	    (throw 'found (point)))))))))
 
 (defun jnx--last-tagname-same-level (tagname)
-  "Find last tagname at the same level."
+  "Find last tagname at the same level.
+Leaves point at start of the tagname, if found.
+Returns nil otherwise."
   (let (last)
     (save-excursion
-      (while (jnx--next-tagname-same-level tagname)
-	(setq last (point))))
+      (while (when-let* ((start (jnx--next-tagname-same-level tagname)))
+	       (setf last start))))
     (when last
       (goto-char last))))
 
 (defun jnx--find-or-add-tagname-same-level (tagname)
-  "Find tagname at same level. Otherwise add it to the end."
-  (or (jnx--next-tagname-same-level tagname)
-      (progn
-	(newline-and-indent)
-	(save-excursion (jnx-add-element tagname nil "\n"))
-	xmltok-start)))
+  "Find tagname at same level. Otherwise add it to the end (past any comments or data).
+Leaves point at start of tagname."
+  (if-let* ((start (jnx--next-tagname-same-level tagname)))
+      (goto-char start)
+    (jnx-end-of-inner-sexp)
+    (newline-and-indent)
+    (save-excursion (jnx-add-element tagname nil "\n"))
+    xmltok-start))
 
 
 
@@ -366,9 +425,11 @@ Doesn't move outside current level."
   "Go to the last element of sexp.
 Doesn't move outside current level.
 Note that this doesn't go to the point before the enclosing end-tag,
-It'll go to the point after the last inner end-tag."
+It'll go to the point after the last inner end-tag.
+Should go to the last non-whitespace character."
   (interactive nil nxml-mode)
-  (jnx--move-while #'nxml-forward-single-balanced-item))
+  (jnx--move-while #'nxml-forward-single-balanced-item)
+  (skip-syntax-backward " "))
 
 ;; Modifying elements
 (defun jnx-swap (newelem)
@@ -629,8 +690,8 @@ Tries to keep the relative position of point in \"from\" the same."
   (let (pos1 pos2)
     (jnx-at-element-start
       (setq pos1 (point))
-      (if (jmm/nxml--next-tag-same-level)
-	  (setq pos2 (point))
+      (nxml-forward-single-balanced-item)
+      (unless (setf pos2 (jmm/nxml--next-tag-same-level))
 	(user-error "No next element")))
     (jmm/nxml-transpose-element pos1 pos2)))
 
