@@ -1,6 +1,6 @@
 ;;; eshell-expanded-history.el --- Add extra metadata to eshell history
 
-;; Copyright (C) 2019 Josh Moller-Mara
+;; Copyright (C) 2019,2022 Josh Moller-Mara
 
 ;; Author: Josh Moller-Mara <jmm@cns.nyu.edu>
 ;; Version 0.1
@@ -86,10 +86,14 @@
 ;; matter if we're using rsync, ssh, sshx, etc since the directory
 ;; should be the same)
 
+;; FIXME: Some of these commands don't work if this file is
+;; byte-compiled.  Not sure why.
+
 ;;; Code:
 
 (require 'ring)
 (require 'eshell)
+(require 'multisession)	;; Only appears in Emacs 29
 
 ;;;###autoload
 (progn
@@ -100,18 +104,18 @@
 
 ;;; User Variables:
 
-(defcustom eshell-hist-ex-file-name
-  (expand-file-name "hist-ex.gz" eshell-directory-name)
-  ;; TODO: Rewrite
-  "Name of the file to read/write input history.
-See also `eshell-read-history' and `eshell-write-history'."
-  :type 'file
-  :group 'eshell-hist-ex
-  :risky t)
-
 ;; TODO: Have separate history size for eshell-hist-ex?
 
 ;;; Interval Variables:
+;; TODO: Should this be a ring again?
+;; TODO: Probably should verify that this can handle large histories.
+(define-multisession-variable jmm/eshell-expanded-history-list-multisession '()
+  "A multisession history ring that is shared among all eshell buffers.
+Unlike em-hist.el, I want this to be global across all buffers.
+Should automatically synchronize between buffers.
+NOTE: Don't put values like buffers in here, or you'll segfault!"
+  :storage 'sqlite
+  :synchronized t)
 
 (defvar-local jmm/eshell-last-command-info '()
   "Save information of the last command we ran. This is a cons of
@@ -128,10 +132,6 @@ See also `eshell-read-history' and `eshell-write-history'."
 (defvar jmm/eshell-last-alert-info nil
   "Information about the last alert.
 Useful if we want to go to the buffer the last alert came from.")
-
-(defvar jmm/eshell-expanded-history-ring (make-ring 500)
-  "A history ring that is shared among all eshell buffers.
-Unlike em-hist.el, I want this to be global across all buffers.")
 
 ;; (time-to-seconds (time-subtract (current-time) blah))
 
@@ -167,11 +167,10 @@ Hook this into `eshell-input-filter-functions'."
 (add-hook 'eshell-input-filter-functions #'jmm/eshell-ext-hist-pre-command-fn)
 
 (defun jmm/eshell-hist-ext--add-to-history (info)
-  "Add some info to the `jmm/eshell-expanded-history-ring'.
-If that's nil, initialize it by reading in history."
-  (unless jmm/eshell-expanded-history-ring
-    (jmm/eshell-hist-ex-read-history))
-  (ring-insert jmm/eshell-expanded-history-ring info))
+  "Add some info to the `jmm/eshell-expanded-history-list-multisession'."
+  ;; The first part of info is a buffer, if we try to write that, we end up segfaulting.
+  (push (cons nil (cdr info))
+	(multisession-value jmm/eshell-expanded-history-list-multisession)))
 
 (defun jmm/eshell-ext-hist-post-command-fn ()
   "Gather data about the last command.
@@ -254,59 +253,8 @@ With ARG, switch in another window."
 	(switch-to-buffer buffer))
     (user-error "Could not find the buffer of the last alert (if it even existed)")))
 
-;; TODO: Read history when eshell is loaded, or when this file is
-;; loaded and active eshell sessions exist
-(defun jmm/eshell-hist-ex-read-history (&optional filename)
-  "Read in values for `jmm/eshell-expanded-history-ring' from
-  FILENAME or `eshell-hist-ex-file-name' by default."
-  (let ((file (or filename eshell-hist-ex-file-name)))
-    (cond
-     ((or (null file)
-	  (equal file ""))
-      nil)
-     ((not (file-readable-p file))
-      (message "Cannot read extended history file %s" file))
-     (t
-      (let* ((count 0)
-	     (size eshell-history-size)
-	     (ring (make-ring size))
-	     ;; TODO: Make eshell-hist-ex-file-name risky
-	     (ringlist (with-temp-buffer
-			 (insert-file-contents file)
-			 (goto-char (point-min))
-			 (read (current-buffer)))))
-	(--each ringlist (ring-insert ring it))
-	(setq jmm/eshell-expanded-history-ring ring))))))
-
-;; Note. We probably don't want to read history before writing our
-;; known history first, otherwise we may erase our history.
-
-;; TODO: We probably want to write history every once in a while. (Like if we start another emacs.)
-
-(defun jmm/eshell-hist-ex-write-history (&optional filename append)
-  "Write values for `jmm/eshell-expanded-history-ring' to FILENAME or `eshell-hist-ex-file-name' by default.
-With APPEND, add to the end of the ring."
-  (let ((file (or filename eshell-hist-ex-file-name)))
-    (cond
-     ((or (null file)
-	  (equal file ""))
-      nil)
-     ((not (file-writable-p file))
-      (message "Cannot write extended history file %s" file))
-     (t
-      (with-temp-buffer
-	(goto-char (point-min))
-	(pp (->> (ring-elements jmm/eshell-expanded-history-ring)
-		  reverse
-		  (-map #'cdr)
-		  ;; Erase buffer
-		  (--map (cons nil it)))
-	    (current-buffer))
-	(eshell-with-private-file-modes
-	 (write-region (point-min) (point-max) file append
-		       'no-message)))))))
-
-(add-hook 'eshell-exit-hook #'jmm/eshell-hist-ex-write-history)
+;; DONE: We probably want to write history every once in a while. (Like if we start another emacs.)
+;; Using multisession it automatically synchronizes!
 
 ;;;;;;;;;;
 
@@ -331,9 +279,7 @@ For example, doesn't handle localhost yet."
 (defun jmm/eshell-directory-history ()
   "Show commands that were run in this directory."
   (let* ((curdir (eshell/pwd)))
-    (unless jmm/eshell-expanded-history-ring
-      (jmm/eshell-hist-ex-read-history))
-    (->> (ring-elements jmm/eshell-expanded-history-ring)
+    (->> (multisession-value jmm/eshell-expanded-history-list-multisession)
 	 (-map #'cdr)
 	 (--filter (jmm/equal-file-path (plist-get it :dir) curdir)))))
 
@@ -406,7 +352,7 @@ Show the history of commands run in this specific directory.")
      (?h "help" nil nil "Output this help screen.")
      :preserve-args
      :usage "[-s]")
-   (->> (ring-elements jmm/eshell-expanded-history-ring)
+   (->> (multisession-value jmm/eshell-expanded-history-list-multisession)
 	(-map #'cdr)
 	reverse
 	(--remove (when elapsedgt (<= (plist-get it :elapsed) (jmm/maybe-duration-to-seconds elapsedgt))))
@@ -465,8 +411,6 @@ Append it to the eshell prompt (if we're not at it), adding a space if necessary
     (eshell-kill-input)
     (insert (concat " cd " (eshell-quote-argument (get-text-property point 'dir))))
     (eshell-send-input)))
-
-;; (insert (jmm/eshell--format-expanded-history (cdar (ring-elements jmm/eshell-expanded-history-ring))))
 
 ;; Look at:
 ;; eshell-last-command-status
