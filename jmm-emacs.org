@@ -224,6 +224,10 @@ Enable all the disabled commands
 ;; Some better completions for M-x and find-file
 ;; I particularly like "initials"
 (setq completion-styles '(basic partial-completion emacs22 initials))
+;; For `execute-extended-command-for-buffer', I also like to use "substring"
+;; See "completion-jmm.el" for this.
+(setf (alist-get 'command completion-category-overrides)
+      `((styles basic substringMX)))
 ;; TODO: I need to figure out a way to signal that other completions exist
 (setq completion-cycle-threshold nil)
 #+end_src
