@@ -327,6 +327,15 @@ Caches the body, so it only runs once."
 			,@body)))))
 	t))))
 
+(defun jnx--completion-table-with-metadata (collection metadata)
+  "Return a completion table function that returns METADATA when called with action=metadata.
+Otherwise completes using COLLECTION.
+METADATA should be an alist, like ((category . xml-tags-and-attrs)) "
+  (lambda (string pred action)
+    (if (eq action 'metadata)
+	`(metadata ,@metadata)
+      (complete-with-action action collection string pred))))
+
 (defun jnx--completions-for-attribute-names (tagname-or-pred &optional extras)
   "Return a dynamic completion table of all attribute names.
 Set TAGNAME-OR-PRED to nil to return all attribute names.
@@ -376,7 +385,9 @@ Allows you to enter in spaces.
 Takes in an optional default DEFAULT."
   (let ((minibuffer-local-completion-map jnx-minibuffer-local-completion-with-spaces-map))
     (completing-read (format-prompt prompt default)
-		     (jnx--completions-for-tagnames jmm/nxml-element-history)
+		     (jnx--completion-table-with-metadata
+		      (jnx--completions-for-tagnames jmm/nxml-element-history)
+		      '((category . xml-tags-with-attrs)))
 		     nil nil nil
 		     'jmm/nxml-element-history
 		     default)))
@@ -413,7 +424,9 @@ Allows you to enter in spaces."
   (let (token-end)
     (while (progn (setq token-end (nxml-token-after))
 		  (eq xmltok-type 'space))
-      (goto-char token-end))))
+      (goto-char token-end))
+    (if (eq xmltok-type 'data)
+	(skip-syntax-forward " "))))
 
 (defun jnx-beginning-of-inner-sexp ()
   "Go to the first element of sexp.
@@ -432,6 +445,8 @@ Should go to the last non-whitespace character."
   (skip-syntax-backward " "))
 
 ;; Modifying elements
+
+;; TODO: Add an optional argument to delete all previous attributes
 (defun jnx-swap (newelem)
   "Tries to change the qname of surrounding element.
 NEWELEM is a string, which can also have attribute values."
@@ -843,7 +858,7 @@ Tries to go to the correct position inside an attribute value, taking entity ref
   (save-excursion
     (let ((end (nxml-token-after))
 	  attr1 val1 pos1)
-      (when (and (eq xmltok-type 'start-tag)
+      (when (and (memq xmltok-type '(start-tag empty-element))
 	     (< xmltok-name-end (point) end))
 	(catch 'found
 	  ;; Try to find the attribute containing point
