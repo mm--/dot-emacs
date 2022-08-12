@@ -5,10 +5,14 @@
 (defun increment-number-decimal (&optional arg)
   "Increment the number forward from point by 'arg'."
   (interactive "p*")
-  (save-excursion
-    (save-match-data
-      (let (inc-by field-width answer)
-        (setq inc-by (if arg arg 1))
+  (let* ((e1 (save-excursion
+	       (skip-chars-forward "0123456789")
+	       (point-marker)))
+	 (offset (- (point) e1))
+	 inc-by field-width answer)
+    (save-excursion
+      (save-match-data
+	(setq inc-by (if arg arg 1))
         (skip-chars-backward "0123456789")
         (when (re-search-forward "[0-9]+" nil t)
           (setq field-width (- (match-end 0) (match-beginning 0)))
@@ -16,7 +20,10 @@
           (when (< answer 0)
             (setq answer (+ (expt 10 field-width) answer)))
           (replace-match (format (concat "%0" (int-to-string field-width) "d")
-                                 answer)))))))
+                                 answer)))))
+    (when answer
+      (goto-char (+ e1 offset))
+      (set-marker e1 nil))))
 
 ;; TODO: It'd be cool to handle roman numerals, "one", etc.
 ;; See https://emacs.stackexchange.com/questions/22743/in-emacs-lisp-how-to-convert-roman-numerals-to-an-integer
@@ -52,6 +59,30 @@
         (unless (characterp chr) (error "Cannot increment char by one"))
         (delete-char 1)
         (insert chr)))))
+
+(defvar-keymap increment-number-or-char-repeat-map
+  :doc "Keymap to repeat `increment-number-or-char' key sequences.  Used in `repeat-mode'."
+  "i" (lambda ()
+	(interactive)
+	(setq repeat-map 'increment-number-or-char-repeat-map)
+	(setq current-prefix-arg (prefix-numeric-value last-prefix-arg))
+	(increment-number-or-char current-prefix-arg))
+  "+" (lambda ()
+	(interactive)
+	(setq repeat-map 'increment-number-or-char-repeat-map)
+	(setq current-prefix-arg (abs (prefix-numeric-value last-prefix-arg)))
+	(increment-number-or-char current-prefix-arg))
+  "=" (lambda ()
+	(interactive)
+	(setq repeat-map 'increment-number-or-char-repeat-map)
+	(setq current-prefix-arg (abs (prefix-numeric-value last-prefix-arg)))
+	(increment-number-or-char current-prefix-arg))
+  "-" (lambda ()
+	(interactive)
+	(setq repeat-map 'increment-number-or-char-repeat-map)
+	(setq current-prefix-arg (- (abs (prefix-numeric-value last-prefix-arg))))
+	(increment-number-or-char current-prefix-arg)))
+(put 'increment-number-or-char 'repeat-map 'increment-number-or-char-repeat-map)
 
 ;; Kind of like dlh-yank-increment from
 ;; https://www.emacswiki.org/emacs/IncrementNumber
