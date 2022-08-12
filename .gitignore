@@ -36,3 +36,4 @@ company-statistics-cache.el
 /eln-cache/
 /split/
 .autoloads/
+/multisession/

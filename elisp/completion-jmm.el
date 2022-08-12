@@ -34,6 +34,9 @@
 
 ;;; Code:
 
+;; TODO: Look up correct ways for optional dependencies
+(require 'orderless nil t)
+
 ;;;###autoload
 (defun completion-substringMX-try-completion (string table pred point)
   "A hacky way of only doing substring completion for `execute-extended-command-for-buffer'."
@@ -52,10 +55,30 @@
     (completion-substring-all-completions string table pred point)))
 
 ;;;###autoload
+(defun completion-orderlessMX-try-completion (string table pred point)
+  "A hacky way of only doing orderless completion for `execute-extended-command-for-buffer'."
+  (when (let ((case-fold-search nil))
+	  (string-match-p "M-X" (minibuffer-prompt)))
+    (orderless-try-completion string table pred point)))
+
+;;;###autoload
+(defun completion-orderlessMX-all-completions (string table pred point)
+  "See `completion-orderlessMX-try-completion'."
+  (when (let ((case-fold-search nil))
+	  (string-match-p "M-X" (minibuffer-prompt)))
+    (orderless-all-completions string table pred point)))
+
+;;;###autoload
 (add-to-list 'completion-styles-alist
              '(substringMX
 	       completion-substringMX-try-completion completion-substringMX-all-completions
 	       "Substring completion, but only for `execute-extended-command-for-buffer' (a.k.a. \"M-X\")."))
+
+;;;###autoload
+(add-to-list 'completion-styles-alist
+             '(orderlessMX
+	       completion-orderlessMX-try-completion completion-orderlessMX-all-completions
+	       "Orderless completion, but only for `execute-extended-command-for-buffer' (a.k.a. \"M-X\")."))
 
 (provide 'completion-jmm)
 ;;; completion-jmm.el ends here
