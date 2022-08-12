@@ -85,9 +85,9 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 ;; - [ ] Defering stuff
 ;; - [ ] Byte compiling and loading (with timing) a file
 ;; It looks like I can't immediately defer this because other things depend on this.
-(setq custom-file "~/.emacs.d/custom.el")
-   (if (file-exists-p custom-file)
-       (load custom-file))
+(setq custom-file (concat user-emacs-directory "custom.el"))
+(if (file-exists-p custom-file)
+    (load custom-file))
 #+end_src
 
   Secret info. (Authentication info)
@@ -149,8 +149,14 @@ Enable all the disabled commands
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
 (blink-cursor-mode 0)
 
-(setq tab-bar-select-tab-modifiers '(control meta))
-(setq tab-bar-tab-hints t)
+;; I kind of like tab bar.  I use it for what I used to use "eyebrowse" for.
+(unless noninteractive
+  (setq tab-bar-select-tab-modifiers '(control meta)
+	tab-bar-tab-hints t
+	tab-bar-show 1
+	tab-bar-tab-name-function 'tab-bar-tab-name-truncated
+	tab-bar-tab-name-truncated-max 10)
+  (tab-bar-mode 1))
 
 (xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
 
