@@ -281,7 +281,7 @@ For example, doesn't handle localhost yet."
   (let* ((curdir (eshell/pwd)))
     (->> (multisession-value jmm/eshell-expanded-history-list-multisession)
 	 (-map #'cdr)
-	 (--filter (jmm/equal-file-path (plist-get it :dir) curdir)))))
+	 (--filter (jmm/equal-file-path (expand-file-name (plist-get it :dir)) curdir)))))
 
 (defun jmm/eshell--format-expanded-history (info &optional nodir)
   "Format a string about an input and things like if it failed and how long it took.
@@ -307,6 +307,7 @@ Optional NODIR says to not include the directory in the string (such as for `esh
 				     'face 'dired-directory
 				     'help-echo "SPC, mouse-1: Change to this directory"
 				     'mouse-face 'highlight
+				     'dir dir
 				     'keymap jmm/eshell-hist-ex--hist-dir-keymap)))
 	  (-non-nil)
 	  (s-join " "))
