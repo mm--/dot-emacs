@@ -192,6 +192,11 @@ Enable all the disabled commands
   :config
   (winner-mode 1))
 
+;; I want to be able to keybind capital letters separately from
+;; lowercase ones. So "M-A" doesn't automatically get translated to
+;; "M-a" This starts appearing in Emacs 29.
+(setq translate-upper-case-key-bindings nil)
+
 (setq focus-follows-mouse t)
 ;; (setq mouse-autoselect-window t) ;Sloppy focus
 (setq inhibit-splash-screen t)
