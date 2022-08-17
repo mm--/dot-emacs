@@ -36,10 +36,15 @@
 (defvar-keymap jnx-minibuffer-local-completion-with-spaces-map
   :doc "Same as `minibuffer-local-completion-map', but allows spaces.
 Use like:
-(let ((jmm/nxml-minibuffer-local-completion-map minibuffer-local-completion-with-spaces-map))
+(let ((minibuffer-local-completion-map jmm/nxml-minibuffer-local-completion-with-spaces-map))
   (completing-read PROMPT COMPLETIONS)
   )"
   :parent minibuffer-local-completion-map
+  "SPC" nil)
+
+(defvar-keymap jnx-crm-local-completion-with-spaces-map
+  :doc "Same as `crm-local-completion-map', but allows spaces."
+  :parent crm-local-completion-map
   "SPC" nil)
 
 (defvar jnx-element-history nil
@@ -392,16 +397,25 @@ Takes in an optional default DEFAULT."
 		     'jmm/nxml-element-history
 		     default)))
 
-;; TODO: Make completion work for multiple values
+;; DONE: Make completion work for multiple values
+;; MAYBE: Make more generic?
 (defun jnx-prompt-class (prompt &optional initial)
-  "Prompt for a class name (or space-separated class names).
-Allows you to enter in spaces."
-  (let ((minibuffer-local-completion-map jnx-minibuffer-local-completion-with-spaces-map))
-    (completing-read (format-prompt prompt nil)
-		     (jnx--completions-for-attribute-values-space-separated nil "class" jmm/nxml-class-history)
-		     nil nil
-		     initial
-		     'jmm/nxml-class-history)))
+  "Prompt for a class name (or space-separated class names)."
+  (let ((minibuffer-local-completion-map jnx-minibuffer-local-completion-with-spaces-map)
+	(crm-separator " ")
+	(crm-local-completion-map jnx-crm-local-completion-with-spaces-map))
+    (thread-first
+      (completing-read-multiple
+       (format-prompt prompt nil)
+       (apply-partially
+	#'completion-table-with-terminator " "
+	(jnx--completions-for-attribute-values-space-separated
+			nil "class"
+			(seq-uniq (mapcan #'split-string jmm/nxml-class-history))))
+       nil nil
+       initial
+       'jmm/nxml-class-history)
+      (string-join " "))))
 
 
 ;;; Moving and modifying the nXML buffer
