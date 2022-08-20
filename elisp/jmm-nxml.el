@@ -120,15 +120,21 @@ Like `delete-blank-lines', but only for one line."
     nil))
 
 ;; Does the excursion slow things down?
-(defun jnx--next-tag ()
+(defun jnx--next-tag (&optional bound)
   "Go to next start-tag or empty-element.
+Opening tag cannot end after BOUND.
 Leaves point after start tag. Returns point of the start of the tag.
 Doesn't move if not found."
   (jnx--maybe-save-excursion
     (catch 'found
-      (while (xmltok-forward)
-	(when (memq xmltok-type '(start-tag empty-element))
-	  (throw 'found xmltok-start))))))
+      (if bound
+	  (while (and (xmltok-forward)
+		      (<= (point) bound))
+	    (when (memq xmltok-type '(start-tag empty-element))
+	      (throw 'found xmltok-start)))
+	  (while (xmltok-forward)
+	    (when (memq xmltok-type '(start-tag empty-element))
+	      (throw 'found xmltok-start)))))))
 
 (defun jnx--prev-tag ()
   "Go to previous start-tag or empty-element.
@@ -187,22 +193,22 @@ Last scanned item is the start-tag or empty-element.
 	(nxml-backward-single-balanced-item)
 	(point)))))
 
-(defun jnx--next-tagname (tagname-or-pred)
+(defun jnx--next-tagname (tagname-or-pred &optional bound)
   "Find next tag with string tagname.
 TAGNAME-OR-PRED can also be a predicate of no arguments that inspects xmltok.
-See `jmm/nxml--next-tag'.
+See `jmm/nxml--next-tag' for meaning of BOUND.
 Doesn't move point if not found."
   (jnx--maybe-save-excursion
     (let (e1)
       (catch 'found
 	(cond
-	 ((null tagname-or-pred) (jnx--next-tag))
+	 ((null tagname-or-pred) (jnx--next-tag bound))
 	 ((stringp tagname-or-pred)
-	  (while (setf e1 (jnx--next-tag))
+	  (while (setf e1 (jnx--next-tag bound))
 	    (when (string= (xmltok-start-tag-qname) tagname-or-pred)
 	      (throw 'found e1))))
 	 (t
-	  (while (setf e1 (jnx--next-tag))
+	  (while (setf e1 (jnx--next-tag bound))
 	    (when (funcall tagname-or-pred)
 	      (throw 'found e1)))))))))
 
