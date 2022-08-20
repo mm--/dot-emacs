@@ -133,42 +133,73 @@ See also `jhfy-html-enkludge-buffer'."
 	(delete-region (prop-match-beginning match) (prop-match-end match))
 	(insert (prop-match-value match))))))
 
+(defun jhfy--fontify-to-html-string (css-sheet css-map)
+  "Takes in current buffer, returns fontified HTML as a string.
+This HTML doesn't include the <code> block."
+  (let ((temp-buffer (generate-new-buffer " *temp*" t)))
+    (copy-to-buffer temp-buffer (point-min) (point-max))
+
+    (with-current-buffer temp-buffer
+      (unwind-protect
+	  (progn
+	    (remove-list-of-text-properties (point-min) (point-max)
+					    hfy-ignored-properties)
+	    (setq buffer-invisibility-spec nil)
+
+	    (jhfy-html-enkludge-buffer)
+
+	    (dolist (point-face css-map)
+	      (let ((pt (car point-face))
+		    (fn (cdr point-face)))
+		(goto-char pt)
+		(if (eq 'end fn)
+		    (funcall hfy-end-span-handler)
+		  (funcall hfy-begin-span-handler (hfy-lookup fn css-sheet) nil nil nil))))
+
+	    (jhfy-html-dekludge-buffer)
+	    (buffer-substring-no-properties (point-min) (point-max)))
+	(and (buffer-name temp-buffer)
+	     (kill-buffer temp-buffer))))))
+
 ;;;###autoload
-(defun jmm-htmlfontify-buffer ()
+(defun jmm-htmlfontify-buffer (beg end)
   "Kind of like `htmlfontify-buffer', but generates HTML that doesn't need to be inside a <pre> tag.
 Unlike `htmlfontify-buffer', it doesn't handle invisible regions or etags links.
-You will probably want to `untabify', because I don't handle tabs correctly..
+You will probably want to `untabify', because I don't handle tabs correctly.
+If the region is active, only htmlfontify the region.
 "
-  (interactive)
-  (let ((html-buffer (generate-new-buffer "*jmm-hfy*"))
-	(css-sheet (hfy-compile-stylesheet))
-	(css-map (hfy-compile-face-map)))
+  (interactive (if (use-region-p)
+		   (list (region-beginning) (region-end))
+		 (list (point-min) (point-max))))
+  (let ((oldbuf (current-buffer)))
+    (with-temp-buffer
+      (insert-buffer-substring oldbuf beg end)
+      (let* ((html-buffer (generate-new-buffer "*jmm-hfy*"))
+	     ;; This overrides something when compiling the stylesheet
+	     (hfy-face-to-css #'jhfy-face-to-css-default)
+	     (css-sheet (hfy-compile-stylesheet))
+	     (css-map (hfy-compile-face-map))
+	     (html (jhfy--fontify-to-html-string css-sheet css-map)))
 
-    (copy-to-buffer html-buffer (point-min) (point-max))
-    (switch-to-buffer html-buffer)
-    (remove-list-of-text-properties (point-min) (point-max)
-                                    hfy-ignored-properties)
-    (setq buffer-invisibility-spec nil)
-
-    (jhfy-html-enkludge-buffer)
-    
-    (dolist (point-face css-map)
-      (let ((pt (car point-face))
-            (fn (cdr point-face))
-            (move-link       nil))
-        (goto-char pt)
-        (if (eq 'end fn)
-            (funcall hfy-end-span-handler)
-          (funcall hfy-begin-span-handler (hfy-lookup fn css-sheet) nil nil nil))))
-
-    (jhfy-html-dekludge-buffer)))
+	(with-current-buffer html-buffer
+	  (insert "<!DOCTYPE html>\n<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en-US\">\n<head>\n<meta charset=\"UTF-8\"/>\n<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>\n")
+	  (insert "<style>\n")
+	  (insert (jhfy-sprintf-stylesheet css-sheet))
+	  (insert "\n</style>\n")
+	  (insert "</head>\n<body>\n")
+	  (insert "<code class=\"fontify\">\n")
+	  (insert html)
+	  (insert "\n</code>\n")
+	  (insert "</body>\n</html>")
+	  (goto-char (point-min)))
+	(pop-to-buffer html-buffer)))))
 
 (defun jhfy--ignore-style-p (property value)
   (let ((ignorevals (alist-get property jhfy-ignore-styles 'jhfy--not-found nil #'equal)))
     (unless (eq ignorevals 'jhfy--not-found)
       (if (null ignorevals)
 	  t ;; We're ignoring any value
-	(member (if (stringp value) value(format "%S" value)) ignorevals)))))
+	(member (if (stringp value) value (format "%S" value)) ignorevals)))))
 
 (defun jhfy-face-to-css-default (fn)
   "See `hfy-face-to-css-default'."
@@ -214,6 +245,37 @@ Also assumes a base class of \".fontify\"."
 	 (css-sheet (hfy-compile-stylesheet)))
     (switch-to-buffer new-buffer)
     (insert (jhfy-sprintf-stylesheet css-sheet))))
+
+(defun jhfy-dom-texts (node)
+  "Like `dom-texts', but ignores certain spaces."
+  (cond
+   ((eq (dom-tag node) 'br) "\n")
+   (t
+    (mapconcat
+     (lambda (elem)
+       (cond
+	((stringp elem)
+	 (replace-regexp-in-string "\n" " " elem))
+	(t
+	 (jhfy-dom-texts elem))))
+     (dom-children node)))))
+
+(defun jhfy-unfontify-tag ()
+  "Unfontify the tag at point."
+  (interactive)
+  (let* ((new-buffer (generate-new-buffer "*jmm-hfy-edit*"))
+	 (dom (xml-parse-tag)))
+    (with-current-buffer new-buffer
+      (insert (jhfy-dom-texts dom))
+      (goto-char (point-min))
+      (save-excursion (while (re-search-forward (rx bol (1+ " ")) nil t) (replace-match "")))
+      (save-excursion (while (re-search-forward (rx " " (1+ " ")) nil t) (replace-match " ")))
+      (save-excursion (while (re-search-forward " " nil t) (replace-match " "))))
+    (pop-to-buffer
+     new-buffer
+     '((display-buffer-below-selected display-buffer-at-bottom)
+       (inhibit-same-window . t)
+       (window-height . fit-window-to-buffer)))))
 
 (provide 'jmm-htmlfontify)
 ;;; jmm-htmlfontify.el ends here
