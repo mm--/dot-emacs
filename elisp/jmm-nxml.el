@@ -464,6 +464,31 @@ Should go to the last non-whitespace character."
   (jnx--move-while #'nxml-forward-single-balanced-item)
   (skip-syntax-backward " "))
 
+(defun jnx-out-of-element ()
+  "Go out of the end of the current element."
+  (interactive nil nxml-mode)
+  (jnx--move-while #'nxml-forward-single-balanced-item)
+  (catch 'done
+    (while (let ((end (nxml-token-after)))
+	     (cond
+	      ((memq xmltok-type '(end-tag partial-end-tag))
+	       (throw 'done (goto-char end)))
+	      ((memq xmltok-type '(space))
+	       (goto-char end))
+	      ((null xmltok-type)
+	       ;; We're at the end. Should we throw an error?
+	       ;; (user-error "End of buffer")
+	       (throw 'done nil))
+	      ;; FIXME: Check for other cases, like at the end of the document.
+	      (t
+	       (error "FIXME: Somehow can't go further out.")))))))
+
+;; TODO: Just maybe make an alias.
+(defun jnx-into-previous-element ()
+  "Go into the end of the previous element."
+  (interactive nil nxml-mode)
+  (nxml-backward-down-element))
+
 ;; Modifying elements
 
 ;; TODO: Add an optional argument to delete all previous attributes
