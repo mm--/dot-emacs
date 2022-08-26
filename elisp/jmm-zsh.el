@@ -22,9 +22,9 @@
 
 ;; Lets you use your Zsh history from inside Emacs.
 ;;
-;; `zsh-run-history' is like `shell-command', but uses your zsh history for completion.
+;; `zsh-history-run' is like `shell-command', but uses your zsh history for completion.
 ;;
-;; `zsh-insert-history-value' is for Eshell or shell.  It prompts for
+;; `zsh-history-insert-value' is for Eshell or shell.  It prompts for
 ;; some zsh history value and inserts it at point.
 
 ;; "orderless" is a good completion style to use.
@@ -41,6 +41,8 @@
 (defvar jmm-zsh-history-list nil
   "Contains zsh history for `completing-read', but gets overwritten.")
 
+;; MAYBE: Memoize if file hasn't changed?
+;; This isn't that slow though.
 (defun jmm-zsh-get-history ()
   "Return a list of Zsh history"
   (let (hist)
@@ -61,8 +63,7 @@
     (lambda (string pred action)
       (if (eq action 'metadata)
 	  `(metadata (category . jmm-zsh-history)
-		     (display-sort-function . ,sorting)
-		     )
+		     (display-sort-function . ,sorting))
 	(complete-with-action action collection string pred)))))
 
 ;;;###autoload
@@ -70,23 +71,23 @@
 	     '(jmm-zsh-history (styles substring)))
 
 ;;;###autoload
-(defun jmm-zsh-insert-history-value ()
+(defun jmm-zsh-history-insert-value ()
   "Prompt for some Zsh history value, insert it."
   (interactive nil eshell-mode shell-mode)
   (let* ((collection (jmm-zsh-history-completions)))
-    (setq jmm-zsh-history-list (funcall collection "" nil t))
+    (setq jmm-zsh-history-list (all-completions "" collection))
     (insert (completing-read "Zsh: " collection
 			     nil t nil
 			     'jmm-zsh-history-list))))
 ;;;###autoload
-(defalias 'zsh-insert-history-value #'jmm-zsh-insert-history-value)
+(defalias 'zsh-history-insert-value #'jmm-zsh-history-insert-value)
 
 ;;;###autoload
-(defun zsh-run-history ()
+(defun zsh-history-run ()
   "Run a `shell-command', using Zsh history for completion."
   (interactive)
   (let* ((collection (jmm-zsh-history-completions)))
-    (setq jmm-zsh-history-list (funcall collection "" nil t))
+    (setq jmm-zsh-history-list (all-completions "" collection))
     (shell-command (completing-read "Zsh: " collection
 				    nil nil nil
 				    'jmm-zsh-history-list))))
