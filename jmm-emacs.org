@@ -4654,6 +4654,8 @@ See the file ~increment-stuff.el~
 (global-set-key (kbd "C-c i r") 'increment-number-roman)
 (global-set-key (kbd "C-c i C-y") 'yank-increment-number-or-char)
 (global-set-key (kbd "C-c i y") 'yank-then-increment-number-or-char)
+(global-set-key (kbd "C-c i d") 'jmm-increment-date)
+(global-set-key (kbd "C-c i n d") 'jmm-increment-goto-next-date)
 #+end_src
 ** Show shells in other windows
 
