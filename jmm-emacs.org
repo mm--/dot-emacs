@@ -23,6 +23,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 (require 'package)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
 (add-to-list 'package-archives '("ELPA" . "https://elpa.gnu.org/packages/") t)
+(add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/packages/") t)
 ;; Marmalade has an insecure cert now
 ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -65,7 +66,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       ))
 ;; TODO move elsewhere.
 (setq save-abbrevs 'silently)
-(setq abbrev-file-name "~/.emacs.d/abbrev_defs")
+(setq abbrev-file-name (expand-file-name "abbrev_defs" user-emacs-directory))
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
@@ -85,15 +86,15 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 ;; - [ ] Defering stuff
 ;; - [ ] Byte compiling and loading (with timing) a file
 ;; It looks like I can't immediately defer this because other things depend on this.
-(setq custom-file (concat user-emacs-directory "custom.el"))
+(setq custom-file (expand-file-name "custom.el" user-emacs-directory))
 (if (file-exists-p custom-file)
     (load custom-file))
 #+end_src
 
   Secret info. (Authentication info)
 #+begin_src emacs-lisp
-  (let ((secrets "~/.emacs.d/secrets.el"))
-    (if (file-exists-p secrets) (load-file secrets)))
+(let ((secrets (expand-file-name "secrets.el" user-emacs-directory)))
+  (if (file-exists-p secrets) (load-file secrets)))
 #+end_src
 
 * Splitting out files and autoloading
@@ -2190,7 +2191,7 @@ With optional argument KILLBUFFER, also kill the current buffer."
 (defun josh/dired-copy-remote-filename ()
   "Copy the file names of marked files in a way that's easy to
 paste into a terminal. Hopefully understandable by rsync or scp."
-  (interactive)
+  (interactive nil dired-mode)
   (let ((string
          (mapconcat 'identity
                     (mapcar (lambda (path)
@@ -3886,7 +3887,7 @@ Make an easy way to find files in open dired buffers
 	 ;; ("<f1> f" . counsel-describe-function)
 	 ;; ("<f1> v" . counsel-describe-variable)
 	 ;; ("C-h C-b" . counsel-descbinds)
-	 ("C-c d" . jmm/counsel-fasd-directories)
+	 ("C-c D" . jmm/counsel-fasd-directories)
 	 ("C-c j" . jmm/counsel-dired-file)
 	 :map dired-mode-map
 	 ("M-F" . jmm/counsel-files-in-directory)
