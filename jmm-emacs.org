@@ -1553,6 +1553,12 @@ You'll need to manually connect the REPL afterwards."
 	     :map eshell-hist-mode-map
 	     ("<up>")
 	     ("<down>"))
+  (with-eval-after-load "em-pred"
+    (setf (alist-get ?X eshell-modifier-alist)
+	  '(jmm-eshell-pred-replace-extension)))
+  (with-eval-after-load "esh-var"
+    (setf (alist-get "dm" eshell-variable-aliases-list nil nil #'equal)
+          (list 'jmm-eshell-dired-marked-relative nil t)))
   (add-hook 'eshell-mode-hook
 	    (lambda ()
 	      ;; TODO: Don't rewrite aliases that already exist.
@@ -1563,7 +1569,7 @@ You'll need to manually connect the REPL afterwards."
 	      (jmm/eshell-maybe-add-alias "d" "dired {default-val $* \".\"}")
 	      (jmm/eshell-maybe-add-alias "dow" "dired-other-window {default-val $* \".\"}")
 	      ;; Make it easy to switch to the project root
-	      (jmm/eshell-maybe-add-alias "cdp" "cd ${projectile-project-root}")
+	      (jmm/eshell-maybe-add-alias "cdp" "cd ${(project-root (project-current t))}")
 	      ;; Easily make a directory and switch to it
 	      (jmm/eshell-maybe-add-alias "mcd" "mkdir -p $1 && cd $1")
 	      ;; Run "visual" commands without adding them to `eshell-visual-commands'
