@@ -67,6 +67,8 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 ;; TODO move elsewhere.
 (setq save-abbrevs 'silently)
 (setq abbrev-file-name (expand-file-name "abbrev_defs" user-emacs-directory))
+(keymap-global-set "C-x a E" #'jmm-edit-abbrevs)
+(keymap-global-set "C-x a S" #'jmm-add-local-skeleton)
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))
