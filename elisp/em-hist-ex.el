@@ -1,4 +1,4 @@
-;;; eshell-expanded-history.el --- Add extra metadata to eshell history
+;;; eshell-expanded-history.el --- Add extra metadata to eshell history  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2019,2022 Josh Moller-Mara
 
@@ -76,6 +76,7 @@
 ;;         - It'd be nice to go the other way around
 
 ;; TODO: Import zshell history or bash?
+;; - Check out jmm-zsh.el which provides something like this
 
 ;; DONE: Make a hotkey to notify when a command is done.
 ;;  - TODO: Find out how to see if a buffer is visible or focused
@@ -278,7 +279,7 @@ For example, doesn't handle localhost yet."
 
 (defun jmm/eshell-directory-history ()
   "Show commands that were run in this directory."
-  (let* ((curdir (eshell/pwd)))
+  (let* ((curdir (expand-file-name (eshell/pwd))))
     (->> (multisession-value jmm/eshell-expanded-history-list-multisession)
 	 (-map #'cdr)
 	 (--filter (jmm/equal-file-path (expand-file-name (plist-get it :dir)) curdir)))))
@@ -450,4 +451,43 @@ See `jmm/eshell-hist-ex-previous-directory-input'."
 (bind-key "S-<up>" #'jmm/eshell-hist-ex-previous-directory-input eshell-mode-map)
 (bind-key "S-<down>" #'jmm/eshell-hist-ex-next-directory-input eshell-mode-map)
 
+;;; Complete from previous input
+
+(defun ehe--completions-for-collection (collection)
+  "Return a completion table for eshell history given a COLLECTION.
+Collection is a list of history, in order.
+This runction returns a completion table that adds sorting and a default completion style."
+  (let* ((sorting (lambda (strings)
+		    (seq-sort-by (lambda (e)
+				   (or (seq-position collection e) most-positive-fixnum))
+				 #'< strings))))
+    (lambda (string pred action)
+      (if (eq action 'metadata)
+	  `(metadata (category . jmm-eshell-history)
+		     (display-sort-function . ,sorting))
+	(complete-with-action action collection string pred)))))
+
+;; TODO: Affix with error status
+(defun ehe-insert-dhist ()
+  "Prompt for some dhist history value, insert it."
+  (interactive nil eshell-mode)
+  (let* ((collection (ehe--completions-for-collection
+		      (mapcar (lambda (x) (plist-get x :input)) (jmm/eshell-directory-history)))))
+    ;; (setq jmm-esh-history-list (all-completions "" collection))
+    (insert (completing-read "Directory history: " collection
+			     nil t nil
+			     ;; 'jmm-zsh-history-list
+			     ))))
+
+(bind-key "M-H" #'ehe-insert-dhist eshell-mode-map)
+
+;;;###autoload
+(add-to-list 'completion-category-defaults
+	     '(jmm-eshell-history (styles substring)))
+
+
 (provide 'em-hist-ex)
+
+;; Local Variables:
+;; read-symbol-shorthands: (("ehe-" . "em-hist-ex-"))
+;; End:
