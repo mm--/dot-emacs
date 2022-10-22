@@ -88,6 +88,14 @@ Returns a list of dired marked files in dired buffers in visible windows for the
    (flatten-tree files)))
 
 ;;;###autoload
+(defun eshell/dirof (arg &rest ignored)
+  "Get the directory of some object."
+  (cond
+   ((bufferp arg) (buffer-local-value 'default-directory arg))
+   ((stringp arg) (file-name-directory (expand-file-name arg)))
+   ((listp arg) (apply #'eshell/dirof (flatten-tree arg)))))
+
+;;;###autoload
 (defun jmm-eshell-pred-replace-extension (&optional repeat)
   "Return a modifier function that will change the extension of file names.
 You don't need to include the initial dot.
@@ -99,6 +107,28 @@ So you could do $file(:X/wav/) to make a wav file.
 		     (format "%s.%s" (file-name-sans-extension str) newext))))
     (lambda (lst)
       (mapcar function lst))))
+
+;;;###autoload
+(defun jmm-eshell-insert-last-argument ()
+  "Inserts argument from last evaluated line.
+Sure, you could use \"$_\", but sometimes you like to see the argument."
+  (interactive)
+  ;; TODO: Make repeated invocations get last arguments of previous commands
+  (insert (eshell-get-variable "_")))
+
+(defvar-keymap jmm-eshell-minor-mode-map
+  "C-c M-." #'jmm-eshell-insert-last-argument)
+
+;;; Functions:
+
+;;;###autoload
+(define-minor-mode jmm-eshell-minor-mode
+  "Josh's minor mode for eshell.
+
+Mostly just for keybindings.
+
+\\{jmm-eshell-minor-mode-map}"
+  :keymap jmm-eshell-minor-mode-map)
 
 (provide 'jmm-eshell-utils)
 ;;; jmm-eshell-utils.el ends here
