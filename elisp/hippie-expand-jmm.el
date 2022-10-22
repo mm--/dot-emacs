@@ -281,6 +281,39 @@ The abbrev needs to be associated with the symbol 'jmm-command."
 	(he-reset-string))
       nil)))
 
+(defun try-expand-local-abbrevs3 (old)
+  "Like `try-expand-local-abbrevs2', but can expand skeletons.
+Unlike `try-expand-local-abbrevs2', doesn't require 'jmm-command to expand skeletons.
+But the expansion should be blank."
+  (if (not old)
+      (progn
+	(setq jmm/he-last-expanded-function nil)
+	(he-init-string (he-dabbrev-beg) (point))
+	(let* ((he-down-str (downcase he-search-string))
+	       (expansion (abbrev-expansion he-down-str local-abbrev-table))
+	       symfun)
+	  (cond
+	   ((and (stringp expansion)
+		 (not (string-empty-p expansion)))
+	    (unless (he-string-member expansion he-tried-table t)
+	      (progn (he-substitute-string expansion) t)))
+	   ((and (string-empty-p expansion)
+		 (setq symfun (symbol-function (abbrev-symbol he-down-str local-abbrev-table))))
+	    ;; We're expanding some skeleton or command.
+	    ;; NOTE: Won't be able to undo a non-skeleton yet.
+	    (let ((curcommand this-command))
+	      ;; Maybe amalgamating-undo
+	      (jmm/he-substitute-function symfun)
+	      ;; Somehow this-command gets obliterated if you prompt.
+	      (setq this-command curcommand)
+	      (setq jmm/he-last-expanded-function t)
+	      t)))))
+    (progn
+      (if jmm/he-last-expanded-function
+	  (undo)
+	(he-reset-string))
+      nil)))
+
 ;;;###autoload
 (defun try-expand-local-abbrevs (old)
   "Like `try-expand-local-abbrevs2', but simpler and doesn't expand skeletons."

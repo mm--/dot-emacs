@@ -30,6 +30,19 @@
 
 (require 'pcomplete)
 
+(defun pcmpl-nix-get-keys-of (prefix attrset)
+  "Get the keys of ATTRSET in nixpkgs.
+Example: You can get a list of all rPackages."
+  (let ((args (list "eval" "--raw"
+		    (format "(with import <nixpkgs> {};
+builtins.toJSON (builtins.filter (x: lib.strings.hasPrefix \"%s\" x) (builtins.attrNames %s)))" (or prefix "") attrset)
+		    )))
+    (json-parse-string
+     (with-output-to-string
+       (with-current-buffer standard-output
+	 (apply #'call-process "nix" nil t nil args)))
+     :array-type 'list)))
+
 (defvar pcmpl-nix-commands
   '("run" "repl" "build" )
   "List of `nix' commands.

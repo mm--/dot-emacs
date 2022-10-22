@@ -37,3 +37,5 @@ company-statistics-cache.el
 /split/
 .autoloads/
 /multisession/
+/var/
+/transient/

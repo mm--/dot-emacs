@@ -240,8 +240,14 @@ Enable all the disabled commands
 (setq completion-styles '(basic partial-completion emacs22 initials))
 ;; For `execute-extended-command-for-buffer', I also like to use "substring"
 ;; See "completion-jmm.el" for this.
-(setf (alist-get 'command completion-category-overrides)
-      `((styles basic substringMX)))
+;; (setf (alist-get 'command completion-category-overrides)
+;;       `((styles basic substringMX)))
+(setf completion-category-overrides
+      '((command (styles basic substringMX))
+	(jmm-eshell-history (styles orderless))
+	(jmm-zsh-history (styles basic orderless))
+	(jmm-file-cache-directories (styles orderless))
+	(jmm-file-cache-files (styles basic orderless))))
 ;; TODO: I need to figure out a way to signal that other completions exist
 (setq completion-cycle-threshold nil)
 #+end_src
@@ -494,6 +500,33 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (define-key minibuffer-local-map (kbd "M-i") 'jmm/minibuffer-complete-cycle)
 (define-key minibuffer-local-filename-completion-map (kbd "M-A") 'jmm/file-minibuffer-project-root-dir)
 (define-key minibuffer-local-filename-completion-map (kbd "M-a") 'jmm/file-minibuffer-up-dir)
+(keymap-global-set "C-x 4 B" #'bookmark-jump-other-window)
+(keymap-global-set "M-E" #'eshell-command)
+
+;; Set up a key for temporary bindings
+(defvar-keymap jmm-temp-map
+  :doc "Temporary keymap for commands.")
+(defalias 'jmm-temp-prefix jmm-temp-map)
+(keymap-global-set "C-c d" #'jmm-temp-prefix)
+
+(defvar-keymap jmm-x-map
+  :doc "Keymap for things I might use a lot."
+  "b f" #'browse-url-of-file
+  "b b" #'browse-url-of-buffer
+  ". d" #'dictionary-search
+  ". t" #'jmm-dictionary-thesaurus-search
+  ". T" #'jmm-dictionary-thesaurus-search-at-point
+  ;; TODO: Make eshell jump to default-directory
+  "e e"	#'eshell
+  "e o" #'jmm-eshell-other-window
+  "e d" #'jmm-eshell-same-dir-other-window
+  "l c" #'copy-from-above-command
+  "l d" #'duplicate-line
+  "z"	#'zsh-history-run
+  )
+(defalias 'jmm-x-prefix jmm-x-map)
+(keymap-global-set "C-c x" #'jmm-x-prefix)
+;; (keymap-set jmm-x-map "1" last-command)
 #+end_src
 ** Keybindings to load org
    Again, most of my org-mode configuration is [[./jmm-org-config.org][here]], but for some dumb
@@ -574,7 +607,8 @@ backed up in the corresponding directory. Emacs will mkdir it if necessary.)
 	try-minibuffer-expand-buffer
 	try-expand-multiabbrevs
 	;; try-expand-all-abbrevs
-	try-expand-local-abbrevs2
+	;; try-expand-local-abbrevs2
+	try-expand-local-abbrevs3
 	try-expand-global-abbrevs
 	try-expand-acronym
 	try-expand-dabbrev2

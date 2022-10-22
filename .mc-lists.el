@@ -11,6 +11,7 @@
 	TeX-insert-sub-or-superscript
 	ace-jump-mode
 	ace-jump-move
+	ace-jump-zap-up-to-char-dwim
 	backward-sentence
 	c-electric-colon
 	c-electric-delete-forward
@@ -49,7 +50,12 @@
 	indent-for-tab-command
 	indent-region
 	insert-register
+	jmm-xhtml-insert-span
 	jmm/eshell-ls-input-insert-filename-at-point
+	jmm/nxml-blockify-element
+	jmm/nxml-down-element-dwim
+	jmm/nxml-end-of-inner-sexp
+	jmm/nxml-wrap
 	jmm/org-add-tag
 	jmm/org-edna-hydra/body
 	jmm/org-edna-hydra/lambda-n-and-exit
@@ -67,6 +73,9 @@
 	markdown-outdent-or-delete
 	matlab-electric-comment
 	matlab-forward-sexp
+	nxml-electric-slash
+	nxml-finish-element
+	nxml-split-element
 	org-agenda-bulk-mark
 	org-agenda-bulk-unmark-all
 	org-agenda-previous-line

@@ -81,6 +81,7 @@ Adds some metadata for sorting later."
   "Kind of like `recentf-track-opened-file', but adds to file cache.
 Only really used when writing files."
   (and buffer-file-name
+       ;; TODO: Add new files that are in directories we're tracking
        ;; Only add if we've already added it before
        (alist-get (expand-file-name buffer-file-name) jfc-file-attribute-alist nil nil #'equal)
        (jfc--add-file buffer-file-name))

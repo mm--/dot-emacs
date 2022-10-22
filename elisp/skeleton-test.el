@@ -121,6 +121,27 @@ Then the abbreviation will be inserted in the `edit-abbrevs' buffer.
 
 
 ;;;;;;;;;;
+;; XML skeletons
+
+;;;###autoload
+(define-skeleton skeleton/svg-skeleton
+  "Skeleton for an SVG"
+  nil
+  "<svg
+   width=\"\"
+   height=\"\"
+   viewBox=\"\"
+   version=\"1.1\"
+   xmlns:xlink=\"http://www.w3.org/1999/xlink\"
+   xmlns=\"http://www.w3.org/2000/svg\"
+   xmlns:svg=\"http://www.w3.org/2000/svg\">
+" _ "
+</svg>
+")
+
+
+
+;;;;;;;;;;
 ;; Nix skeletons
 
 ;; TODO: Move `jmm/nix-get-keys-of' elsewhere
@@ -356,6 +377,21 @@ texenv = texlive.combine {
   "Set up looping over the list of marked files"
   nil
   "for x in $dm { " _ "$x }")
+
+;;;###autoload
+(define-skeleton skeleton/eshell/ffmeta
+  "Add metadata to media file using ffmpeg"
+  nil
+  ;; Bug: Quitting inside subskeletons causes `eshell-last-output-end' to get
+  ;; reset to beginning of line
+  '(narrow-to-region (point) (point-max))
+  "ffmpeg -i " (shell-quote-argument (setq v1 (file-relative-name (expand-file-name (read-file-name "File: ")))))
+  " -metadata title=\"" (read-string "Title: ")"\""
+  ("Field: " " -metadata " str "=\"" (read-string "Value: ")"\"")
+  " -c copy "
+  (shell-quote-argument (file-name-sans-extension v1))
+  _ "." (file-name-extension v1)
+  '(widen))
 
 
 ;;;;;;;;;;
