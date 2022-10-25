@@ -265,6 +265,8 @@ texenv = texlive.combine {
 
 ;;;;;;;;;;
 ;; HTML skeletons
+;; including:
+;; (jmm-xhtml-mode-abbrev-table)
 
 (defun jmm/html-comment-line ()
   "Comment the currrent line."
@@ -344,6 +346,55 @@ texenv = texlive.combine {
   '(indent-region v1 (point))
   '(goto-char v2))
 
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/notehtml
+  "Skeleton for an HTML page for notes"
+  "Title: "
+  "<!DOCTYPE html>
+<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en-US\">
+ <head>
+  <meta charset=\"UTF-8\"/>
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>
+  <!-- <meta http-equiv=\"Content-Security-Policy\" content=\"default-src https:\"/> -->
+  <meta name=\"referrer\" content=\"no-referrer\"/>
+  <meta name=\"author\" content=\"Josh Moller-Mara\"/>
+  <title>" str "</title>
+  <link rel=\"stylesheet\" href=\"./style.css\" type=\"text/css\" title=\"Default style\"/>" \n
+  (when (y-or-n-p "Skewer?") '(nil "<script src=\"http://localhost:8081/skewer\"></script>" \n))
+  "</head>
+ <body>
+  <header>
+   <h1>" str "</h1>
+  </header>
+  <main>
+  </main>
+ </body>
+</html>
+<!-- Local Variables: -->
+<!-- mode: jmm-xhtml -->
+<!-- nxml-child-indent: 1 -->
+<!-- word-wrap: t -->
+<!-- End: -->
+")
+
+
+;;;;;;;;;;
+;; CSS skeletons
+;; (css-mode-abbrev-table)
+
+;;;###autoload
+(define-skeleton skeleton/css/notecss
+  "A basic skeleton for CSS styles for notes I take."
+  ;; Probably will add more stuff later.
+  nil
+  "body {
+    font: 1rem 'Fira Sans', sans-serif;
+}
+h1 {
+    text-align: center;
+}
+")
+
 
 ;;;;;;;;;;
 ;; Javascript skeletons
@@ -392,6 +443,24 @@ texenv = texlive.combine {
   (shell-quote-argument (file-name-sans-extension v1))
   _ "." (file-name-extension v1)
   '(widen))
+
+;;;###autoload
+(define-skeleton skeleton/eshell/ytmv
+  "Download a music video using yt-dlp"
+  nil
+  '(setq str (let ((default (car kill-ring)))
+	       (read-string (format-prompt "URL" default) nil nil default)))
+  "yt-dlp --no-mtime --no-embed-metadata --format 243+251 "
+  (format "\"%s\"" str))
+
+
+;;;###autoload
+(define-skeleton skeleton/eshell/ffprobe
+  "Get the metadata of a file using ffprobe"
+  nil
+  "ffprobe -hide_banner -i "
+  (shell-quote-argument (file-relative-name (expand-file-name (read-file-name "File: ")))))
+
 
 
 ;;;;;;;;;;
