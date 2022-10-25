@@ -511,8 +511,8 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 
 (defvar-keymap jmm-x-map
   :doc "Keymap for things I might use a lot."
-  "b f" #'browse-url-of-file
-  "b b" #'browse-url-of-buffer
+  "u f" #'browse-url-of-file
+  "u b" #'browse-url-of-buffer
   ". d" #'dictionary-search
   ". t" #'jmm-dictionary-thesaurus-search
   ". T" #'jmm-dictionary-thesaurus-search-at-point
@@ -5957,4 +5957,16 @@ obscuring other windows.
   (setq plantuml-default-exec-mode 'executable))
 
 #+end_src
+** tmr
+
+[[https://protesilaos.com/emacs/tmr][tmr]] is handy way to set timers in Emacs.
+
+#+begin_src emacs-lisp
+(use-package tmr
+  :bind
+  (("C-c t t" . tmr)
+   ("C-c t T" . tmr-with-description)
+   ("C-c t l" . tmr-tabulated-view)))
+#+end_src
+
 
