@@ -240,10 +240,11 @@ Enable all the disabled commands
 (setq completion-styles '(basic partial-completion emacs22 initials))
 ;; For `execute-extended-command-for-buffer', I also like to use "substring"
 ;; See "completion-jmm.el" for this.
-;; (setf (alist-get 'command completion-category-overrides)
-;;       `((styles basic substringMX)))
+(unless noninteractive
+  (require 'completion-jmm)
+  (advice-add 'execute-extended-command-for-buffer :around #'jmm-advice-M-X-override-completion))
 (setf completion-category-overrides
-      '((command (styles basic substringMX))
+      '((command-for-buffer (styles orderless))
 	(jmm-eshell-history (styles orderless))
 	(jmm-zsh-history (styles basic orderless))
 	(jmm-file-cache-directories (styles orderless))

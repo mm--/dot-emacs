@@ -22,63 +22,56 @@
 
 ;; Allows you to use "substring" style completion, but only for
 ;; `execute-extended-command-for-buffer'.
-;; Activate it using something like:
+;; To do this, it creates a new completion category 'command-for-buffer.
 ;;
-;; (setf (alist-get 'command completion-category-overrides)
-;;       `((styles basic substringMX)))
+;; Activate it using:
 ;;
-;; Note: This is really hacky, and will only work if
-;;       `suggest-key-bindings' is `t'. Otherwise M-X's completion
-;;       table won't return a "metadata" with a category of "command".
+;; (require 'completion-jmm)
+;; (advice-add 'execute-extended-command-for-buffer :around #'jmm-advice-M-X-override-completion)
+;;
+;; and set the completion style using:
+;;
+;; (setf (alist-get 'command-for-buffer completion-category-overrides)
+;;       `((styles basic substring)))
+;;
 
+;; FIXME: This file needs to be required. Simply using autoloads doesn't work.
+;; It might have something to do with the way
+;; `advice-eval-interactive-spec' uses `eval' on the interactive part of the advice.
 
 ;;; Code:
 
-;; TODO: Look up correct ways for optional dependencies
-(require 'orderless nil t)
+(defun jmm-advice--M-X-override-completion-metadata (orig string pred action)
+  "This is advice that overrides a completion table.
+It will return a custom metadata setting with the category 'command-for-buffer."
+  (if (eq action 'metadata)
+      '(metadata
+	(affixation-function . read-extended-command--affixation)
+	(category . command-for-buffer))
+    (funcall orig string pred action)))
 
-;;;###autoload
-(defun completion-substringMX-try-completion (string table pred point)
-  "A hacky way of only doing substring completion for `execute-extended-command-for-buffer'."
-  (when (let ((case-fold-search nil))
-	  ;; I can't really find a better way to determine if we're
-	  ;; calling `execute-extended-command-for-buffer'
-	  ;; Maybe we can advise the function and use `minibuffer-with-setup-hook'
-	  (string-match-p "M-X" (minibuffer-prompt)))
-    (completion-substring-try-completion string table pred point)))
+;; FIXME: This isn't actually a command, and should be excluded from
+;; being listed in M-x.
 
-;;;###autoload
-(defun completion-substringMX-all-completions (string table pred point)
-  "See `completion-substringMX-try-completion'."
-  (when (let ((case-fold-search nil))
-	  (string-match-p "M-X" (minibuffer-prompt)))
-    (completion-substring-all-completions string table pred point)))
+;;;###autoload (autoload 'jmm-advice-M-X-override-completion "completion-jmm")
+(defun jmm-advice-M-X-override-completion (orig &rest args)
+  "Sets a custom completion category for `execute-extended-command-for-buffer'.
+The new completion category becomes 'command-for-buffer.
+You can set styles for \\[execute-extended-command-for-buffer] using, for example:
 
-;;;###autoload
-(defun completion-orderlessMX-try-completion (string table pred point)
-  "A hacky way of only doing orderless completion for `execute-extended-command-for-buffer'."
-  (when (let ((case-fold-search nil))
-	  (string-match-p "M-X" (minibuffer-prompt)))
-    (orderless-try-completion string table pred point)))
+ (setf (alist-get 'command-for-buffer completion-category-overrides)
+       `((styles basic orderless)))
 
-;;;###autoload
-(defun completion-orderlessMX-all-completions (string table pred point)
-  "See `completion-orderlessMX-try-completion'."
-  (when (let ((case-fold-search nil))
-	  (string-match-p "M-X" (minibuffer-prompt)))
-    (orderless-all-completions string table pred point)))
+This needs to be applied using:
 
-;;;###autoload
-(add-to-list 'completion-styles-alist
-             '(substringMX
-	       completion-substringMX-try-completion completion-substringMX-all-completions
-	       "Substring completion, but only for `execute-extended-command-for-buffer' (a.k.a. \"M-X\")."))
-
-;;;###autoload
-(add-to-list 'completion-styles-alist
-             '(orderlessMX
-	       completion-orderlessMX-try-completion completion-orderlessMX-all-completions
-	       "Orderless completion, but only for `execute-extended-command-for-buffer' (a.k.a. \"M-X\")."))
+ (advice-add 'execute-extended-command-for-buffer :around #'jmm-advice-M-X-override-completion)
+"
+  (interactive
+   (lambda (spec)
+     (minibuffer-with-setup-hook
+	 (:append (lambda () (add-function :around (local 'minibuffer-completion-table) #'jmm-advice--M-X-override-completion-metadata)))
+       (advice-eval-interactive-spec spec))))
+  (apply orig args))
 
 (provide 'completion-jmm)
 ;;; completion-jmm.el ends here
