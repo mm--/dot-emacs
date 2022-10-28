@@ -244,7 +244,8 @@ Enable all the disabled commands
   (require 'completion-jmm)
   (advice-add 'execute-extended-command-for-buffer :around #'jmm-advice-M-X-override-completion))
 (setf completion-category-overrides
-      '((command-for-buffer (styles orderless))
+      '((bookmark (styles basic orderless))
+	(command-for-buffer (styles basic orderless))
 	(jmm-eshell-history (styles orderless))
 	(jmm-zsh-history (styles basic orderless))
 	(jmm-file-cache-directories (styles orderless))

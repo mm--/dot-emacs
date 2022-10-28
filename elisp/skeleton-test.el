@@ -49,6 +49,7 @@ Basically just `edit-abbrevs' for a provided table. "
      (string-remove-suffix "-mode"))
    abbr))
 
+;; TODO: Prompt for abbreviation tables.
 ;;;###autoload
 (defun jmm-add-local-skeleton ()
   "Open this file, try to find the right place to add a skeleton.
@@ -118,6 +119,18 @@ Then the abbreviation will be inserted in the `edit-abbrevs' buffer.
   "Just insert the current date time"
   nil
   (format-time-string "%Y-%m-%d %H:%M"))
+
+;;;###autoload
+(define-skeleton skeleton/global/org-read-date
+  "Insert the date using `org-read-date'"
+  nil
+  (format-time-string "%Y-%02m-%02d" (org-read-date nil t nil "Date: ")))
+
+;;;###autoload
+(define-skeleton skeleton/global/org-read-date-time
+  "Insert a date and time using `org-read-date'"
+  nil
+  (format-time-string "%Y-%02m-%02d %H:%M" (org-read-date t t nil "Date: ")))
 
 
 ;;;;;;;;;;
@@ -377,6 +390,16 @@ texenv = texlive.combine {
 <!-- End: -->
 ")
 
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/calevs
+  "List of calendar events for my personal calendar."
+  nil
+  "<ul class=\"events\">" > \n
+  "<li>" _ "</li>" \n
+  "</ul>" >
+  )
+
+
 
 ;;;;;;;;;;
 ;; CSS skeletons
@@ -443,6 +466,43 @@ h1 {
   (shell-quote-argument (file-name-sans-extension v1))
   _ "." (file-name-extension v1)
   '(widen))
+
+
+(defun jmm-get-pulseaudio-ids (source-or-sink)
+  "Return an alist from PulseAudio names to IDs.
+SOURCE-OR-SINK should be either 'source or 'sink."
+  (let ((arg (pcase source-or-sink
+	       ('sink "sinks")
+	       ('source "sources")
+	       (t (error "Expecting either 'source or 'sink")))))
+    (thread-last
+      (split-string (shell-command-to-string (format "pactl list short %s" arg)) "\n" t)
+      (mapcar (lambda (x) (split-string x split-string-default-separators t)))
+      (mapcar (pcase-lambda (`(,num ,name ,_))
+		(cons name num))))))
+
+(add-to-list 'completion-category-defaults
+	     '(jmm-pulseaudio-name (styles orderless substring)))
+
+(defun jmm-read-pulseaudio (source-or-sink prompt)
+  "Read a PulseAudio source or sink name.
+SOURCE-OR-SINK should be either 'source or 'sink."
+  (let* ((alist (jmm-get-pulseaudio-ids source-or-sink))
+	 (collection (lambda (string pred action)
+		       (if (eq action 'metadata)
+			   `(metadata (category . jmm-pulseaudio-name))
+			 (complete-with-action action alist string pred)))))
+    (shell-quote-argument (completing-read (format "%s: " prompt) collection))))
+
+;;;###autoload
+(define-skeleton skeleton/eshell/ffrecord
+  "Make a recording of computer speakers and microphone."
+  "Filename: "
+  "ffmpeg -fflags nobuffer -flags low_delay "
+  "-f pulse -i " (jmm-read-pulseaudio 'source "Left side") " "
+  "-f pulse -i " (jmm-read-pulseaudio 'source "Right side") " "
+  "-filter_complex \"[0:a][1:a]amerge=inputs=2,pan=stereo|c0<c0+c1|c1<c2+c3[a]\" -map \"[a]\" "
+  "-fflags +genpts " str)
 
 ;;;###autoload
 (define-skeleton skeleton/eshell/ytmv
