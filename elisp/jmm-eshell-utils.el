@@ -96,6 +96,16 @@ Returns a list of dired marked files in dired buffers in visible windows for the
    ((listp arg) (apply #'eshell/dirof (flatten-tree arg)))))
 
 ;;;###autoload
+(defun eshell/async-shell (&rest args)
+  "Run `async-shell-command'."
+  (async-shell-command (combine-and-quote-strings (flatten-tree args))))
+
+;;;###autoload
+(defun eshell/rg (&rest args)
+  "Use Emacs grep facility with ripgrep."
+  (eshell-grep "rg" (append (list "--no-heading" "--null" "--color=ansi" "--follow" "--no-messages" "--search-zip") args) t))
+
+;;;###autoload
 (defun jmm-eshell-pred-replace-extension (&optional repeat)
   "Return a modifier function that will change the extension of file names.
 You don't need to include the initial dot.

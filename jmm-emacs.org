@@ -1609,8 +1609,6 @@ You'll need to manually connect the REPL afterwards."
 	      (jmm/eshell-maybe-add-alias "cdp" "cd ${(project-root (project-current t))}")
 	      ;; Easily make a directory and switch to it
 	      (jmm/eshell-maybe-add-alias "mcd" "mkdir -p $1 && cd $1")
-	      ;; Run "visual" commands without adding them to `eshell-visual-commands'
-	      (jmm/eshell-maybe-add-alias "eev" "eshell-exec-visual")
 	      ;; We want $PAGER to be "cat" ("less" messes up stuff for us. Especially with nix-env)
 	      (make-local-variable 'process-environment)
 	      (setenv "PAGER" "cat"))))
