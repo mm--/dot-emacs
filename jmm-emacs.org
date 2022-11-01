@@ -683,6 +683,14 @@ It just has the property 'no-self-insert set."
 #+begin_src emacs-lisp
 (require 'jmm-autotype)
 #+end_src
+* Searching
+
+I've defined some extra ~isearch~ modes in [[file:elisp/jmm-isearch.el][jmm-isearch.el]].
+
+#+begin_src emacs-lisp
+(require 'jmm-isearch)
+(define-key isearch-mode-map (kbd "M-s l") #'isearch-toggle-permuted-splits-in-line)
+#+end_src
 
 * Compiling conveniences
 
