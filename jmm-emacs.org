@@ -244,7 +244,9 @@ Enable all the disabled commands
   (require 'completion-jmm)
   (advice-add 'execute-extended-command-for-buffer :around #'jmm-advice-M-X-override-completion))
 (setf completion-category-overrides
-      '((bookmark (styles basic orderless))
+      '((command (styles initials partial-completion orderless))
+	(buffer (styles basic orderless))
+	(bookmark (styles basic orderless))
 	(command-for-buffer (styles basic orderless))
 	(jmm-eshell-history (styles orderless))
 	(jmm-zsh-history (styles basic orderless))
@@ -495,6 +497,8 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (bind-key "C-x x v" #'variable-pitch-mode)
 (bind-key "C-h M-k" #'find-function-on-key)
 (bind-key "C-h M-f" #'find-function)
+(bind-key "C-h M-l" #'find-library)
+(bind-key "C-h M-v" #'find-variable)
 ;; Minibuffer keybindings
 ;; I don't normally fill paragraphs in the minibuffer, and I'd like
 ;; some way to clear the contents without adding to my kill ring.
@@ -2193,7 +2197,7 @@ Note that ~dired-jump~ got promoted from ~dired-x~ to ~dired~ recently, like Ema
    This is similar to ~dired-jump~, but it'll try to find the file in
    a dired buffer that's already open (most usefully when the file is
    listed in a subdirectory of a dired buffer). Otherwise it just
-   calls ~~dired-jump~.
+   calls ~dired-jump~.
 #+BEGIN_SRC emacs-lisp
 (defun jmm/dired-jump (&optional killbuffer file)
   "Like `dired-jump', but prefer an already open dired that contains the parent directory as a subdir.
