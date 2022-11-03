@@ -1,6 +1,7 @@
 ;; -*- lexical-binding: t; -*-
 ;; Unorganized skeleton and abbreviation utilities.
 (require 'nxml-mode)
+(require 'thunk)
 
 (defvar jmm-skeleton-last-defined nil)
 
@@ -97,6 +98,13 @@ Then the abbreviation will be inserted in the `edit-abbrevs' buffer.
 	  (skeleton-edit-abbrev-last-skeleton skelabbrev)
 	  (save-excursion (insert "\n")))
 	))))
+
+(defun jmm-skeleton-prompt (prompt futurehistory)
+  (let ((res (read-from-minibuffer (format-prompt prompt nil)
+				   nil nil nil nil
+				   futurehistory)))
+    (unless (string-empty-p res)
+      res)))
 
 
 ;;;;;;;;;;
@@ -400,6 +408,63 @@ texenv = texlive.combine {
   )
 
 
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/frag
+  "Add a slide fragment to a node."
+  "Frag ID? "
+  '(jmm-xhtml-add-class "fragment")
+  "data-fragment-index=\"" str "\"")
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/afile
+  "Insert a link to a local file from kill ring"
+  nil
+  '(setq v1 (current-kill 0))
+  "<a href=\"" (xml-escape-string (format "file://%s" v1)) "\">"
+  ;; I only want to prompt if I'm not wrapping.
+  ;; If we prompt, we shouldn't set the interesting point.
+  ;; _ | (jmm-skeleton-prompt "Link text" (list (file-name-nondirectory v1) v1))
+  (jmm-skeleton-prompt "Link text" (list (file-name-nondirectory v1) v1)) | _
+  "</a>")
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/arelk
+  "Insert a link to relative file from kill ring"
+  "Link text: "
+  "<a href=\"" (xml-escape-string (file-relative-name (expand-file-name (car kill-ring)))) "\">" str "</a>")
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/akill
+  "Insert link from current kill."
+  "Link text: "
+  "<a href=\"" (xml-escape-string (current-kill 0)) "\">" str "</a>")
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/stodo
+  "Add a todo span with current date"
+  "Todo text: "
+  "<span class=\"todo\" data-added=\""
+  (xml-escape-string (format-time-string "%Y-%m-%d %H:%M"))
+  "\">" str "</span>")
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/aemail
+  "Link to local email"
+  nil
+  '(setq v1 (pop org-stored-links))
+  "<a data-orglink=\"" (xml-escape-string (format "[[%s]]" (car v1))) "\" "
+  (when-let* ((title (jmm-skeleton-prompt "Title" (list (cadr v1)))))
+    (format "title=\"%s\" " (xml-escape-string title)))
+  "href=\""
+  (xml-escape-string (save-window-excursion
+		       (org-link-open-from-string (car v1))
+		       (jmm/notmuch-show-get-gmail-link)))
+  "\" rel=\"noreferrer\">"
+  (jmm-skeleton-prompt "Link text" (list (cadr v1)))
+  "</a>")
 
 ;;;;;;;;;;
 ;; CSS skeletons
@@ -532,6 +597,51 @@ SOURCE-OR-SINK should be either 'source or 'sink."
   "Make it easier to bind a key"
   "Keybinding: "
   "(keymap-global-set \"" str "\" #'" (symbol-name (read-command "Command: ")) ")")
+
+(defun jmm-make-keymap-table ()
+  "Returns a completion table for loaded keymaps."
+  (thunk-let ((maps (let (maps)
+		      (mapatoms
+		       (lambda (sym)
+			 (when (and (boundp sym)
+				    (keymapp (symbol-value sym)))
+			   (push sym maps)))
+		       obarray)
+		      maps)))
+    (lambda (string pred action)
+      (if (eq action 'metadata)
+	  '(metadata
+	    (category . keymap))
+	(complete-with-action action maps string pred)))))
+
+(defun jmm-make-command-table ()
+  "Returns a completion table for loaded commands."
+  (thunk-let ((commands (let (l)
+			  (mapatoms
+			   (lambda (sym)
+			     (when (commandp sym)
+			       (push sym l)))
+			   obarray)
+			  l)))
+    (lambda (string pred action)
+      (if (eq action 'metadata)
+	  '(metadata
+	    (category . command))
+	(complete-with-action action commands string pred)))))
+
+;;;###autoload
+(define-skeleton skeleton/emacs-lisp/defkey
+  "Expand a `define-key' call.
+Prompts for keymap name."
+  nil
+  "(define-key "
+  (completing-read "Keymap: " (jmm-make-keymap-table)) " "
+  "(kbd \"" (read-string "Key: ") "\") "
+  "#'" (completing-read "Command: " (jmm-make-command-table)) ")")
+
+;; MAYBE: Should I add command modes to other skeletons?
+;; Note: This won't add the command modes to the autoload definition, though.
+(put 'skeleton/emacs-lisp/defkey 'command-modes '(emacs-lisp-mode))
 
 
 ;;;;;;;;;;

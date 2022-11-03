@@ -3181,16 +3181,21 @@ use ~josh/notmuch-send-html-to-browser~ though.
 For example, if mail to your school account is user 0,
   specify (\"school\" . 0) as an item in the alist")
 
-(defun jmm/notmuch-show-open-in-gmail ()
-  "Open the displayed message in gmail"
+(defun jmm/notmuch-show-get-gmail-link ()
+  "Return a gmail link for currently displayed message."
   (interactive)
   (let ((msgid (notmuch-show-get-message-id t))
 	(userid (or (cdr (assoc (car (-intersection (mapcar 'car jmm/gmail-to-user-id-alist)
 						(notmuch-show-get-tags)))
 				jmm/gmail-to-user-id-alist))
 		    0)))
-    (browse-url (concat (format "https://mail.google.com/mail/u/%d/?ibxr=0#search/" userid)
-			(url-hexify-string (format "rfc822msgid:%s" msgid))))))
+    (concat (format "https://mail.google.com/mail/u/%d/?ibxr=0#search/" userid)
+	    (url-hexify-string (format "rfc822msgid:%s" msgid)))))
+
+(defun jmm/notmuch-show-open-in-gmail ()
+  "Open the displayed message in gmail"
+  (interactive)
+  (browse-url (jmm/notmuch-show-get-gmail-link)))
 #+END_SRC
 ** Store Org mode links to sent messages
 
