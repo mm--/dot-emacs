@@ -1030,6 +1030,99 @@ following line.
 
 #+end_src
 
+* XML/HTML/SVG
+
+I've been using XML and HTML a lot more recently for writing mixed content.
+Compared to say LaTeX, Markdown, or org-mode, the (X)HTML has the nice property of still being /data/ when it's written.
+Especially with HTML5 ~data-~ attributes, you can really start to embed arbitrary data along with your text.
+
+You find XML-like structures in a lot of places like HTML, SVG, Atom/RSS, RDF, GPX, MathML, and configuration and data files.
+Being able to edit XML easily is pretty powerful.
+
+** nxml-mode
+
+For editing XML, I mostly use ~nxml-mode~.
+~nxml-mode~ is nice in that actually parses the XML you're writing, allowing you to treat text like it's data.
+If you've used ~paredit~ or ~smartparens~, you know how powerful it is to be able to act on the AST.
+
+
+*** nxml-mode configuration
+   I just have a simple configuration for plain nxml-mode.
+
+   Turn off flyspell mode with nxml, as for whatever reason it hangs.
+   (Actually, not sure if this is true anymore.)
+#+BEGIN_SRC emacs-lisp
+  (add-hook 'nxml-mode-hook  (lambda () (flyspell-mode -1)))
+#+END_SRC
+
+*** jmm-nxml: Utilities for nxml-mode
+
+I wrote some utilities that leverage nxml-mode's parsing capabilities
+in [[./elisp/jmm-nxml.el][jmm-nxml.el]].  The utilities are similar to what you'd find in
+paredit/smartparens, like being able to wrap/unwrap regions, swap
+element names, and navigate around tags.  It also has utilities for
+elisp programs, like tools for setting attributes or generating
+completions from all attribute values.
+
+I've used these functions for making some derived-major-modes for
+special types of XML, like XHTML and SVG.
+
+** SVG/Inkscape
+
+SVG is a super powerful way to create graphics.  Besides being
+infinitely scalable and human-readable, SVGs are a good way to make
+graphics that are accessible (e.g. it can contain machine-readable
+text) and interactive (e.g. you can animate shapes and respond to
+mouse events). I mean, just check out [[https://d3js.org/][D3.js]] for some cool examples of
+what SVG can do.
+
+People usually create SVGs through graphical interfaces like [[https://inkscape.org/][Inkscape]],
+or through textual interfaces like text editors and programming
+languages.  Both ways have costs and benefits.  Text editors make it
+hard to position elements, which are easily done with a mouse or other
+device in graphical interfaces.  Graphical interfaces make it easy to
+visualize and tweak positions, but doing many similar repeated edits
+can be tedious, and GUIS normally don't expose the full capabilities
+of SVG (like making [[https://developer.mozilla.org/en-US/docs/Web/CSS/CSS_Animations/Using_CSS_animations][CSS animations]] or using [[https://developer.mozilla.org/en-US/docs/Web/SVG/SVG_animation_with_SMIL][SMIL]]).
+
+Inkscape and Emacs, are both powerful on their own, but is there a way
+to get the best of both worlds?  You bet!  There's already some prior
+art here, like [[https://github.com/jave/inkmacs][Inkmacs]].  I haven't tried Inkmacs, but it uses D-bus to
+communicate between Emacs and Inkscape, which coincidentally is
+exactly what I do in my own library: [[./elisp/jmm-inkscape.el][jmm-inkscape.el]].
+
+"Library" is a strong word here. Maybe I should call it a "junkyard of
+hacks" you can scavenge through to find useful bits.  Why did I write
+it instead of using Inkmacs? [[https://en.wikipedia.org/wiki/Not_invented_here][NIH syndrome]]? Maybe. But a real reason is
+that Inkscape v1.2 recently [[https://wiki.inkscape.org/wiki/DBus][stopped supporting]] its own legacy "verbs" D-Bus
+interface in and now implements D-Bus interfaces through GtkActions.
+
+Here's two things [[./elisp/jmm-inkscape.el][jmm-inkscape.el]] does that you might find useful.
+
+1. Live previews.  When editing an SVG in Emacs,
+   ~jmm-inkscape-auto-reload-mode~ will automatically refresh
+   Inkscape's view of the file whenever you save the buffer.  Using
+   the built-in ~auto-revert-mode~, makes this bidirectional: saving
+   the file in one program updates the other.
+
+2. Inspector. When you have objects selected in Inkscape,
+   ~jmm-inkscape-goto-selected-node~ (bound to ~M-g s~ in
+   ~jmm-inkscape-svg-mode~) can jump to where the objects exist in
+   text.
+
+*** Configuring jmm-inkscape.el
+
+#+begin_src emacs-lisp
+(use-package jmm-inkscape
+  :defer t
+  :init
+  (setq auto-mode-alist
+      (append
+       '(("\\.svgz?\\'" . image-mode)
+	 ("\\.svgz?\\'" . jmm-inkscape-svg-mode))
+       auto-mode-alist))
+  (add-hook 'jmm-inkscape-svg-mode-hook 'rainbow-mode))
+#+end_src
 
 * R/ESS
   This seems to be necessary when installing ESS from MELPA.
