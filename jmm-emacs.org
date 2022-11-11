@@ -46,18 +46,13 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       magit
                       helm
                       auctex
-                      zenburn-theme
                       multiple-cursors
                       phi-search
                       expand-region
                       async
-                      auto-complete
-                      ;; projectile
                       ledger-mode
                       f
 		      dash
-                      ;; helm-projectile
-                      ;; helm-swoop
 		      hydra
                       js2-mode
                       flycheck
@@ -688,13 +683,48 @@ It just has the property 'no-self-insert set."
 (require 'jmm-autotype)
 #+end_src
 * Searching
+** isearch
 
+Some settings I like for isearch.
+
+#+begin_src emacs-lisp
+(custom-set-variables
+ ;; Being able to press M-< instead of M-s M-< is helpful
+ '(isearch-allow-motion t)
+ ;; I like knowing whether or not I'm at the first match.
+ '(isearch-lazy-count t))
+#+end_src
+
+*** jmm-isearch.el
 I've defined some extra ~isearch~ modes in [[file:elisp/jmm-isearch.el][jmm-isearch.el]].
 
 #+begin_src emacs-lisp
 (require 'jmm-isearch)
 (define-key isearch-mode-map (kbd "M-s l") #'isearch-toggle-permuted-splits-in-line)
+(bind-key "M-s D" #'jmm-isearch-multi-isearch-dired-buffers)
 #+end_src
+
+** grep
+The built-in grep mode. Default to using ripgrep if we have that.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'grep
+  (when (executable-find "rg")
+    (custom-set-variables
+     '(grep-command "rg --no-heading --color=auto -nH --null -L --no-messages -z -e ")
+     ;; Hmm.... actually it looks like ripgrep doesn't support "--exclude"
+     ;; '(grep-template "rg --no-heading <X> <C> -nH -z --null -L -e <R> <F>")'
+     '(grep-find-template "find -H <D> <X> -type f <F> -exec rg --no-heading <C> -nH -z --null -e <R> \{\} +")
+     '(grep-use-null-device nil))))
+#+end_src
+** xref
+Also prefer ripgrep for xref.
+#+begin_src emacs-lisp
+(with-eval-after-load 'xref
+  (when (executable-find "rg")
+    (custom-set-variables '(xref-search-program 'ripgrep))))
+#+end_src
+
 
 * Compiling conveniences
 
@@ -2392,7 +2422,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
           (mapc
            (lambda (fPath) (let ((process-connection-type nil)) (start-process "" nil "xdg-open" fPath))) xah-file-list))))))
 
-    (add-hook 'dired-mode-hook '(lambda () 
+    (add-hook 'dired-mode-hook #'(lambda ()
                                   (local-set-key (kbd "E") 'xah-open-in-external-app)))
 #+END_SRC
 
@@ -2415,7 +2445,7 @@ paste into a terminal. Hopefully understandable by rsync or scp."
     (apply 'start-process "" nil (append mpvprog thefiles))
     (message (format "Played %i files" (length thefiles)))))
 
-(add-hook 'dired-mode-hook '(lambda ()
+(add-hook 'dired-mode-hook #'(lambda ()
                               (local-set-key (kbd "J") 'josh/open-with-mpv)))
 #+END_SRC
 ** Show files in the File Manager
@@ -5476,6 +5506,7 @@ completion. This code from the manual brings it back.
 	 (add-to-list 'sp-ignore-modes-list 'latex-mode)
 	 (add-to-list 'sp-ignore-modes-list 'mhtml-mode)
 	 (add-to-list 'sp-ignore-modes-list 'nxml-mode)
+	 (add-to-list 'sp-ignore-modes-list 'jmm-inkscape-svg-mode)
          (smartparens-global-mode t)
 	 (fset 'my-wrap-with-paren "\C-](")
 
@@ -5552,16 +5583,13 @@ completion. This code from the manual brings it back.
 #+BEGIN_SRC emacs-lisp
 (use-package wgrep
   :ensure t
+  :bind (:map grep-mode-map
+	      ("r" . wgrep-change-to-wgrep-mode))
   :init
   (progn
     (setq wgrep-auto-save-buffer t)
     (setq wgrep-enable-key "r"))
   :after (grep))
-#+END_SRC
-** nxml mode
-   Turn off flyspell mode with nxml, as for whatever reason it hangs.
-#+BEGIN_SRC emacs-lisp
-  (add-hook 'nxml-mode-hook  (lambda () (flyspell-mode -1)))
 #+END_SRC
 ** skewer-mode
    Some functions to evaluate either the region (if active) or the last expression.
@@ -6022,6 +6050,7 @@ obscuring other windows.
 #+begin_src emacs-lisp
 (use-package plantuml-mode
   :unless noninteractive
+  :defer t
   :init
   (setq plantuml-default-exec-mode 'executable))
 
