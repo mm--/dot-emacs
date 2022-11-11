@@ -99,12 +99,50 @@ Then the abbreviation will be inserted in the `edit-abbrevs' buffer.
 	  (save-excursion (insert "\n")))
 	))))
 
-(defun jmm-skeleton-prompt (prompt futurehistory)
-  (let ((res (read-from-minibuffer (format-prompt prompt nil)
-				   nil nil nil nil
-				   futurehistory)))
+(defvar-local jmm-minibuffer-lazy-history nil)
+
+(defun jmm-minibuffer-add-lazy-history ()
+  "Used as a `minibuffer-default-add-function'.
+Pops elements off of `jmm-minibuffer-lazy-history', evaluating them with `thunk-force'"
+  (if-let* ((val (pop jmm-minibuffer-lazy-history)))
+      (progn
+	(when jmm-minibuffer-lazy-history ;; If there are more items left
+	  (setq minibuffer-default-add-done nil))
+	(append minibuffer-default (list (thunk-force val))))
+    minibuffer-default))
+
+(defun jmm-skeleton-prompt (prompt &optional futurehistory)
+  "Prompt for string, returning nil if nothing entered.
+FUTUREHISTORY is a list of strings or thunks/functions.
+Functions will get lazily evaluated as if by thunk-force/funcall."
+  (let* ((immediatefuturehistory (seq-take-while #'stringp futurehistory))
+	 (lazyfuturehistory (seq-drop futurehistory (length immediatefuturehistory)))
+	 (res (minibuffer-with-setup-hook
+		 (lambda ()
+		   (setq-local jmm-minibuffer-lazy-history lazyfuturehistory)
+		   (setq-local minibuffer-default-add-function #'jmm-minibuffer-add-lazy-history))
+		(read-from-minibuffer prompt
+				      nil nil nil nil
+				      immediatefuturehistory))))
     (unless (string-empty-p res)
       res)))
+
+(defmacro jmm-skeleton-unless-wrapping (&rest body)
+  "If we can wrap, return \"_\" skeleton element.
+Otherwise run body.
+If body returns nil, return \"_\" anyway so we leave the skeleton-point there."
+  `(if skeleton-regions
+       '_
+     (or (progn ,@body) '_)))
+
+;; TODO: Move elsewhere
+(defun jmm--get-url-html-title (url)
+  "Get the title of a webpage from URL"
+  (with-temp-buffer
+    (url-insert-file-contents url)
+    (let* ((dom (libxml-parse-html-region (point-min) (point-max))))
+      (when-let* ((title-elements (dom-by-tag dom 'title)))
+	(dom-text (car title-elements))))))
 
 
 ;;;;;;;;;;
@@ -139,6 +177,13 @@ Then the abbreviation will be inserted in the `edit-abbrevs' buffer.
   "Insert a date and time using `org-read-date'"
   nil
   (format-time-string "%Y-%02m-%02d %H:%M" (org-read-date t t nil "Date: ")))
+
+;;;###autoload
+(define-skeleton skeleton/global/relk
+  "A relative file path from kill ring"
+  nil
+  (file-relative-name (expand-file-name (car kill-ring))))
+
 
 
 ;;;;;;;;;;
@@ -425,7 +470,8 @@ texenv = texlive.combine {
   ;; I only want to prompt if I'm not wrapping.
   ;; If we prompt, we shouldn't set the interesting point.
   ;; _ | (jmm-skeleton-prompt "Link text" (list (file-name-nondirectory v1) v1))
-  (jmm-skeleton-prompt "Link text" (list (file-name-nondirectory v1) v1)) | _
+  (jmm-skeleton-unless-wrapping
+   (jmm-skeleton-prompt "Link text: " (list (file-name-nondirectory v1) v1)))
   "</a>")
 
 
@@ -438,16 +484,29 @@ texenv = texlive.combine {
 ;;;###autoload
 (define-skeleton skeleton/jmm-xhtml/akill
   "Insert link from current kill."
-  "Link text: "
-  "<a href=\"" (xml-escape-string (current-kill 0)) "\">" str "</a>")
+  _
+  '(setq v1 (current-kill 0))
+  "<a href=\"" (xml-escape-string v1) "\">"
+  '(setq v2 (ignore-errors (url-generic-parse-url v1)))
+  (jmm-skeleton-unless-wrapping
+   (jmm-skeleton-prompt "Link text: "
+			(seq-uniq
+			 (list
+			  (xml-escape-string v1)
+			  (url-host v2)
+			  (url-domain v2)
+			  (lambda () (jmm--get-url-html-title v1))))))
+  "</a>")
+
+
 
 ;;;###autoload
 (define-skeleton skeleton/jmm-xhtml/stodo
   "Add a todo span with current date"
-  "Todo text: "
+  nil
   "<span class=\"todo\" data-added=\""
   (xml-escape-string (format-time-string "%Y-%m-%d %H:%M"))
-  "\">" str "</span>")
+  "\">" (read-string "Todo text: ")  | _ "</span>")
 
 
 ;;;###autoload
@@ -456,15 +515,74 @@ texenv = texlive.combine {
   nil
   '(setq v1 (pop org-stored-links))
   "<a data-orglink=\"" (xml-escape-string (format "[[%s]]" (car v1))) "\" "
-  (when-let* ((title (jmm-skeleton-prompt "Title" (list (cadr v1)))))
+  (when-let* ((title (jmm-skeleton-prompt "Title: " (list (cadr v1)))))
     (format "title=\"%s\" " (xml-escape-string title)))
   "href=\""
   (xml-escape-string (save-window-excursion
 		       (org-link-open-from-string (car v1))
 		       (jmm/notmuch-show-get-gmail-link)))
   "\" rel=\"noreferrer\">"
-  (jmm-skeleton-prompt "Link text" (list (cadr v1)))
+  (jmm-skeleton-prompt "Link text: " (list (cadr v1)))
   "</a>")
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/br
+  "Insert a line break"
+  nil
+  "<br/>" \n
+  > )
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/li1
+  "Insert an <li> element </li>"
+  nil
+  "<li>" _  "</li>")
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/slidesvg
+  "Embed a slide SVG file from current kill."
+  nil
+  > "<div class=\"slidecontainer\">" \n
+  "<embed src=\"" (xml-escape-string (file-relative-name (expand-file-name (car kill-ring)))) "\" />" \n
+  "</div>" > )
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/sliden
+  "Slide note. A simple div."
+  nil
+  "<div class=\"slidenotes\">" \n
+  _
+  \n
+  "</div>" > )
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/jmmfr
+  "Add a presentation slide fragment."
+  nil
+  "<jmmfr:setclass"
+  (when-let* ((begin (jmm-skeleton-prompt "Begin: ")))
+    (format " begin=\"%s\"" begin))
+  (when-let* ((end (jmm-skeleton-prompt "End: ")))
+    (format " end=\"%s\"" end))
+  " classes=\""
+  ;; TODO: Autocomplete classes
+  (xml-escape-string (jmm-skeleton-prompt "Classes: " (list "visible")))
+  "\" />")
+
+
+;;;###autoload
+(define-skeleton skeleton/jmm-xhtml/dets
+  "Insert a <details> element"
+  nil
+  "<details>" \n
+  "<summary>" (jmm-skeleton-prompt "Summary: ") "</summary>" \n
+  _ \n
+  "</details>" >)
+
+
 
 ;;;;;;;;;;
 ;; CSS skeletons
@@ -652,6 +770,20 @@ Prompts for keymap name."
   "Make an abbreviation for the last defined skeleton"
   "Abbreviation to expand: "
   "\"" str "\" 0 \"\" " jmm-skeleton-last-defined)
+
+
+
+;;;;;;;;;;
+;; (timebox-xml-mode-abbrev-table)
+
+
+;;;###autoload
+(define-skeleton skeleton/timebox-xml/stm
+  "Span with current time."
+  nil
+  "<span time=\""
+  (xml-escape-string (format-time-string "%H:%M:%S"))
+  "\">" _ "</span>")
 
 
 
