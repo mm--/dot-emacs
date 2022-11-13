@@ -566,8 +566,6 @@ Kind of like `try-expand-dabbrev'."
 
 ;;; Minibuffer expansion
 
-;; TODO: Need to load bookmarks automatically
-
 ;; DONE: Maybe make it search bookmarks with files.
 ;; MAYBE: Require it ends in a comma to look for a bookmark.
 ;; Or like ",b" for bookmarks. ",p" for projects ",d" for open dired buffers.
@@ -576,7 +574,9 @@ Kind of like `try-expand-dabbrev'."
   "Expand a bookmark in the minibuffer, only if we're in the minibuffer, and if it has a filename."
   (if (not old)
       ;; Are we looking for a file?
+      ;; MAYBE: We could also check the completion table metadata 'category.
       (when (eq minibuffer-completion-table 'read-file-name-internal)
+	(bookmark-maybe-load-default-file)
 	;; This way doesn't work
 	;; (memq minibuffer-local-filename-completion-map
 	;; 	    (current-active-maps))
