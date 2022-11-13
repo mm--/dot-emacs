@@ -29,6 +29,7 @@
 
 ;;; Code:
 
+(require 'crm)
 (require 'nxml-mode)
 
 ;;; Variables:
@@ -118,6 +119,21 @@ Like `delete-blank-lines', but only for one line."
 			    (point))))
 	   (/= pos pos2))
     nil))
+
+(defun jnx--move-while2 (fun &optional start)
+  "Keep running FUN until it returns a new point.
+FUN needs to return a point, or nil if it cannot continue.
+Does not move the point.
+Instead, it returns the new point, or nil if none was found."
+  (save-excursion
+    (let ((origpos (or start (point)))
+	  newpos)
+      (goto-char origpos)
+      (catch 'found
+	(while (and (setq newpos (funcall fun))
+		    (if (/= newpos origpos)
+			(throw 'found newpos)
+		      t)))))))
 
 ;; Does the excursion slow things down?
 (defun jnx--next-tag (&optional bound)
@@ -437,6 +453,46 @@ Takes in an optional default DEFAULT."
 	 (nxml-forward-single-balanced-item)
 	 (point))))))
 
+(defun jnx-goto-next-tag (&optional N)
+  "Move point N tags forward.
+Leaves point at beginning of tag."
+  (interactive "p" nxml-mode)
+  (dotimes (_ N)
+    (if-let* ((newpoint (jnx--move-while2 #'jnx--next-tag)))
+	(goto-char newpoint)
+      (user-error "No next tags"))))
+
+(defun jnx-goto-prev-tag (&optional N)
+  "Move point N tags backward.
+Leaves point at beginning of tag."
+  (interactive "p" nxml-mode)
+  (dotimes (_ N)
+    (if-let* ((newpoint (jnx--move-while2 #'jnx--prev-tag)))
+	(goto-char newpoint)
+      (user-error "No previous tags"))))
+
+(defun jnx-goto-next-tag-same-level (&optional N)
+  "Move point N tags forward, at the same level.
+Leaves point at beginning of tag."
+  (interactive "p" nxml-mode)
+  (let ((start (jnx-at-element-start
+		 (point))))
+    (dotimes (_ N)
+      (if-let* ((newpoint (jnx--move-while2 #'jnx--next-tag-same-level start)))
+	  (goto-char (setq start newpoint))
+	(user-error "No next tags at same level")))))
+
+(defun jnx-goto-prev-tag-same-level (&optional N)
+  "Move point N tags backward, at the same level.
+Leaves point at beginning of tag."
+  (interactive "p" nxml-mode)
+  (let ((start (jnx-at-element-start
+		 (point))))
+    (dotimes (_ N)
+      (if-let* ((newpoint (jnx--move-while2 #'jnx--prev-tag-same-level start)))
+	  (goto-char (setq start newpoint))
+	(user-error "No previous tags at same level")))))
+
 (defun jnx-down-element-dwim (&optional arg)
   "Like `nxml-down-element', but go to the first non-space point."
   (interactive "^p" nxml-mode)
@@ -655,6 +711,7 @@ Returns boundaries of element from `jmm/nxml--element-bounds'. "
 	    ;; 	  (marker-position e2))
 	    (goto-char a1))))))
 
+;; FIXME: Doesn't correctly handle elements where attributes aren't inline.
 (defun jnx-inline-element ()
   "Ensure the current element is inline, not a block element.
 Folds all elements onto one line.
@@ -707,6 +764,18 @@ Returns boundaries of element from `jmm/nxml--element-bounds'."
 	(prog1
 	    (jnx--element-bounds)
 	  (goto-char a1))))))
+
+;; MAYBE: Flatten all elements in a region?
+(defun jnx-flatten-element ()
+  "Put all attributes of element on one line."
+  (interactive nil nxml-mode)
+  (jnx-at-element-start
+    (jnx-let-markers* ((s1 (point-marker))
+		       (e1 (save-excursion
+			     (xmltok-forward)
+			     (point-marker))))
+      (atomic-change-group
+	(delete-indentation nil s1 e1)))))
 
 (defun jnx-add-element (tagname attrs &rest children)
   "Insert a new element at point.
@@ -795,6 +864,7 @@ This assumes you already have `xmltok-attributes' scanned."
   (cl-loop for attr in xmltok-attributes
 	   collect (xmltok-attribute-local-name attr)))
 
+;; FIXME: Clean up possible blank lines
 (defun jnx--attribute-delete (attr)
   "Delete xmltok ATTR."
   (let ((beg (1- (xmltok-attribute-name-start attr)))
