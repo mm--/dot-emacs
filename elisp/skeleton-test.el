@@ -610,19 +610,30 @@ h1 {
 (define-skeleton skeleton/js2/qs
   "Skeleton for \"querySelector\""
   nil
-  "querySelector(\"" _ "\")")
+  "querySelector(\"" (jmm-skeleton-unless-wrapping
+		      (jmm-skeleton-prompt "querySelector text: ")) "\")" _ )
 
 ;;;###autoload
 (define-skeleton skeleton/js2/qsa
   "Skeleton for \"querySelectorAll\""
   nil
-  "querySelectorAll(\"" _ "\")")
+  "querySelectorAll(\"" (jmm-skeleton-unless-wrapping
+			 (jmm-skeleton-prompt "querySelector text: ")) "\")" _ )
 
 ;;;###autoload
 (define-skeleton skeleton/js2/dqs
   "Skeleton for \"document.querySelector\""
   nil
-  "document.querySelector(\"" _ "\")")
+  "document.querySelector(\"" (jmm-skeleton-unless-wrapping
+			       (jmm-skeleton-prompt "QuerySelector text: ")) "\")" _)
+
+;;;###autoload
+(define-skeleton skeleton/js2/0cl
+  "Insert a JavaScript console.log"
+  nil
+  "console.log(" (jmm-skeleton-unless-wrapping
+		    (jmm-skeleton-prompt "console.log text: ")) ")" _ )
+
 
 
 ;;;;;;;;;;
