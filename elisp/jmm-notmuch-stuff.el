@@ -25,6 +25,11 @@
 ;;; Code:
 (require 'xref)
 
+(defcustom jmm-notmuch-generic-domains-for-rules
+  '("gmail.com" "yahoo.com" "berkeley.edu" "nyu.edu")
+  "Generic domains where a from:domain rule would be too generic.
+Used in `jmm-notmuch-find-rule'.")
+
 
 ;; Notmuch is great, but typing search queries like "date:2M.. and
 ;; tag:family" can be burdensome.  Saved searches help, but don't
@@ -128,31 +133,31 @@ Like `jmm/notmuch-search-org', but jumps directly to the first one."
 (fset 'jmm/notmuch-mark-all-previous-read
       (kmacro-lambda-form [?\C-e ?\C-  ?\C-a ?\M-< ?k ?U ?\C-x ?\C-x] 0 "%d"))
 
-;; TODO: no-try-domain should be smart. Generic domains like
-;; "gmail.com" or "nyu.edu" shouldn't be matched.
-
 ;;;###autoload
 (defun jmm-notmuch-find-rule (fromaddr &optional no-try-domain no-error)
   "Find email address FROMADDR in current buffer.
 When called interactively, gets FROMADDR from notmuch buffer in other window.
 
 Will also try to just find the domain name if the address fails,
-unless NO-TRY-DOMAIN is set.  Sometimes marketers change the
-local-part they send from.
+unless NO-TRY-DOMAIN is set or domain is in
+`jmm-notmuch-generic-domains-for-rules'.  Sometimes marketers
+change the local-part they send from.
 
 With NO-ERROR, don't signal an error if nothing is found, just
 return nil."
   (interactive (list (jmm-notmuch-get-from-address-other-window) nil nil))
-  (let* ((newpoint (save-excursion
+  (let* ((domain (cadr (split-string fromaddr "@")))
+	 (newpoint (save-excursion
 		     (goto-char (point-min))
 		     (when (or (re-search-forward
 				(format "from:%s" (regexp-quote fromaddr))
 				nil t)
 			       ;; Try just the domain name
-			       (unless no-try-domain
+			       (unless (or no-try-domain
+					   (member domain jmm-notmuch-generic-domains-for-rules))
 				 (re-search-forward
 				  (format "from:%s"
-					  (regexp-quote (cadr (split-string fromaddr "@"))))
+					  (regexp-quote domain))
 				  nil t)))
 		       (point)))))
     (if newpoint
@@ -330,17 +335,17 @@ With optional prefix ARG, invert the search."
     (user-error "No email address was found")))
 
 ;;;###autoload
-(defun jmm-notmuch-find-sender-rule (&optional try-domain)
+(defun jmm-notmuch-find-sender-rule (&optional no-try-domain)
   "Find email tagging rule for sender.
 Assumes you're in a notmuch search buffer.
-With interactive arg TRY-DOMAIN, attempt to search for the domain if
-searching for the local-part fails."
+With interactive arg NO-TRY-DOMAIN, do not attempt to search for the
+domain if searching for the local-part fails."
   (interactive "P" notmuch-search-mode notmuch-show-mode)
   (let* ((address (jmm-notmuch-get-from-address))
 	 found start end execline)
     (save-current-buffer
       (bookmark-jump "post-new" #'ignore)
-      (when (jmm-notmuch-find-rule address (not try-domain) t)
+      (when (jmm-notmuch-find-rule address no-try-domain t)
 	(setq found (point-marker)
 	      start (match-beginning 0)
 	      end   (match-end 0))))
