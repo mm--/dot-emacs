@@ -23,6 +23,7 @@
 	clojure-align
 	comment-dwim
 	dabbrev-expand
+	default-indent-new-line
 	delete-horizontal-space
 	delete-indentation
 	dired-flag-file-deletion
