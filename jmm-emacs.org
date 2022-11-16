@@ -675,6 +675,23 @@ It just has the property 'no-self-insert set."
 (put 'dont-insert-expansion-char 'no-self-insert t)
 (setq skeleton-end-newline nil)
 #+end_src
+** Tempo
+
+Tempo is another templating system included in Emacs.
+
+Compared to skeletons, tempo feels like it's more easily extended.
+However, it's easier to integrate plain elisp in skeletons.
+
+I've written some tempo utilities and templates in [[./elisp/jmm-tempo.el][jmm-tempo.el]].
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'tempo
+  (require 'jmm-tempo))
+(bind-key "M-N" 'tempo-forward-mark)
+(bind-key "M-P" 'tempo-backward-mark)
+#+end_src
+
+
 ** Auto-insert
 
    See [[./elisp/jmm-autotype.el][this file]]. Allows me to not have to remember some boilerplate for new files.
