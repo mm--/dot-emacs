@@ -84,7 +84,7 @@ ORIG is the original function, ARGS is the args passed to it."
 
 
 ;;;###autoload
-(defun jmm/notmuch-search-org ()
+(defun jmm-notmuch-search-org ()
   "Find email ID in org mode.
 Searches my org mode project for the notmuch ID, to see if I have
 something already entered somewhere."
@@ -106,9 +106,9 @@ something already entered somewhere."
     (message "Hello there")))
 
 ;;;###autoload
-(defun jmm/notmuch-search-org-jump ()
+(defun jmm-notmuch-search-org-jump ()
   "Another way of trying to find an org entry for an email.
-Like `jmm/notmuch-search-org', but jumps directly to the first one."
+Like `jmm-notmuch-search-org', but jumps directly to the first one."
   (interactive)
   (let* ((messageid (notmuch-show-get-message-id))
 	 (default-directory "~/org")
@@ -130,7 +130,7 @@ Like `jmm/notmuch-search-org', but jumps directly to the first one."
 	  (notmuch-show-tag (list "-inorg"))
 	  (user-error "No link found for this notmuch message ID"))))))
 
-(fset 'jmm/notmuch-mark-all-previous-read
+(fset 'jmm-notmuch-mark-all-previous-read
       (kmacro-lambda-form [?\C-e ?\C-  ?\C-a ?\M-< ?k ?U ?\C-x ?\C-x] 0 "%d"))
 
 ;;;###autoload
@@ -217,7 +217,7 @@ return nil."
   (gethash (downcase month) nmd-month-hash))
 
 ;; FIXME: Doesn't work correctly yet.
-(defun jmm/notmuch-get-email-date (search-terms)
+(defun jmm-notmuch-get-email-date (search-terms)
   "Return a list of dates for SEARCH-TERMS.
 
 SEARCH-TERMS should be a list, or it'll be converted to one.
@@ -237,7 +237,7 @@ SEARCH-TERMS should be a list, or it'll be converted to one.
 (defun nmd-get-year ()
   "Get year for email at point."
   ;; This is pretty inefficient.
-  (if-let* ((dates (jmm/notmuch-get-email-date (notmuch-search-find-thread-id))))
+  (if-let* ((dates (jmm-notmuch-get-email-date (notmuch-search-find-thread-id))))
       (thread-last (parse-time-string (car dates))
 		   encode-time
 		   (format-time-string "%Y")
@@ -280,7 +280,7 @@ Return an encoded time."
 (defun jmm-notmuch-get-search-from-addresses (search-terms)
   "Get from addresses from a search.
 
-Like `jmm/notmuch-get-email-addresses', but if the address is
+Like `jmm-notmuch-get-email-addresses', but if the address is
 from Firefox Relay, get the true email.
 
 SEARCH-TERMS is a list of strings forming a notmuch search query."
@@ -394,7 +394,7 @@ With prefix arg TRY-DOMAIN, fall back to domain name if local part not found."
 	(insert (format "notmuch tag %s -- tag:new and from:%s" newtagsstr address))
 	(open-line 1)
 	(recursive-edit))
-      (jmm/notmuch-post-new-rerun-rule))))
+      (jmm-notmuch-post-new-rerun-rule))))
 
 ;;;###autoload
 (defun jmm-notmuch-post-new-rerun-rule ()
@@ -429,14 +429,14 @@ With prefix arg TRY-DOMAIN, fall back to domain name if local part not found."
 (define-skeleton notmuch-skeleton-tags
   "Enter tags in any case and the output will be upcased."
   nil
-  '(setq v1 (jmm/notmuch-get-from-other-window))
+  '(setq v1 (jmm-notmuch-get-from-address-other-window))
   "notmuch tag "
   ((skeleton-read "Tag: ") "" str " ")
   "-- tag:new and from:"
   v1 \n)
 
 ;;;###autoload
-(defun jmm/notmuch-add-ledger-receipt ()
+(defun jmm-notmuch-add-ledger-receipt ()
   "Add a receipt from the current email."
   (interactive nil notmuch-show-mode)
   (let* ((date (thread-last (notmuch-show-get-header :Date)
@@ -460,5 +460,5 @@ With prefix arg TRY-DOMAIN, fall back to domain name if local part not found."
 (provide 'jmm-notmuch-stuff)
 ;;; jmm-notmuch-stuff.el ends here
 ;; Local Variables:
-;; read-symbol-shorthands: (("nmd-" . "jmm/notmuch-date-"))
+;; read-symbol-shorthands: (("nmd-" . "jmm-notmuch-date-"))
 ;; End:
