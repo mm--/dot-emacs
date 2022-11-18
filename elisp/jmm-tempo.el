@@ -242,6 +242,23 @@ Basically just `edit-abbrevs' for a provided table. "
                 (concat "(" (symbol-name table-name) ")\n\n") nil t))
       (goto-char (match-end 0)))))
 
+;;;###autoload
+(defun jmm-tempo-yank-template ()
+  "Insert current kill as a series of strings in tempo."
+  (interactive nil emacs-lisp-mode)
+  (atomic-change-group
+    (thread-first
+      (current-kill 0)
+      (substring-no-properties)
+      (split-string "\n")
+      (thread-last
+	(mapcar #'string-trim)
+	(mapc (lambda (line)
+		(insert (prin1-to-string line))
+		(indent-according-to-mode)
+		(insert " n> \n")))))))
+(put 'jmm-tempo-yank-template 'no-self-insert t)
+
 
 ;;;;;;;;;;
 ;; (emacs-lisp-mode-abbrev-table)
@@ -307,20 +324,33 @@ Basically just `edit-abbrevs' for a provided table. "
 ;;;;;;;;;;
 ;; (jmm-xhtml-mode-abbrev-table)
 
+;; MAYBE: Truncate string to some length?
+;; MAYBE: Guarantee uniqueness?
+(defun jmm-tempo--string-to-xml-id (string)
+  "Change an arbitrary string to something that could be an XML id."
+  (thread-last
+    string
+    downcase
+    (replace-regexp-in-string (rx (1+ (not alphanumeric))) " ")
+    (string-trim)
+    (replace-regexp-in-string (rx (1+ (not alphanumeric))) "-")))
+
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/section "jmm-tempo")
 (define-jmm-tempo jmm-tempo/jmm-xhtml/section
   "Insert an HTML section."
   nil
-  "<section>" n>
   (P "Header level: " header t)
-  "<"  (s header) ">" (P "Title: ") "</" (s header) ">" n>
-  (j:set header (jmm-skeleton-prompt "Some value: " (list "Future1" "Future two")))
-  "echo hi" n
-  (s header) n
-  "echo done" n
-  r>  n>
+  (P "Header title: " title t)
+  (j:let (id title)
+	 (setf id (jmm-skeleton-prompt "ID: " (list (jmm-tempo--string-to-xml-id title))))
+	 nil)
+  "<section" (j:let (id)
+		    (when id
+		      (format " id=\"%s\"" (xml-escape-string id))))
+  ">" n>
+  "<"  (s header) ">" (s title) "</" (s header) ">" n>
+  r> n>
   "</section>" >)
-
 
 (define-jmm-tempo jmm-tempo/jmm-xhtml/header
   "Adds a header"
@@ -342,6 +372,77 @@ Basically just `edit-abbrevs' for a provided table. "
  (P "Caption: " caption) > n>
 "</figcaption>" > n>
 "</figure>" >)
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/stht "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/stht
+  "A span for a thought"
+  nil
+  "<span class=\"thought\" aria-hidden=\"true\" data-last-edited=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\">"
+  r
+  "</span>" >)
+
+
+(defun jmm-tempo--xml-timestamp ()
+  "Return a timestamp, XML escaped."
+  (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")))
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/dnote "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/dnote
+  "Add a div note"
+  nil
+  "<div class=\"note\" aria-hidden=\"true\" data-last-edited=\"" (jmm-tempo--xml-timestamp) "\">" n>
+  r> n>
+  "</div>" >)
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/scite "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/scite
+  "Add a span todo to make a citation"
+  nil
+  "<span class=\"cite\" aria-hidden=\"true\" data-last-edited=\"" (jmm-tempo--xml-timestamp) "\">" r> "</span>")
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/sdraft "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/sdraft
+  "Add a draft span."
+  nil
+  "<span class=\"draft\" aria-hidden=\"true\" data-last-edited=\"" (jmm-tempo--xml-timestamp) "\">" r> "</span>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/sindex "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/sindex
+  "Add a span for an indexed term"
+  nil
+  (P "Text: " term t)
+  "<span class=\"index\""
+  (j:let (term)
+	 (when-let ((idx (jmm-skeleton-prompt "Indexed term: " (list term))))
+	   (format " data-index=\"%s\"" (xml-escape-string idx))))
+  ">" p (s term) "</span>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/mathil "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/mathil
+  "MathML inline"
+  nil
+  "<math display=\"inline\" xmlns=\"http://www.w3.org/1998/Math/MathML\">" n>
+  r> n>
+  "</math>" >)
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/idkill "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/idkill
+  "Add an id= attribute from current kill"
+  nil
+  "id=\"" p (jmm-tempo--string-to-xml-id (current-kill 0)) "\"")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/ddraft "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/ddraft
+  "Add a draft div"
+  nil
+  "<div class=\"draft\" aria-hidden=\"true\" data-last-edited=\"" (jmm-tempo--xml-timestamp) "\">" n>
+  r> n>
+  "</div>" >)
 
 
 
