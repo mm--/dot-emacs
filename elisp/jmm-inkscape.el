@@ -419,6 +419,25 @@ Returns a new string of space-separated classes."
 	     jmm-inkscape-window-id)
     (jmm-inkscape-revert)))
 
+;; TODO: This gets called repeatedly for some reason. Like 4 times in
+;; a row. Maybe we should cache the Inkscape windows.
+;; Also, sometimes the menu is weirdly set to "About GNU"
+(defun ji--set-window-id-menu (_menu-def)
+  "Tries to make a menu for selecting the current window ID."
+  (when-let* ((windows (ji--get-inkscape-windows))
+	      (default (car windows)))
+    (mapcar (lambda (win)
+	      `[,(if win
+		     (format "Window %s " win)
+		   "None")
+		,(lambda ()
+		   (interactive)
+		   (ji-set-window win))
+		:style radio
+		:selected (eval (equal jmm-inkscape-window-id
+				       ,win))])
+	    (cons nil windows))))
+
 (defvar-keymap jmm-inkscape-svg-mode-map
   :parent nxml-mode-map
   "C-M-a" #'jnx-beginning-of-inner-sexp
@@ -445,6 +464,32 @@ Returns a new string of space-separated classes."
   "M-g M-s" #'jmm-inkscape-goto-selected-node
   "M-n" #'jnx-goto-next-tag
   "M-p" #'jnx-goto-prev-tag)
+
+(easy-menu-define jmm-inkscape-svg-menu jmm-inkscape-svg-mode-map
+  "JMM Inkscape SVG Menu."
+  `("jmm-SVG"
+    ["Launch Inkscape" jmm-inkscape-launch
+     :help "Launch an Inkscape subprocess for the current file"]
+    ["Set Inkscape Window" jmm-inkscape-set-window
+     :help "Set the Inkscape window ID for current buffer"]
+    ["Go to Inkscape selection" jmm-inkscape-goto-selected-node
+     :help "Go to the object(s) currently selected in Inkscape"]
+    ("Set window to"
+     :filter ji--set-window-id-menu)
+    "--"
+    ["Revert Inkscape" jmm-inkscape-revert
+     :help "Tell Inkscape to revert the current document"]
+    ["Revert Buffer" revert-buffer
+     :help "Revert current buffer"]
+    ["Auto Revert Inkscape" jmm-inkscape-auto-reload-mode
+     :style toggle
+     :selected (eval jmm-inkscape-auto-reload-mode)
+     :help "Automatically revert Inkscape after a buffer save"]
+    ["Auto Revert Buffer" auto-revert-mode
+     :style toggle
+     :selected (eval auto-revert-mode)
+     :help "Automatically revert current buffer"]
+    ))
 
 ;; TODO: Remember `jmm-inkscape-window-id', which gets reset if we
 ;; switch using `image-minor-mode'.
