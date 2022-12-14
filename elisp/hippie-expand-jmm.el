@@ -53,7 +53,7 @@
 (require 'bookmark) ;; For `try-minibuffer-expand-bookmark'
 
 
-;; Internal functions
+;;; Internal functions
 ;; You specify trans-case by setting substitute-function to (lambda (x) (he-substitute-string x t))
 (defun he--all-buffers2 (old init-function search-function substitute-function)
   "Just like `he--all-buffers', but initializes differently.
@@ -150,10 +150,21 @@ Instead of passing a function that goes to the point, you have to initialize the
 	(progn
 	  (if old (he-reset-string))
 	  ())
-	(progn
-	  ;; (he-substitute-string expansion t)
-	  (funcall substitute-function expansion)
-	  t))))
+      (progn
+	;; (he-substitute-string expansion t)
+	(funcall substitute-function expansion)
+	t))))
+
+
+(defun jmm-hippie--remove-tried (candidates)
+  "Remove CANDIDATES that have already been tried.
+CANDIDATES is a list of strings."
+  (seq-remove (lambda (x) (he-string-member x he-tried-table t)) candidates))
+
+(defun jmm-hippie--remove-low-effort (candidates)
+  "Remove CANDIDATES that only expand fewer than 2 characters."
+  (let* ((baselen (length he-search-string)))
+    (seq-remove (lambda (word) (length< word (+ baselen 2))) candidates)))
 
 
 ;;; "Multiabbrev" expansion
@@ -175,7 +186,7 @@ Instead of passing a function that goes to the point, you have to initialize the
 				 ("jmm" "Josh Moller-Mara" "Josh Mōller-Mara")
 				 ;; Squintmojis
 				 (("squintmoji" "khsr") "　🚘\n　⛔️🏓\n🥊🍘\n　🎵" "🛁\n🚨\n🍶" "　🛁\n　🖇🚨　⛴\n⛴　　✔️" "　🔍🦎\n🥒🔋\n 🦎🐢" "🎷👂🏻\n　👛")
-)
+				 )
   "This should be an alist of abbrevs and their expansions. This first element can be a list of synonyms to expand.")
 
 ;; TODO: Maybe remember the last one? Though that could be annoying and unpredictable.
@@ -509,7 +520,7 @@ Kind of like `try-expand-dabbrev'."
 
 (defvar he-dabbrev2--lastused nil
   "Was `try-expand-dabbrev-historical' the last one used?")
-(defvar he-dabbrev2--last-location nil)
+(defvar he-dabbrev2--last-location (make-marker))
 
 (defvar he-dabbrev2--last-expansion (make-marker))
 
@@ -523,11 +534,11 @@ Kind of like `try-expand-dabbrev'."
       (save-restriction
 	(if hippie-expand-no-restriction
 	    (widen))
-	(goto-char he-search-loc)
+	(goto-char he-dabbrev2--last-location)
 	;; Go forward over last place and spaces
 	;; FIXME: There could just be a line break without spaces
 	(re-search-forward "\\<\\(\\sw\\|\\s_\\)+\\([[:space:]]\\|\n\\)+" nil t)
-	(set-marker he-search-loc (point))
+	(set-marker he-dabbrev2--last-location (point))
 	;; The next one is the symbol we want to save.
 	(re-search-forward "\\<\\(\\sw\\|\\s_\\)+" nil t)
 	(setq expansion (buffer-substring-no-properties (match-beginning 0)
@@ -555,6 +566,7 @@ Kind of like `try-expand-dabbrev'."
 	    t))
       (if (try-expand-dabbrev old)
 	  (progn
+	    (set-marker he-dabbrev2--last-location he-search-loc)
 	    (set-marker he-dabbrev2--last-expansion (point))
 	    t)
 	(progn
@@ -562,6 +574,18 @@ Kind of like `try-expand-dabbrev'."
 	  (set-marker he-dabbrev2--last-expansion nil)
 	  nil)
 	))))
+
+(defvar jmm-hippie--try-expand-window-dabbrev-last-loc nil
+  "Last place we found an expansion for `jmm-try-expand-window-dabbrev'.")
+(defvar jmm-hippie--try-expand-window-dabbrev-last-expansion nil
+  "Last place we expanded `jmm-try-expand-window-dabbrev'.")
+
+(defun jmm-try-expand-window-dabbrev (old)
+  "Try to expand a dynamic abbreviation using only the current window."
+  (if (and (not old) ;; If we're continuing the last expansion
+	   (= (preceding-char) \s)
+	   (markerp jmm-hippie--try-expand-window-dabbrev-last-expansion)
+	   (= (point) (1+ jmm-hippie--try-expand-window-dabbrev-last-expansion)))))
 
 
 ;;; Minibuffer expansion
@@ -654,6 +678,227 @@ The benefit here is that the most recent buffers are suggested first."
       (he-substitute-string (car he-expand-list) t)
       (setq he-expand-list (cdr he-expand-list))
       t)))
+
+
+;;; Visible buffers
+
+(defun jmm-visible-symbol-completions (str)
+  "Returns a list of visible symbols starting with STR.
+Tries to sort by distance to window's cursor."
+  (thread-last
+    (cl-loop for win in (window-list)
+	     nconc (with-selected-window win
+		     (save-excursion
+		       (let ((pos (window-point win))
+			     (beg (window-start win))
+			     (end (window-end win)))
+			 (goto-char beg)
+			 (cl-loop while (re-search-forward (rx-to-string `(seq bow ,str (1+ (or wordchar (syntax symbol))) eow)) end t)
+				  collect (cons (match-string-no-properties 0)
+						(abs (- (point) pos)))
+				  )))))
+    (seq-sort-by #'cdr #'<)
+    (mapcar #'car)
+    (seq-uniq)))
+
+;; TODO: Also complete spaces.
+;; FIXME: Incorrectly expands in the middle "like^this" will get expanded to "likethisthis".
+;;;###autoload
+(defun jmm-try-expand-dabbrev-visible (old)
+  "Try to expand visible abbreviations dynamically.
+Unlike `try-expand-dabbrev-visible', tries to weight based on distance."
+  (unless old
+    (progn
+      (he-init-string (he-dabbrev-beg) (point))
+      (setq he-expand-list (thread-first
+			     he-search-string
+			     (jmm-visible-symbol-completions)
+			     (seq-difference he-tried-table)))))
+
+  (while (and he-expand-list
+	      (or (not (car he-expand-list))
+		  (he-string-member (car he-expand-list) he-tried-table t)))
+    (setq he-expand-list (cdr he-expand-list)))
+
+  (if (null he-expand-list)
+      (progn
+	(if old (he-reset-string))
+	())
+    (progn
+      (he-substitute-string (car he-expand-list) t)
+      (setq he-expand-list (cdr he-expand-list))
+      t)))
+
+
+;;; Dictionary functions
+
+(defun jmm-hippie-aspell-simple-word-list ()
+  "Return a list of words from GNU aspell.
+Only returns root words."
+  (thread-first
+    (shell-command-to-string "aspell dump master | aspell expand | aspell munch-list")
+    (split-string "\n")
+    (thread-last
+      (mapcar (lambda (x) (car (split-string x "/"))))
+      (seq-sort-by #'length #'<))))
+
+(defun jmm-hippie-aspell-extended-word-list ()
+  "Return a list of words from GNU aspell."
+  (thread-first
+    (shell-command-to-string "aspell dump master | aspell expand")
+    (split-string "\n")
+    (thread-last
+      (seq-remove (lambda (x) (string-match-p "'s$" x))))))
+
+(defvar jmm-hippie-simple-word-list
+  (lazy-completion-table jmm-hippie-simple-word-list
+			 (lambda ()
+			   (jmm-hippie-aspell-simple-word-list)))
+  "A lazy completion table of (simple) words.
+Doesn't include affixes.")
+
+(defvar jmm-hippie-extended-word-list
+  (lazy-completion-table jmm-hippie-extended-word-list
+			 (lambda ()
+			   (jmm-hippie-aspell-extended-word-list)))
+  "A lazy completion table of extended words. Includes affixes.")
+
+(defvar jmm-hippie-dictionary-search-length-minimum 4
+  "Minimum number of characters before trying to expand a word.")
+
+
+;;; Word frequency functions
+(defvar jmm-hippie-word-frequency-file (locate-user-emacs-file "hippie/count_1w.txt")
+  "A file with words and their frequencies.
+Download from https://norvig.com/ngrams/count_1w.txt")
+
+(defvar jmm-hippie-word-frequency-table nil
+  "Will be a hash table of words to their frequencies.")
+
+(defun jmm-hippie--generate-word-frequency-hash-table ()
+  "Create a hash table of words and their frequencies.
+Uses https://norvig.com/ngrams/count_1w.txt, which should be locally downloaded."
+  (let ((wordcounts (make-hash-table :test 'equal :size 500000))
+	line idx)
+    (with-temp-buffer
+      (insert-file-contents-literally jmm-hippie-word-frequency-file)
+      ;; For optimization purposes, I try to avoid copying the buffer string unnecessarily
+      (while (not (eobp))
+	;; It also seems like having a "let" inside "while" is slower than having it on the outside.
+	(setq line (buffer-substring (line-beginning-position) (line-end-position))
+	      idx (string-match "\t" line))
+	(puthash (substring line 0 idx)
+		 (string-to-number (substring line (1+ idx)))
+		 wordcounts)
+	(forward-line 1)))
+    wordcounts))
+
+(defun jmm-hippie--ensure-word-frequency-table ()
+  "Initializes `jmm-hippie-word-frequency-table' if it's nil."
+  (unless jmm-hippie-word-frequency-table
+    (let ((reporter (make-progress-reporter "Generating word frequency table")))
+      (setq jmm-hippie-word-frequency-table (jmm-hippie--generate-word-frequency-hash-table))
+      (progress-reporter-done reporter))))
+
+(defun jmm-hippie--sort-words-by-frequency (words)
+  "Sort a list of WORDS by their descending frequency."
+  (jmm-hippie--ensure-word-frequency-table)
+  (seq-sort-by (lambda (word) (gethash word jmm-hippie-word-frequency-table 0)) #'> words))
+
+
+;;; Dictionary expansion
+
+;;; FIXME: Doesn't yet handle case correctly.
+;;; Like, when you start with a capital letter.
+
+;;;###autoload
+(defun jmm-try-expand-dictionary-word (old)
+  "Try to expand words, sorted by frequency"
+  (unless old
+    (progn
+      (he-init-string (he-dabbrev-beg) (point))
+      (unless (length< he-search-string jmm-hippie-dictionary-search-length-minimum)
+	(setq he-expand-list (thread-first
+			       (all-completions he-search-string jmm-hippie-extended-word-list)
+			       (jmm-hippie--remove-tried)
+			       (jmm-hippie--remove-low-effort)
+			       (jmm-hippie--sort-words-by-frequency))))))
+  (if (null he-expand-list)
+      (progn
+	(if old (he-reset-string))
+	nil)
+    (progn
+      (he-substitute-string (car he-expand-list) t)
+      (setq he-expand-list (cdr he-expand-list))
+      t)))
+
+(defun jmm-hippie--flex-dict-pattern (pattern)
+  "Make a flex regular expression for PATTERN.
+Words must start and end with same start and end as PATTERN.
+Characters inside pattern must be in order."
+  (thread-first
+    pattern
+    (string-glyph-split)
+    ;; TODO: Integrate jmm-isearch
+    (jmm-isearch--interleave-separator '(0+ not-newline))
+    ((lambda (x) `(sequence bow ,@x eow)))
+    (rx-to-string)))
+
+(defun jmm-hippie--flex-dict-completions (pattern)
+  "Returns flex dictionary expansions for PATTERN.
+See `jmm-hippie--flex-dict-pattern'."
+  (let* ((regexp (jmm-hippie--flex-dict-pattern pattern))
+	 (pred (lambda (x) (string-match-p regexp x))))
+    (seq-filter pred (all-completions "" jmm-hippie-extended-word-list))))
+
+;;;###autoload
+(defun jmm-try-expand-flex-dictionary-word (old)
+  "Try to expand words in a \"flex\" style, sorting by word frequency.
+Takes at most 3 guesses."
+  (unless old
+    (progn
+      (he-init-string (he-dabbrev-beg) (point))
+      (unless (length< he-search-string jmm-hippie-dictionary-search-length-minimum)
+	(setq he-expand-list (thread-first
+			       (jmm-hippie--flex-dict-completions he-search-string)
+			       (jmm-hippie--remove-low-effort)
+			       (jmm-hippie--remove-tried)
+			       (jmm-hippie--sort-words-by-frequency)
+			       (seq-take 3))))))
+  (if (null he-expand-list)
+      (progn
+	(if old (he-reset-string))
+	nil)
+    (progn
+      (he-substitute-string (car he-expand-list) t)
+      (setq he-expand-list (cdr he-expand-list))
+      t)))
+
+
+;; (completing-read "Word: " jmm-hippie-simple-word-list)
+
+
+;;; Limit completions to major mode
+
+;;;###autoload
+(defun jmm-maybe-try-complete-lisp-symbol-partially (old)
+  (unless (derived-mode-p 'text-mode)
+    (try-complete-lisp-symbol-partially old)))
+
+;;;###autoload
+(defun jmm-maybe-try-complete-lisp-symbol (old)
+  (unless (derived-mode-p 'text-mode)
+    (try-complete-lisp-symbol old)))
+
+;;;###autoload
+(defun jmm-maybe-try-expand-flex-dictionary-word (old)
+  (when (derived-mode-p 'text-mode)
+    (jmm-try-expand-flex-dictionary-word old)))
+
+;;;###autoload
+(defun jmm-maybe-try-expand-dictionary-word (old)
+  (when (derived-mode-p 'text-mode)
+    (jmm-try-expand-dictionary-word old)))
 
 (provide 'hippie-expand-jmm)
 ;;; hippie-expand-jmm.el ends here
