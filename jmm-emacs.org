@@ -75,6 +75,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 
   If I make any changes using Custom, I want them to be in a separate file.
 #+begin_src emacs-lisp
+(setq custom-theme-directory (locate-user-emacs-file "themes/"))
 ;; TODO: This is slow. Defer this. It seems to be loading org-mode already.
 ;; Also, make a macro/function for:
 ;; - [ ] Defering stuff
