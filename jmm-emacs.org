@@ -12,17 +12,15 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   packages.
 #+begin_src emacs-lisp
 (setq use-package-verbose t)
-(add-to-list 'load-path (locate-user-emacs-file "elisp/"))
-;; (make-directory-autoloads "~/.emacs.d/elisp/" "~/.emacs.d/.autoloads/jmmloaddefs.el")
-(add-to-list 'load-path (locate-user-emacs-file ".autoloads/"))
 (require 'jmmloaddefs nil t) ;; Load my personal autoloads, if they exist
 (require 'jmmloadsplit nil t) ;; Autoloads generated from splitting out tangled code
 
 
 (require 'package)
 (add-to-list 'package-archives '("org" . "http://orgmode.org/elpa/") t)
-(add-to-list 'package-archives '("ELPA" . "https://elpa.gnu.org/packages/") t)
-(add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/packages/") t)
+;; I think this is added by default now as "gnu"
+;; (add-to-list 'package-archives '("ELPA" . "https://elpa.gnu.org/packages/") t)
+;; (add-to-list 'package-archives '("nongnu" . "https://elpa.nongnu.org/packages/") t)
 ;; Marmalade has an insecure cert now
 ;; (add-to-list 'package-archives '("marmalade" . "http://marmalade-repo.org/packages/") t)
 (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -91,38 +89,6 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 #+begin_src emacs-lisp
 (let ((secrets (expand-file-name "secrets.el" user-emacs-directory)))
   (if (file-exists-p secrets) (load-file secrets)))
-#+end_src
-
-* Splitting out files and autoloading
-
-  One issue with having all my elisp code in org is that all the
-  ~(require ...)~ statements get evaluated at init. This is the reason
-  I had to split out my org config into its own file, as it took too
-  long to load when I wasn't even using org.
-
-  The proper way to do things is to split code out into their own
-  packages and provide autoloads. To do this while keeping the org
-  babel stuff, we just supply a ~:tangle~ header argument, add
-  autoload comments, and make sure the ~(provide ...)~ matches the
-  tangled filename.
-
-#+begin_src emacs-lisp :tangle "split/jmm-elisp-stuff.el"
-(require 'org)
-
-;; TODO: Probably should delete/clean the files in "split"
-
-;;;###autoload
-(defun jmm-elisp-recompile ()
-  "Tangle, byte-compile, make autoloads."
-  (interactive)
-  (org-babel-tangle-file (locate-user-emacs-file "jmm-emacs.org") (locate-user-emacs-file "jmm-emacs.el"))
-  (org-babel-tangle-file (locate-user-emacs-file "jmm-org-config.org") (locate-user-emacs-file "jmm-org-config.el"))
-  ;; (byte-recompile-directory "~/.emacs.d" 0)
-  (byte-recompile-directory (locate-user-emacs-file "split") 0)
-  (make-directory-autoloads (locate-user-emacs-file "elisp/") (locate-user-emacs-file ".autoloads/jmmloaddefs.el"))
-  (make-directory-autoloads (locate-user-emacs-file "split/") (locate-user-emacs-file ".autoloads/jmmloadsplit.el")))
-
-(provide 'jmm-elisp-stuff)
 #+end_src
 
 * Basic configuration
@@ -237,6 +203,10 @@ Enable all the disabled commands
 (unless noninteractive
   (require 'completion-jmm)
   (advice-add 'execute-extended-command-for-buffer :around #'jmm-advice-M-X-override-completion))
+
+(use-package orderless
+  :ensure t)
+
 (setf completion-category-overrides
       '((command (styles initials partial-completion orderless))
 	(buffer (styles basic orderless))
@@ -507,6 +477,7 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (define-key minibuffer-local-filename-completion-map (kbd "M-a") 'jmm/file-minibuffer-up-dir)
 (keymap-global-set "C-x 4 B" #'bookmark-jump-other-window)
 (keymap-global-set "M-E" #'eshell-command)
+(bind-key "C-x r S" #'jmm-register-copy-kill-to-register)
 
 ;; Set up a key for temporary bindings
 (defvar-keymap jmm-temp-map
