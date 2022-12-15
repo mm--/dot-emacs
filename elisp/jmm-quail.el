@@ -64,6 +64,7 @@ Also escapes some stuff for HTML.
  ("<<" ["&lt;"])
  (">>" ["&gt;"])
  ;; The "compose" input method is probably better here.
+ ;; Actually, you can just use “C-x 8 a <”
  ;; ("<-" ["<-" "←"])
  ;; ("->" ["->" "→"])
  )

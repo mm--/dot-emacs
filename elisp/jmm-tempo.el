@@ -445,6 +445,13 @@ Basically just `edit-abbrevs' for a provided table. "
   "</div>" >)
 
 
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/ruby1 "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/ruby1
+  "Template for <ruby> HTML element"
+  nil
+  "<ruby>" r> (P "Ruby base: ") "<rp>(</rp><rt>" p (P "Ruby text: ") "</rt><rp>)</rp>" p  "</ruby>")
+
+
 
 ;;;;;;;;;;
 ;; (edit-abbrevs-mode-abbrev-table)
@@ -471,6 +478,20 @@ Basically just `edit-abbrevs' for a provided table. "
   p > n>
   "}" > n>
   "}" > )
+
+
+;;;;;;;;;;
+;; (js2-mode-abbrev-table)
+
+;;;###autoload (autoload 'jmm-tempo/js2/pthn "jmm-tempo")
+(define-jmm-tempo jmm-tempo/js2/pthn
+  "Promise \"then\""
+  nil
+  "then((" (P "Argument: " name) ") => {" n>
+  p n>
+  "})" >
+  )
+
 
 
 (provide 'jmm-tempo)

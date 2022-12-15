@@ -491,11 +491,13 @@ texenv = texlive.combine {
   (jmm-skeleton-unless-wrapping
    (jmm-skeleton-prompt "Link text: "
 			(seq-uniq
-			 (list
-			  (xml-escape-string v1)
-			  (url-host v2)
-			  (url-domain v2)
-			  (lambda () (jmm--get-url-html-title v1))))))
+			 (seq-remove
+			  #'null
+			  (list
+			   (xml-escape-string v1)
+			   (ignore-errors (url-host v2))
+			   (ignore-errors (url-domain v2))
+			   (lambda () (jmm--get-url-html-title v1)))))))
   "</a>")
 
 

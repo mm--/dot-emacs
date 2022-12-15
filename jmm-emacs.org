@@ -12,10 +12,9 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   packages.
 #+begin_src emacs-lisp
 (setq use-package-verbose t)
-(add-to-list 'load-path "~/elisp")
-(add-to-list 'load-path "~/.emacs.d/elisp")
+(add-to-list 'load-path (locate-user-emacs-file "elisp/"))
 ;; (make-directory-autoloads "~/.emacs.d/elisp/" "~/.emacs.d/.autoloads/jmmloaddefs.el")
-(add-to-list 'load-path "~/.emacs.d/.autoloads/")
+(add-to-list 'load-path (locate-user-emacs-file ".autoloads/"))
 (require 'jmmloaddefs nil t) ;; Load my personal autoloads, if they exist
 (require 'jmmloadsplit nil t) ;; Autoloads generated from splitting out tangled code
 
@@ -61,7 +60,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
                       ))
 ;; TODO move elsewhere.
 (setq save-abbrevs 'silently)
-(setq abbrev-file-name (expand-file-name "abbrev_defs" user-emacs-directory))
+(setq abbrev-file-name (locate-user-emacs-file "abbrev_defs"))
 (keymap-global-set "C-x a E" #'jmm-edit-abbrevs)
 (keymap-global-set "C-x a S" #'jmm-add-local-skeleton)
 (dolist (p my-packages)
@@ -113,15 +112,15 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 ;; TODO: Probably should delete/clean the files in "split"
 
 ;;;###autoload
-(defun jmm/elisp-recompile ()
+(defun jmm-elisp-recompile ()
   "Tangle, byte-compile, make autoloads."
   (interactive)
-  (org-babel-tangle-file "~/.emacs.d/jmm-emacs.org" "~/.emacs.d/jmm-emacs.el")
-  (org-babel-tangle-file "~/.emacs.d/jmm-org-config.org" "~/.emacs.d/jmm-org-config.el")
+  (org-babel-tangle-file (locate-user-emacs-file "jmm-emacs.org") (locate-user-emacs-file "jmm-emacs.el"))
+  (org-babel-tangle-file (locate-user-emacs-file "jmm-org-config.org") (locate-user-emacs-file "jmm-org-config.el"))
   ;; (byte-recompile-directory "~/.emacs.d" 0)
-  (byte-recompile-directory "~/.emacs.d/split" 0)
-  (make-directory-autoloads "~/.emacs.d/elisp/" "~/.emacs.d/.autoloads/jmmloaddefs.el")
-  (make-directory-autoloads "~/.emacs.d/split/" "~/.emacs.d/.autoloads/jmmloadsplit.el"))
+  (byte-recompile-directory (locate-user-emacs-file "split") 0)
+  (make-directory-autoloads (locate-user-emacs-file "elisp/") (locate-user-emacs-file ".autoloads/jmmloaddefs.el"))
+  (make-directory-autoloads (locate-user-emacs-file "split/") (locate-user-emacs-file ".autoloads/jmmloadsplit.el")))
 
 (provide 'jmm-elisp-stuff)
 #+end_src
@@ -137,7 +136,7 @@ Enable all the disabled commands
 ;; I don't like having to type "yes"
 (fset 'yes-or-no-p 'y-or-n-p)
 
-(transient-mark-mode 1)
+(transient-mark-mode 0) ;; You know, I think I prefer using the mark just to remember where I was.
 (column-number-mode 1)
 (show-paren-mode 1)
 ;; I'll set this in customize, so by default it doesn't take it away.
@@ -268,7 +267,11 @@ Make scripts executable
 #+begin_src emacs-lisp
 (setq select-enable-clipboard t) ; as above
 (setq interprogram-paste-function #'gui-selection-value)
-(setq select-enable-primary t)
+;; Unfortunately, `select-enable-primary' set to "t" here means that any time we
+;; have an active region we end up adding it to the kill ring.
+(setq select-enable-primary nil)
+;; But if we don't have `select-enable-primary' set to t, we can't copy a selection from, say, an xterm or alacritty directly into emacs using `yank'.
+;; To actually use the primary selection, use <mouse-2>, which is bound to `mouse-yank-primary'.
 #+end_src
 ** Windmove
 #+begin_src emacs-lisp
@@ -347,14 +350,15 @@ Show color emojis.
 ;; TODO: Make a macro out of this
 ;; TODO: Maybe only if Cairo and Harfbuzz are enabled?
 ;; TODO: Include ligatures/composition. See https://emacs.stackexchange.com/a/62220
+;;       - https://www.masteringemacs.org/article/unicode-ligatures-color-emoji has a good guide
 (when (and window-system (x-family-fonts "Noto Color Emoji"))
   (set-fontset-font t 'symbol (font-spec :family "Noto Color Emoji")))
 #+end_src
 
 
 For whatever reason, when trying to view the HELLO file in Emacs 28 in NixOS, Emacs hangs.
-Using `csysdig`, I found a lot of accesses to an "Adobe Blank" font
-file. A bug report [here](https://debbugs.gnu.org/db/40/40733.html)
+Using ~csysdig~, I found a lot of accesses to an "Adobe Blank" font
+file. A bug report [[here][https://debbugs.gnu.org/db/40/40733.html]]
 shows how to work around this.
 
 #+BEGIN_SRC emacs-lisp
@@ -703,6 +707,15 @@ I've written some tempo utilities and templates in [[./elisp/jmm-tempo.el][jmm-t
 #+begin_src emacs-lisp
 (require 'jmm-autotype)
 #+end_src
+** Abbrevs
+
+#+begin_src emacs-lisp
+(add-hook 'nxml-mode-hook #'abbrev-mode)
+(add-hook 'css-mode-hook #'abbrev-mode)
+(add-hook 'text-mode-hook #'abbrev-mode)
+#+end_src
+
+
 * Searching
 ** isearch
 
@@ -798,6 +811,12 @@ Also prefer ripgrep for xref.
 (setq-default ispell-grep-options "-iE")
 (setq-default ispell-complete-word-dict "/usr/share/dict/american-english")
 (setq-default ispell-silently-savep t)
+;; Allow ispell to use unicode apostrophes (’) in words.
+;; Originally from https://endlessparentheses.com/ispell-and-apostrophes.html
+;; GNU Aspell 0.60.7 partially supports unicode apostrophes already
+(setq ispell-local-dictionary-alist
+      `((nil "[[:alpha:]]" "[^[:alpha:]]"
+             "['\x2019]" nil ("-B") nil utf-8)))
 ;; (use-package rw-hunspell
 ;;   :after flyspell)
 #+end_src
@@ -890,6 +909,16 @@ Right click to correct a word (instead of middle click).
    cool to use ~dictionary.el~ to suggest ~ispell~/~flyspell~
    corrections in the future.
 
+
+* Plain text
+Some configuration for plain ~text-mode~
+#+begin_src emacs-lisp
+;; Actually, I have a `jmm-typography' input method that's a bit nicer
+;; than `electric-quote-local-mode', since it also translates dashes.
+;; (add-hook 'text-mode-hook #'electric-quote-local-mode) ;; Makes it easier to type “smart quotes”
+(add-hook 'text-mode-hook #'abbrev-mode)
+(add-hook 'text-mode-hook #'word-wrap-whitespace-mode)
+#+end_src
 
 * LaTeX
 
