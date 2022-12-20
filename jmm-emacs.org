@@ -113,15 +113,6 @@ Enable all the disabled commands
 (ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
 (blink-cursor-mode 0)
 
-;; I kind of like tab bar.  I use it for what I used to use "eyebrowse" for.
-(unless noninteractive
-  (setq tab-bar-select-tab-modifiers '(control meta)
-	tab-bar-tab-hints t
-	tab-bar-show 1
-	tab-bar-tab-name-function 'tab-bar-tab-name-truncated
-	tab-bar-tab-name-truncated-max 10)
-  (tab-bar-mode 1))
-
 (xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
 
 ;; Some performance things for snappier redisplay
