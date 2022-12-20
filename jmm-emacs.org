@@ -76,6 +76,9 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
   If I make any changes using Custom, I want them to be in a separate file.
 #+begin_src emacs-lisp
 (setq custom-theme-directory (locate-user-emacs-file "themes/"))
+;; Load my basic theme
+;; This actually only adds settings, not faces.
+(load-theme 'jmm-default t)
 ;; TODO: This is slow. Defer this. It seems to be loading org-mode already.
 ;; Also, make a macro/function for:
 ;; - [ ] Defering stuff
@@ -103,18 +106,6 @@ Enable all the disabled commands
 ;; I don't like having to type "yes"
 (fset 'yes-or-no-p 'y-or-n-p)
 
-(transient-mark-mode 0) ;; You know, I think I prefer using the mark just to remember where I was.
-(column-number-mode 1)
-(show-paren-mode 1)
-;; I'll set this in customize, so by default it doesn't take it away.
-;; (menu-bar-mode -1) ;; Was confusing some people
-;; (tool-bar-mode 0)
-;; (scroll-bar-mode 0)
-(ignore-errors (horizontal-scroll-bar-mode 0)) ;Doesn't exist on some earlier emacs
-(blink-cursor-mode 0)
-
-(xterm-mouse-mode 1) ;; Allow people to click around if using the terminal
-
 ;; Some performance things for snappier redisplay
 ;; (setq redisplay-skip-fontification-on-input t)
 ;; (setq fast-but-imprecise-scrolling t)
@@ -137,11 +128,7 @@ Enable all the disabled commands
   :config
   (server-start))
 
-(setq visible-bell 0)                   ;Set visible bell on.
-(setq ring-bell-function 'ignore)       ;Visible bell.
-
 (setq frame-title-format "Emacs - %b")
-(setq set-mark-command-repeat-pop t)
 (use-package uniquify
   :defer 2
   :init
@@ -158,16 +145,10 @@ Enable all the disabled commands
 ;; "M-a" This starts appearing in Emacs 29.
 (setq translate-upper-case-key-bindings nil)
 
-(setq focus-follows-mouse t)
-;; (setq mouse-autoselect-window t) ;Sloppy focus
 (setq inhibit-splash-screen t)
 (setq Man-notify-method 'pushy)
 ;;(set-frame-font "-misc-fixed-medium-r-normal-*-11-*-*-*-*-*-*-*")
 (setq visual-line-fringe-indicators '(nil right-curly-arrow))
-(setq mouse-yank-at-point t)
-;; Make right click open a context menu. (Which you can otherwise access with S-<f10>)
-;; I don't really use `mouse-save-then-kill'.
-(unless noninteractive (context-menu-mode 1))
 
 (setq history-length 1000)
 (setq history-delete-duplicates t)
@@ -184,12 +165,6 @@ Enable all the disabled commands
 ;; it so I can quickly close it by pressing "q"
 (setq help-window-select t)
 
-;; Sometimes I like to pipe the output of `shell-command' into `find-file'
-(setq enable-recursive-minibuffers t)
-
-;; Some better completions for M-x and find-file
-;; I particularly like "initials"
-(setq completion-styles '(basic partial-completion emacs22 initials))
 ;; For `execute-extended-command-for-buffer', I also like to use "substring"
 ;; See "completion-jmm.el" for this.
 (unless noninteractive
@@ -208,8 +183,6 @@ Enable all the disabled commands
 	(jmm-zsh-history (styles basic orderless))
 	(jmm-file-cache-directories (styles orderless))
 	(jmm-file-cache-files (styles basic orderless))))
-;; TODO: I need to figure out a way to signal that other completions exist
-(setq completion-cycle-threshold nil)
 #+end_src
 
 Make scripts executable
@@ -682,15 +655,7 @@ I've written some tempo utilities and templates in [[./elisp/jmm-tempo.el][jmm-t
 * Searching
 ** isearch
 
-Some settings I like for isearch.
-
-#+begin_src emacs-lisp
-(custom-set-variables
- ;; Being able to press M-< instead of M-s M-< is helpful
- '(isearch-allow-motion t)
- ;; I like knowing whether or not I'm at the first match.
- '(isearch-lazy-count t))
-#+end_src
+Check [[./themes/jmm-default-theme.el][jmm-default-theme.el]] for some isearch settings.
 
 *** jmm-isearch.el
 I've defined some extra ~isearch~ modes in [[file:elisp/jmm-isearch.el][jmm-isearch.el]].
@@ -699,27 +664,6 @@ I've defined some extra ~isearch~ modes in [[file:elisp/jmm-isearch.el][jmm-isea
 (require 'jmm-isearch)
 (define-key isearch-mode-map (kbd "M-s l") #'isearch-toggle-permuted-splits-in-line)
 (bind-key "M-s D" #'jmm-isearch-multi-isearch-dired-buffers)
-#+end_src
-
-** grep
-The built-in grep mode. Default to using ripgrep if we have that.
-
-#+begin_src emacs-lisp
-(with-eval-after-load 'grep
-  (when (executable-find "rg")
-    (custom-set-variables
-     '(grep-command "rg --no-heading --color=auto -nH --null -L --no-messages -z -e ")
-     ;; Hmm.... actually it looks like ripgrep doesn't support "--exclude"
-     ;; '(grep-template "rg --no-heading <X> <C> -nH -z --null -L -e <R> <F>")'
-     '(grep-find-template "find -H <D> <X> -type f <F> -exec rg --no-heading <C> -nH -z --null -e <R> \{\} +")
-     '(grep-use-null-device nil))))
-#+end_src
-** xref
-Also prefer ripgrep for xref.
-#+begin_src emacs-lisp
-(with-eval-after-load 'xref
-  (when (executable-find "rg")
-    (custom-set-variables '(xref-search-program 'ripgrep))))
 #+end_src
 
 
