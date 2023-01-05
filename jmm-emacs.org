@@ -664,6 +664,8 @@ I've defined some extra ~isearch~ modes in [[file:elisp/jmm-isearch.el][jmm-isea
 (require 'jmm-isearch)
 (define-key isearch-mode-map (kbd "M-s l") #'isearch-toggle-permuted-splits-in-line)
 (bind-key "M-s D" #'jmm-isearch-multi-isearch-dired-buffers)
+(bind-key "M-s M" #'jmm-isearch-multi-occur-major-mode-permuted-splits-in-line)
+(bind-key "M-s O" #'jmm-isearch-multi-occur-permuted-splits-in-line)
 #+end_src
 
 

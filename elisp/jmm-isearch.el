@@ -230,7 +230,7 @@ _LAX search is not implemented."
 
 
 ;;;;;;;;;;
-;; Multi Isearch
+;; Multi Isearch and multi occur
 
 (defun jmm-isearch-multi-isearch-dired-buffers (&optional no-recursive-edit)
   "Search all dired buffers using `multi-isearch-buffers'."
@@ -259,6 +259,101 @@ _LAX search is not implemented."
       (progn
 	(add-to-history 'global-mark-ring startmarker global-mark-ring-max t)
 	(message "Global mark saved where search started")))))
+
+(defun jmm-isearch--get-isearch-regexp ()
+  "Get a regexp for the current search.
+Comes from `isearch-occur'."
+  (cond
+   ((functionp isearch-regexp-function)
+    (funcall isearch-regexp-function isearch-string))
+   (isearch-regexp-function (word-search-regexp isearch-string))
+   (isearch-regexp isearch-string)
+   (t (regexp-quote isearch-string))))
+
+(defun jmm-isearch--buffers-same-mode (mode)
+  "Get buffers with same major MODE."
+  (cl-loop for buf in (buffer-list)
+	   if (eq (buffer-local-value 'major-mode buf) mode)
+	   collect buf))
+
+(defun jmm-isearch--buffers-visiting-files ()
+  "Get buffers visiting files."
+  (cl-loop for buf in (buffer-list)
+	   if (buffer-file-name buf)
+	   collect buf))
+
+;;;###autoload
+(defun jmm-isearch-multi-occur-major-mode (regexp mode)
+  "Run `multi-occur' across same major-mode buffers using search string.
+Interactively, REGEXP is constructed from the isearch search string.
+MODE is the major mode of the buffer.
+Similar to `isearch-occur'."
+  (interactive
+   (list (jmm-isearch--get-isearch-regexp)
+	 major-mode))
+  (multi-occur (seq-reverse ;; multi-occur goes in reverse order
+		(jmm-isearch--buffers-same-mode mode))
+	       regexp))
+
+;;;###autoload
+(defun jmm-isearch-multi-occur-buffers (regexp &optional allbufs)
+  "Run `multi-occur' across file-visiting buffers using last search string.
+Interactively, REGEXP is constructed from the isearch search string.
+With interactive prefix arg ALLBUFS (non-nil), search all buffers.
+Similar to `isearch-occur' and `multi-occur-in-matching-buffers'."
+  (interactive
+   (list (jmm-isearch--get-isearch-regexp)
+	 current-prefix-arg))
+  (multi-occur (seq-reverse ;; multi-occur goes in reverse order
+		(if allbufs (buffer-list) (jmm-isearch--buffers-visiting-files)))
+	       regexp))
+
+;;;###autoload
+(defun jmm-isearch-multi-occur-major-mode-permuted-splits-in-line (string mode)
+  "Run `multi-occur' across same major MODE buffers using permuted search STRING.
+STRING is transformed using `jmm-isearch-permuted-splits-in-line-regexp'.
+MODE is the major mode of the buffer."
+  (interactive
+   (list (read-string "Permuted major-mode multi occur: " nil 'search-ring)
+	 major-mode))
+  (multi-occur (seq-reverse ;; multi-occur goes in reverse order
+		(jmm-isearch--buffers-same-mode mode))
+	       (jmm-isearch-permuted-splits-in-line-regexp string)))
+
+;;;###autoload
+(defun jmm-isearch-multi-occur-permuted-splits-in-line (string &optional allbufs)
+  "Run `multi-occur' across file-visiting buffers using permuted search STRING.
+If interactive prefix arg ALLBUFS is non-nill, search all buffers.
+STRING is transformed using `jmm-isearch-permuted-splits-in-line-regexp'."
+  (interactive
+   (list (read-string "Permuted multi occur: " nil 'search-ring)
+	 current-prefix-arg))
+  (multi-occur (seq-reverse ;; multi-occur goes in reverse order
+		(if allbufs (buffer-list) (jmm-isearch--buffers-visiting-files)))
+	       (jmm-isearch-permuted-splits-in-line-regexp string)))
+
+(define-key isearch-mode-map (kbd "M-s j o") #'jmm-isearch-multi-occur-major-mode)
+(define-key isearch-mode-map (kbd "M-s j b") #'jmm-isearch-multi-occur-buffers)
+
+
+;;;;;;;;;;
+;; Delete region
+
+(defun jmm-isearch-delete-region (&optional nomove)
+  "End the current isearch, deleting the region from starting end.
+If interactive prefix arg NOMOVE is non-nil, don't move to the starting end.
+Basically, you can use this like a more complicated `zap-to-char' that doesn't kill."
+  (interactive)
+  (isearch-done)
+  (let ((pos (if nomove
+		 (point)
+	       (if isearch-forward
+		   isearch-other-end
+		 (point)))))
+    (goto-char pos)
+    (delete-region (mark t) (point))))
+
+(define-key isearch-mode-map (kbd "C-<backspace>") #'jmm-isearch-delete-region)
 
 (provide 'jmm-isearch)
 ;;; jmm-isearch.el ends here
