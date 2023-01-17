@@ -22,6 +22,7 @@ You'll probably load other themes on top of this.")
  '(enable-recursive-minibuffers t nil nil "Sometimes I like to pipe the output of `shell-command' into `find-file'")
  ;; Mark settings
  '(transient-mark-mode nil nil nil "You know, I think I prefer using the mark just to remember where I was.")
+ '(jmm-mark-mode t)
  '(set-mark-command-repeat-pop t)
  ;; Some modes to turn on
  '(column-number-mode t)
