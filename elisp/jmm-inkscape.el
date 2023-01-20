@@ -89,6 +89,10 @@ A number.")
   "Holds a reference to the main Inkscape process.
 See `jmm-inkscape-launch'.")
 
+(defvar jmm-inkscape-last-selection nil
+  "A list of selection IDs.
+See `jmm-inkscape-refresh-selection'.")
+
 (defun jmm-inkscape-revert ()
   "Tell Inkscape to revert the document.
 This is the same as going to File > Revert.
@@ -115,6 +119,43 @@ ID is a string."
 		    "select-by-id"
 		    `(:array (:variant ,id))
 		    '(:array :signature "{sv}")))
+
+(defun jmm-inkscape--read-selection-register (prompt)
+  "Read a key from 1 to 9."
+  (ignore-errors (string-to-number (char-to-string (read-key prompt)))))
+
+(defun jmm-inkscape-selection-refresh ()
+  "Store selection in `jmm-inkscape-last-selection'."
+  (interactive nil jmm-inkscape-svg-mode)
+  (setq jmm-inkscape-last-selection (jmm-inkscape-get-selection-ids))
+  (message "Selected IDs: %S" jmm-inkscape-last-selection))
+
+(defun jmm-inkscape-selection-jump-to-register (n)
+  "Go to element N of `jmm-inkscape-last-selection'.
+Starts at 1."
+  (interactive (list (jmm-inkscape--read-selection-register "Selection: "))
+	       jmm-inkscape-svg-mode)
+  (if-let* ((id (elt jmm-inkscape-last-selection (1- n))))
+      (jmm-inkscape--goto-id id)
+    (error "No valid ID")))
+
+(defun jmm-inkscape-selection-insert-register (n)
+  "Insert ID of element N of `jmm-inkscape-last-selection'.
+Starts at 1.
+Includes a #."
+  (interactive (list (jmm-inkscape--read-selection-register "Selection: "))
+	       jmm-inkscape-svg-mode)
+  (if-let* ((id (elt jmm-inkscape-last-selection (1- n))))
+      (insert "#" id)
+    (error "No valid ID")))
+
+(defun jmm-inkscape-selection-add-node ()
+  "Select the node at point."
+  (interactive nil jmm-inkscape-mode)
+  (let ((id (save-excursion
+	      (jnx--element-for-point)
+	      (jnx--attribute-value "id"))))
+    (jmm-inkscape-select-by-id id)))
 
 ;; (dbus-call-method :session "org.inkscape.Inkscape"
 ;; 		    "/org/inkscape/Inkscape"
@@ -214,20 +255,42 @@ If `jmm-inkscape-process' is live, call `jmm-inkscape-open-file' instead."
 (defun jmm-inkscape-get-selection-ids ()
   "Return a list of IDS of the current selection."
   (let* ((buf (generate-new-buffer " *inkscape selected-list*"))
+	 (called nil)
 	 (newfilter (lambda (proc string)
 		      (with-current-buffer buf
+			(setq called t)
 			(goto-char (point-max))
 			(insert string)))))
     (add-function :before (process-filter jmm-inkscape-process) newfilter)
-    (dbus-call-method :session "org.inkscape.Inkscape"
-		      "/org/inkscape/Inkscape"
-		      "org.gtk.Actions" "Activate"
-		      "select-list"
-		      '(:array :signature "v")
-		      '(:array :signature "{sv}"))
-    ;; I thought I'd have to do some `accept-process-output' stuff here,
-    ;; but it doesn't look like I need to.
-    ;; 
+
+    (if executing-kbd-macro
+	;; There's a weird issue with `dbus-call-method' that prevents it
+	;; from working inside of a keyboard macro.  It has something to
+	;; do with the fact that it processes events rather than treats a
+	;; dbus call like a process.
+	;;
+	;; This hack works around that, but it's only used inside a macro.
+	;;
+	;; FIXME: The filter will not be called if the selection is empty,
+	;; and thus the function will hang.
+	(progn (dbus-call-method-asynchronously
+		:session "org.inkscape.Inkscape"
+		"/org/inkscape/Inkscape"
+		"org.gtk.Actions" "Activate"
+		nil
+		"select-list"
+		'(:array :signature "v")
+		'(:array :signature "{sv}"))
+	       ;; I'm assuming we only need to be called once.  This might not be accurate.
+	       (while (not called)
+		 (accept-process-output jmm-inkscape-process)))
+       (dbus-call-method
+		:session "org.inkscape.Inkscape"
+		"/org/inkscape/Inkscape"
+		"org.gtk.Actions" "Activate"
+		"select-list"
+		'(:array :signature "v")
+		 '(:array :signature "{sv}")))
     ;; Also, theoretically something could interrupt Inkscape in the
     ;; middle and cause the filter to get more than just the selection.
     (remove-function (process-filter jmm-inkscape-process) newfilter)
@@ -322,6 +385,60 @@ This is kind of hacky, but should work."
 	(next-error 1 t))
     (user-error "No selected IDs found.")))
 
+(defun jmm-inkscape--read-command-from-key (prompt)
+  "Read a command from a keybinding.
+PROMPT is a message to display when reading a key.
+If M-x is given, read the command."
+  (let (cmd)
+    (setq cmd (key-binding (read-key-sequence prompt)))
+    (if (eq cmd 'execute-extended-command)
+	(read-command "Command: ")
+      cmd)))
+
+(defun jmm-inkscape-for-each-remaining-selection (fun)
+  "Call FUN at point for each remaining selected node."
+  (interactive (list (jmm-inkscape--read-command-from-key "For each remaining: "))
+	       jmm-inkscape-svg-mode)
+  (while (condition-case nil
+	     (when-let* ((buffer (next-error-find-buffer)))
+	       (with-current-buffer (next-error-find-buffer)
+		 (jmm-inkscape-id-next-error-function 1 nil)))
+	   (error nil))
+    (if (commandp fun  t)
+	(call-interactively fun)
+      (funcall fun))))
+
+;; TODO: Make a query version like query-replace-regexp.
+(defun jmm-inkscape-for-each-selected-node (fun)
+  "Call FUN with point at beginning of each selected node."
+  (interactive (list (jmm-inkscape--read-command-from-key "For each node: "))
+	       jmm-inkscape-svg-mode)
+  (cl-loop for id in (jmm-inkscape-get-selection-ids)
+	   do (progn
+		(jmm-inkscape--goto-id id)
+		(if (commandp fun t)
+		    (call-interactively fun)
+		  (funcall fun)))))
+
+(defun jmm-inkscape-macro-for-each-selected-node ()
+  "Records and runs a macro on each selected node.
+Starts with point at first selected node and starts recording a macro.
+Call `exit-recursive-edit' to finish recording the macro and run on all remaining nodes."
+  (interactive nil jmm-inkscape-svg-mode)
+  ;; Doesn't seem like `atomic-change-group' would work here, probably
+  ;; because of the recursive edit.
+  (let ((ids (jmm-inkscape-get-selection-ids)))
+    (progn
+      ;; Go to first node and start recording
+      (jmm-inkscape--goto-id (car ids))
+      (kmacro-start-macro nil)
+      (recursive-edit)
+      (kmacro-end-macro nil)
+      (cl-loop for id in (cdr ids)
+	       do (progn
+		    (jmm-inkscape--goto-id id)
+		    (call-last-kbd-macro nil))))))
+
 (defun jmm-inkscape--add-class-str (prevval classes)
   "Add space-separated string of CLASSES to string attribute value PREVVAL.
 Returns a new string of space-separated classes."
@@ -391,6 +508,35 @@ Returns a new string of space-separated classes."
     (message "Removed %d ids" count)
     (set-marker markend nil)))
 
+(defun jmm-inkscape-strip-translation ()
+  "Remove transform-translate for node, incorporating into x and y coordinates.
+
+Removes transform=\"translate(dx,dy)\" and adds it to x= and y=.
+
+Useful since I can't find out how to move text in Inkscape
+without causing a transform, which prevents bounding box live
+path effects from working.
+
+Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
+  (interactive nil jmm-inkscape-mode)
+  (atomic-change-group
+    (save-excursion
+      (jnx--element-for-point)
+      (if-let* ((x (jnx--attribute-value "x"))
+		(y (jnx--attribute-value "y"))
+		(transform (jnx--attribute-value "transform")))
+	  (pcase-let* (((rx "translate(" (let dx (1+ nonl)) "," (let dy (1+ nonl)) ")") transform))
+	    (unless (and dx dy) (error "Can't find or parse translate() transform attribute."))
+	    (let ((x1 (string-to-number x))
+		  (y1 (string-to-number y))
+		  (dx1 (string-to-number dx))
+		  (dy1 (string-to-number dy)))
+	      (jnx--set-attribute-value "x" (number-to-string (+ x1 dx1)))
+	      (jnx--set-attribute-value "y" (number-to-string (+ y1 dy1)))
+	      (jnx--set-attribute-value "transform" nil)))
+	;; Should it not error?
+	(error "Missing either x, y, or transform attribute.")))))
+
 ;; Note: I still haven't found a way to determine which windows belong
 ;; to which documents/files.
 (defun ji--get-inkscape-windows ()
@@ -459,7 +605,11 @@ Returns a new string of space-separated classes."
   "C-c C-r" #'jmm-inkscape-revert
   "C-c C-j C-l" #'jmm-inkscape-launch
   "C-c C-j C-w" #'jmm-inkscape-set-window
-  "C-c C-s" #'jmm-inkscape-goto-selected-node
+  "C-c C-s C-s" #'jmm-inkscape-selection-add-node
+  "C-c C-s C-l" #'jmm-inkscape-selection-refresh
+  "C-c C-s j" #'jmm-inkscape-selection-jump-to-register
+  "C-c C-s i" #'jmm-inkscape-selection-insert-register
+  "C-c C-k C-s" #'jmm-inkscape-macro-for-each-selected-node
   "M-g s" #'jmm-inkscape-goto-selected-node
   "M-g M-s" #'jmm-inkscape-goto-selected-node
   "M-n" #'jnx-goto-next-tag
