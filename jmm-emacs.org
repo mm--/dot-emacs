@@ -4765,6 +4765,14 @@ See the file ~increment-stuff.el~
 (global-set-key (kbd "C-x 4 E") 'jmm/eshell-other-window)
 (global-set-key (kbd "C-x 4 S") 'jmm/shell-other-window)
 #+end_src
+** Quitting other windows
+When other windows pop up and I want to get rid of them.
+
+#+begin_src emacs-lisp
+(bind-key "C-x 4 q" #'jmm-quit-other-window)
+(bind-key "C-x 4 h" #'jmm-other-window-buffer-here)
+#+end_src
+
 
 
 * Emacs Rocks
