@@ -443,6 +443,7 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (keymap-global-set "C-x 4 B" #'bookmark-jump-other-window)
 (keymap-global-set "M-E" #'eshell-command)
 (bind-key "C-x r S" #'jmm-register-copy-kill-to-register)
+(bind-key "C-x r K" #'jmm-register-register-to-kill-ring)
 
 ;; Set up a key for temporary bindings
 (defvar-keymap jmm-temp-map
