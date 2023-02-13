@@ -259,6 +259,15 @@ CANDIDATES is a list of strings."
     (delete-region (point) he-string-end)
     (funcall funsym))
 
+(defun jmm/he-substitute-function2 (funsym)
+  "Replace string with function call."
+  (undo-boundary)
+  (atomic-change-group
+    (goto-char he-string-beg)
+    (setq he-tried-table (cons (concat "jmm-abbrev " (symbol-name funsym)) he-tried-table))
+    (delete-region (point) he-string-end)
+    (funcall funsym)))
+
 ;; TODO: Split out expanding of normal text. This should probably only expand functions.
 ;; TODO: Mark this function with some kind if "impure" metadata, so other completions can avoid this.
 ;; TODO: Detect if the skeleton aborted with a quit. If so, return nil.
@@ -290,6 +299,28 @@ The abbrev needs to be associated with the symbol 'jmm-command."
       (if jmm/he-last-expanded-function
 	  (undo)
 	(he-reset-string))
+      nil)))
+
+;;;###autoload
+(defun try-expand-global-abbrev-hooks (old)
+  "Like `try-expand-global-abbrevs', but only expands hooks.
+Basically, the abbrev needs to be an empty string and have a hook."
+  (if (not old)
+      (progn
+	(he-init-string (he-dabbrev-beg) (point))
+	(let* ((expansion (abbrev-expansion he-search-string global-abbrev-table))
+	       (curcommand this-command)
+	       sym symfun)
+	  (when (and (stringp expansion) (string-empty-p expansion)
+		     (setq sym (abbrev-symbol he-search-string global-abbrev-table))
+		     (setq symfun (symbol-function sym)))
+	    ;; Maybe amalgamating-undo
+	    (jmm/he-substitute-function2 symfun)
+	    ;; Somehow this-command gets obliterated if you prompt.
+	    (setq this-command curcommand)
+	    t)))
+    (progn
+      (undo)
       nil)))
 
 (defun try-expand-local-abbrevs3 (old)
@@ -350,6 +381,7 @@ But the expansion should be blank."
 	(let* ((he-down-str (downcase he-search-string))
 	       (expansion (abbrev-expansion he-down-str global-abbrev-table)))
 	  (when (and (stringp expansion)
+		     (not (string-empty-p expansion)) ;; Don't expand an empty thing.
 		     (not (he-string-member expansion he-tried-table t)))
 	    (he-substitute-string expansion t)
 	    t)))
