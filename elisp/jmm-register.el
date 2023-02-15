@@ -31,6 +31,10 @@
 ;; you effectively name important kills and keep them separate from
 ;; junk kills.
 
+;; Also provides:
+;; - `jmm-buffer-to-register' lets you save the buffer without the point
+;; - `jmm-point-to-register' calls `jmm-buffer-to-register' if given a prefix
+
 ;;; Code:
 
 (require 'register)
@@ -60,6 +64,26 @@ Interactively, reads the register using `register-read-with-preview'."
 
 (cl-defmethod jmm-register-val-kill-new ((val string))
   (kill-new val))
+
+;;;###autoload
+(defun jmm-buffer-to-register (register)
+  "Sets current buffer to REGISTER.
+Useful if you want to jump to a buffer, but don't want to save the point."
+  (interactive (list (register-read-with-preview "Buffer to register: ")))
+  (set-register register `(buffer . ,(current-buffer))))
+
+;;;###autoload
+(defun jmm-point-to-register (register &optional arg)
+  "Like `point-to-register' but saves buffer if given a prefix.
+See `jmm-buffer-to-register'."
+  (interactive (list (register-read-with-preview
+		      (if current-prefix-arg
+			  "Buffer to register: "
+			"Point to register: "))
+		     current-prefix-arg))
+  (if arg
+      (jmm-buffer-to-register register)
+    (point-to-register register)))
 
 (provide 'jmm-register)
 ;;; jmm-register.el ends here

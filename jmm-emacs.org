@@ -117,6 +117,8 @@ Enable all the disabled commands
 ;;(set-register ?e '(file . "~/.emacs.d/jmm-emacs.org"))
 ;;(set-register ?d '(file . "~/Downloads/"))
 
+(setq register-separator ?+)
+
 (setq launchserver (when (member "--server" command-line-args)
 		     t))
 (setq command-line-args
@@ -444,6 +446,9 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (keymap-global-set "M-E" #'eshell-command)
 (bind-key "C-x r S" #'jmm-register-copy-kill-to-register)
 (bind-key "C-x r K" #'jmm-register-register-to-kill-ring)
+(bind-key "C-x r B" #'jmm-buffer-to-register)
+(global-set-key [remap point-to-register] #'jmm-point-to-register)
+(bind-key "M-J" #'jump-to-register)
 
 ;; Set up a key for temporary bindings
 (defvar-keymap jmm-temp-map
