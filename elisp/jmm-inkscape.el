@@ -75,6 +75,7 @@
 ;;       thing in busctl or D-feet.
 
 ;;; Code:
+(require 'align)
 (require 'dbus)
 (require 'jmm-nxml)
 
@@ -420,7 +421,7 @@ If M-x is given, read the command."
 		    (call-interactively fun)
 		  (funcall fun)))))
 
-(defun jmm-inkscape-macro-for-each-selected-node ()
+(defun jmm-inkscape-new-macro-for-each-selected-node ()
   "Records and runs a macro on each selected node.
 Starts with point at first selected node and starts recording a macro.
 Call `exit-recursive-edit' to finish recording the macro and run on all remaining nodes."
@@ -438,6 +439,20 @@ Call `exit-recursive-edit' to finish recording the macro and run on all remainin
 	       do (progn
 		    (jmm-inkscape--goto-id id)
 		    (call-last-kbd-macro nil))))))
+
+(defun jmm-inkscape-apply-macro-to-selected-nodes (&optional macro)
+  "Like `apply-macro-to-region-lines', but applies last macro to selected nodes."
+  (interactive nil jmm-inkscape-svg-mode)
+  ;; TODO: Interactively prompt for macro, maybe with a keyboard binding.
+  (or macro
+      (progn
+	(if (null last-kbd-macro)
+	    (user-error "No keyboard macro has been defined"))
+	(setq macro last-kbd-macro)))
+  (cl-loop for id in (jmm-inkscape-get-selection-ids)
+	   do (progn
+		(jmm-inkscape--goto-id id)
+		(execute-kbd-macro macro))))
 
 (defun jmm-inkscape--add-class-str (prevval classes)
   "Add space-separated string of CLASSES to string attribute value PREVVAL.
@@ -609,7 +624,8 @@ Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
   "C-c C-s C-l" #'jmm-inkscape-selection-refresh
   "C-c C-s j" #'jmm-inkscape-selection-jump-to-register
   "C-c C-s i" #'jmm-inkscape-selection-insert-register
-  "C-c C-k C-s" #'jmm-inkscape-macro-for-each-selected-node
+  "C-c C-k C-n" #'jmm-inkscape-new-macro-for-each-selected-node
+  "C-c C-k C-s" #'jmm-inkscape-apply-macro-to-selected-nodes
   "M-g s" #'jmm-inkscape-goto-selected-node
   "M-g M-s" #'jmm-inkscape-goto-selected-node
   "M-n" #'jnx-goto-next-tag
