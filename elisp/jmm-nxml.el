@@ -26,6 +26,11 @@
 ;; To-dos:
 ;; - [X] A function to convert between block and inline contents
 ;; - [ ] Maybe add XML namespaces to child tags
+;; - [ ] When unwrapping an element, save its tag and attributes and suggest
+;;       it as future history when wrapping a region.
+;; - [ ] When unwrapping an element, check if electric indent mode is
+;;       enabled.  We may not want to reindent when unwrapping a <pre>
+;;       element.
 
 ;;; Code:
 
@@ -453,6 +458,22 @@ Takes in an optional default DEFAULT."
 	 (nxml-forward-single-balanced-item)
 	 (point))))))
 
+;; FIXME: Error out if we're looking at a void element.
+(defun jnx--element-inner-bounds ()
+  "Returns a cons of the inside bounds of a tag.
+For example <hello>A test B</hello>
+Would return positions A and B."
+  (let ((start xmltok-start))
+    (cons (save-excursion
+	    (goto-char start)
+	    (xmltok-forward)
+	    (point))
+	  (save-excursion
+	    (xmltok-save
+	      (goto-char start)
+	      (nxml-forward-single-balanced-item)
+	      xmltok-start)))))
+
 (defun jnx-goto-next-tag (&optional N)
   "Move point N tags forward.
 Leaves point at beginning of tag."
@@ -871,7 +892,8 @@ This assumes you already have `xmltok-attributes' scanned."
 	(end (1+ (xmltok-attribute-value-end attr))))
     (save-excursion
       (goto-char beg)
-      (delete-region beg end))))
+      (delete-region beg end)
+      (jnx--delete-blank-line))))
 
 (defun jnx--attribute-replace (attr str)
   "Set xmltok ATTR to be escaped value STR.
@@ -1027,6 +1049,28 @@ With prepend, add new attributes to the beginning."
    nxml-mode)
   (jnx-at-element-start
     (jnx--set-attribute-value attrname attrval prepend)))
+
+
+;;; xref
+;; FIXME: Not yet working?
+
+(defun jnx--xref-backend ()
+  "This is added to `xref-backend-functions'.
+e.g.: (add-hook 'xref-backend-functions #'jmm/nxml--xref-backend nil t)"
+  ;; TODO: Should this return different values depending on the context?
+  'jnx--id-xref-backend)
+
+(cl-defmethod xref-backend-identifier-at-point ((_backend (eql 'jnx--id-xref-backend)))
+  (save-excursion
+    ;; This assumes ids are only composed of alphanumerics, hyphens, and underscores
+    (let* ((start (progn (skip-chars-backward "[:alnum:]-_") (point)))
+	   (end (progn (skip-chars-forward "[:alnum:]-_") (point))))
+      (propertize (buffer-substring-no-properties start end) 'pos start))))
+
+(cl-defmethod xref-backend-definitions ((_backend (eql 'jnx--id-xref-backend)) identifier)
+  (let* ((pos (get-text-property 0 'pos identifier))
+         (defs (tx--xref-find-definitions identifier)))
+    defs))
 
 
 ;; TODO: This actually isn't great since not all of the buffer will be fontified if we run "flyspell-buffer"
