@@ -194,6 +194,21 @@ If the region is active, only htmlfontify the region.
 	  (goto-char (point-min)))
 	(pop-to-buffer html-buffer)))))
 
+;;;###autoload
+(defun jmm-htmlfontify-string (string)
+  "Fontifies a string, returning a cons of HTML and CSS.
+Like `jmm-htmlfontify-buffer'."
+  (let ((oldbuf (current-buffer)))
+    (with-temp-buffer
+      (insert string)
+      (let* (;; This overrides something when compiling the stylesheet
+	     (hfy-face-to-css #'jhfy-face-to-css-default)
+	     (css-sheet (hfy-compile-stylesheet))
+	     (css-map (hfy-compile-face-map))
+	     (html (jhfy--fontify-to-html-string css-sheet css-map))
+	     (css (jhfy-sprintf-stylesheet css-sheet)))
+	(cons html css)))))
+
 (defun jhfy--ignore-style-p (property value)
   (let ((ignorevals (alist-get property jhfy-ignore-styles 'jhfy--not-found nil #'equal)))
     (unless (eq ignorevals 'jhfy--not-found)

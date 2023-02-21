@@ -680,6 +680,7 @@ SOURCE-OR-SINK should be either 'source or 'sink."
 (add-to-list 'completion-category-defaults
 	     '(jmm-pulseaudio-name (styles orderless substring)))
 
+;;;###autoload
 (defun jmm-read-pulseaudio (source-or-sink prompt)
   "Read a PulseAudio source or sink name.
 SOURCE-OR-SINK should be either 'source or 'sink."

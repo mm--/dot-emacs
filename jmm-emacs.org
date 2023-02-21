@@ -61,6 +61,7 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 (setq abbrev-file-name (locate-user-emacs-file "abbrev_defs"))
 (keymap-global-set "C-x a E" #'jmm-edit-abbrevs)
 (keymap-global-set "C-x a S" #'jmm-add-local-skeleton)
+(keymap-global-set "C-x a T" #'jmm-add-local-tempo)
 (dolist (p my-packages)
   (when (not (package-installed-p p))
     (package-install p)))

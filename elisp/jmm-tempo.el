@@ -28,9 +28,33 @@
 ;; (skeleton's just uses positions, which can get obliterated), but I
 ;; don't like how it just never deletes markers.
 
+;; This file defines a lot of different tempo elements, which you can
+;; use via `tempo-user-elements'.  However, it may be easier to simply
+;; use Emacs Lisp shorthands and macros, which allow for nicer indenting.
+;; If you use the shorthand ("jte:" . "jmm-tempo-element:"), you can have things like
+;; 
+;;   (jte:if-first some-id
+;;       "first"
+;;     "second" )
+;;
+;; indent nicely.  Also, you can more easily jump to the definition of
+;; the macro.
+
+;; To-dos:
+;; - [X] Make a while loop, like subskeletons.  (Like, make it easier
+;;       to make "<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>I</kbd>")
+;; - [ ] Make a timer counter variable?
+;; 	 Might be able to do it by propertizing a string.
+;; 	 (propertize "hello" 'jte-repeat 1)
+
 ;;; Code:
 (require 'tempo)
 (require 'abbrev)
+
+(defvar jmm-tempo-use-region nil
+  "Whether we should use the region, setting `tempo-region-start' and `tempo-region-stop'.
+This is dynamically bound, letting new elements know whether to use the region.
+Similar to `tempo-insert-template'’s “on-region”.")
 
 (defun jmm-tempo-user-elements (arg)
   "Adds some more tempo elements.
@@ -40,9 +64,9 @@ New elements:
 
 - '(EXPRESSION): Evaluates elisp EXPRESSION, but ignores the result.
 - '(j:let BINDINGS BODY): Allows you to use tempo-named as variables in elisp BODY.
-             See `jmm-tempo--let-tempo-named' for an example.
+	     See `jmm-tempo--let-tempo-named' for an example.
 - '(j:set VARIABLE BODY): Allows you to set tempo-named as variable using in elisp BODY.
-             See `jmm-tempo--set-tempo-named' for an example.
+	     See `jmm-tempo--set-tempo-named' for an example.
 - '(j:prompt VARIABLE BODY): Runs and inserts BODY if VARIABLE is nil.
 "
   (pcase arg
@@ -61,6 +85,7 @@ New elements:
     (`(j:prompt ,variable . ,body) (eval `(jmm-tempo--prompt-tempo-named ,variable ,@body)))
     (`(j:subtempo ,variable) `(l ,@(eval variable)))))
 
+;; TODO: Remove this in favor of macros and shorthands.
 (add-to-list 'tempo-user-elements #'jmm-tempo-user-elements)
 
 ;; MAYBE: Add autoloads somehow?
@@ -79,7 +104,7 @@ Might also let you specify some dynamically bound vars, like \"v1\" and \"v2\" f
 Just pass in nil or () for now though.
 "
   (declare (doc-string 2)
-           (indent defun))
+	   (indent defun))
   `(progn
      ;; Add 'no-self-insert (and return t) so if we're expanded as an
      ;; abbrev, we don't insert whatever caused the expansion.
@@ -94,8 +119,10 @@ Just pass in nil or () for now though.
        (interactive nil)
        (jmm-tempo--clean-up-marks)
        (atomic-change-group
-	 ;; Should I use `tempo-insert-region'?
-	 (tempo-insert-template ',name nil)
+	 (let ((jmm-tempo-use-region nil))
+	   (jmm-tempo--initialize-region)
+	  ;; Should I use `tempo-insert-region'?
+	   (tempo-insert-template ',name nil))
 	 ;; I think tempo-insert-template does return a marker but I'm
 	 ;; explicitly returning t for 'no-self-insert abbreviation
 	 ;; expansion
@@ -104,6 +131,18 @@ Just pass in nil or () for now though.
 (defun jmm-tempo--clean-up-marks ()
   (mapc (lambda (mark) (set-marker mark nil)) tempo-marks)
   (setq tempo-marks nil))
+
+(defun jmm-tempo--initialize-region ()
+  "Set the value of `jmm-tempo-use-region', `tempo-region-start' and `tempo-region-stop'.
+TODO: Maybe use an argument like the current prefix?"
+  (if (use-region-p)
+      (progn
+	(set-marker tempo-region-start (region-beginning))
+	(set-marker tempo-region-stop (region-end))
+	(setf jmm-tempo-use-region t))
+    (set-marker tempo-region-start nil)
+    (set-marker tempo-region-stop nil)
+    (setf jmm-tempo-use-region nil)))
 
 (defun jmm-tempo-lookup-named (var)
   "The same as `tempo-lookup-named', but defines a `setf' form."
@@ -146,6 +185,155 @@ Gets expanded to something like:
   `(jmm-tempo--let-tempo-named
     (,variable)
     (setf ,variable (progn ,@body))))
+
+(defmacro jmm-tempo-element:set (variable &rest body)
+  "See `jmm-tempo--set-tempo-named'.
+
+Example:
+(jte:set v1
+ (message \"hello\")
+ \"test\")
+
+Would set \"v1\" \"test\"."
+  (declare (indent 1))
+  `(progn
+     ,`(jmm-tempo--set-tempo-named ,variable ,@body)
+     '(l nil)))
+
+(defmacro jmm-tempo-util:get (variable)
+  "Get value of unquoted variable.
+For use inside lisp code.
+
+Example:
+(P \"Title: \" title t)
+(format \"Hello %s\" (jtu:get v1))"
+  `(jmm-tempo-lookup-named ',variable))
+
+(defun jmm-tempo--empty-p (x)
+  "Is X nil or the empty string?"
+  (or (null x)
+      (and (stringp x) (string-empty-p x))))
+
+(defmacro jmm-tempo-element:when-some (variable &rest body)
+  "When VARIABLE is non-empty, run tempo BODY.
+Non-empty here means non-nil and not the empty string.
+BODY is executed with tempo.
+
+Example:
+(jt:when-some v1
+ \"Hello\" n> \"there\")"
+  (declare (indent 1))
+  `(progn
+     (if (jmm-tempo--empty-p (jmm-tempo-lookup-named ',variable))
+	 '(l nil)
+       (jte:bind (,variable) ,@body))))
+
+(cl-defmacro jmm-tempo-element:if-set ((name expression) then &rest else)
+  "Set NAME to result of lisp EXPRESSION, running template element THEN if non-empty, otherwise ELSE.
+
+Example:
+(jte:if-set (v1 (read-string \"Something: \"))
+  (l \"I am inserting \" (s v1) \".\")
+\"Nothing \" \"is \" \"set.\")"
+  (declare (indent 2))
+  `(if (progn
+	 (jte:set ,name ,expression)
+	 (not (jmm-tempo--empty-p (jmm-tempo-lookup-named ',name))))
+       '(l ,then)
+     '(l ,@else)))
+
+(cl-defmacro jmm-tempo-element:when-set ((name expression) &rest body)
+  "Set NAME to result of lisp EXPRESSION, running template BODY if non-empty.
+
+Example:
+(jte:when-set (v1 (read-string \"Something: \"))
+\"I am inserting \" (s v1) \".\")"
+  (declare (indent 1))
+  `(if (progn
+	 (jte:set ,name ,expression)
+	 (not (jmm-tempo--empty-p (jmm-tempo-lookup-named ',name))))
+       '(l ,@body)
+     '(l nil)))
+
+(defmacro jmm-tempo-element:bind (bindings &rest body)
+  "Bind tempo named locations to variables within BODY.
+Returned elements are executed with tempo.
+(Returns a list (l ...body))"
+  (declare (indent 1))
+  `(cl-symbol-macrolet ,(mapcar (lambda (var) `(,var (jmm-tempo-lookup-named ',var))) bindings)
+     (list 'l ,@body)))
+
+(defmacro jmm-tempo-element:if-some (variable then &rest else)
+  "If VARIABLE is non-empty, run tempo THEN otherwise ELSE.
+Non-empty here means non-nil and not the empty string.
+THEN and ELSE are executed with tempo.
+
+Example:
+(jt:if-some v1
+ (s v1)
+\"Empty\")"
+  (declare (indent 2))
+  `(progn
+     (if (not (jmm-tempo--empty-p (jmm-tempo-lookup-named ',variable)))
+	 '(l ,then)
+       '(l ,@else))))
+
+(defmacro jmm-tempo-element:while-some (variable start &rest body)
+  "Runs BODY while template START sets VARIABLE.
+
+Example:
+(jte:while-some v1 (jte:set v1 (read-string \"Something: \"))
+\"I am inserting \" (s v1) \".\")
+
+Note: Don't use (P \"something\" v1 t), as it will never
+reevaluate v1 after it's already set.
+"
+  (declare (indent 2))
+  `(progn
+     (while (progn
+		  (tempo-insert ',start nil)
+		  (not (jmm-tempo--empty-p (jmm-tempo-lookup-named ',variable))))
+       (mapc (lambda (elt) (tempo-insert elt nil)) ',body))
+     '(l nil)))
+
+(cl-defmacro jmm-tempo-element:while-set ((variable expression) &rest body)
+  "Runs BODY while lisp EXPRESSION returns a non-empty string for VARIABLE.
+
+Example:
+(jte:while-set (v1 (read-string \"Something: \"))
+\"I am inserting \" v1 \".\")"
+  (declare (indent 1))
+  `(progn
+     (while (progn
+		  (jte:set ,variable ,expression)
+		  (not (jmm-tempo--empty-p (jmm-tempo-lookup-named ',variable))))
+       (mapc (lambda (elt) (tempo-insert elt nil)) ',body))
+     '(l nil)))
+
+(cl-defmacro jmm-tempo-element:if-first (variable first &rest rest)
+  "Run template element FIRST the first time otherwise run REST.
+Sets VARIABLE to the string \"jte:repeat\", unless you set it within FIRST.
+
+Example:
+(jte:if-first some-id \"\" \", \")"
+  (declare (indent 2))
+  `(progn
+     (if (jmm-tempo--empty-p (jmm-tempo-lookup-named ',variable))
+	 (progn (tempo-insert ',first nil)
+		;; Check to see if it got set in FIRST?
+		(unless (jmm-tempo--empty-p (jmm-tempo-lookup-named ',variable))
+		  (jte:set ,variable "jte:repeat")))
+       (mapc (lambda (elt) (tempo-insert elt nil)) ',rest))
+     '(l nil)))
+
+(cl-defmacro jmm-tempo-element:on-repeat (variable &rest body)
+  "Run BODY when VARIABLE is initialized.
+See `jmm-tempo-element:if-first'.
+
+Example:
+(jte:on-repeat repeat1 \", \")"
+  (declare (indent 1))
+  `(jte:if-first ,variable nil ,@body))
 
 ;; TODO: Add NOINSERT parameter, like '(P) in `tempo-define-template'
 (defmacro jmm-tempo--prompt-tempo-named (variable &rest body)
@@ -238,8 +426,8 @@ Basically just `edit-abbrevs' for a provided table. "
   (let* ((buf (prepare-abbrev-list-buffer)))
     (pop-to-buffer-same-window buf)
     (when (and table-name
-               (search-forward
-                (concat "(" (symbol-name table-name) ")\n\n") nil t))
+	       (search-forward
+		(concat "(" (symbol-name table-name) ")\n\n") nil t))
       (goto-char (match-end 0)))))
 
 ;;;###autoload
@@ -258,6 +446,35 @@ Basically just `edit-abbrevs' for a provided table. "
 		(indent-according-to-mode)
 		(insert " n> \n")))))))
 (put 'jmm-tempo-yank-template 'no-self-insert t)
+
+
+;;;;;;;;;;
+;; Other internal functions
+
+(defun jmm-tempo--delete-and-return-line ()
+  "Delete the current line (from beginning of indentation) and return a trimmed version."
+  (let ((beg (save-excursion
+	       (back-to-indentation)
+	       (point)))
+	(end (line-end-position)))
+    (prog1
+	(string-trim (buffer-substring-no-properties beg end))
+      (delete-region beg end))))
+
+
+;;;;;;;;;;
+;; Some example templates
+
+(define-jmm-tempo jmm-tempo/examples/while-example
+  "An example of repeating things, setting a comma between elements."
+  nil
+  (jte:while-set (id (read-string "Enter an ID: "))
+    (jte:on-repeat repeat1 "," " ")
+    "ID:" (s id))
+  n
+  (jte:if-some repeat1
+      "Added things!"
+    "Nothing added."))
 
 
 ;;;;;;;;;;
@@ -420,6 +637,17 @@ Basically just `edit-abbrevs' for a provided table. "
   ">" p (s term) "</span>")
 
 
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/sidxa "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/sidxa
+  "Automatically make an indexed term from kill ring."
+  nil
+  (j:set term (current-kill 0))
+  "<span class=\"index\""
+  (j:let (term)
+	 (format " data-index=\"%s\"" (xml-escape-string term)))
+  ">" p (s term) "</span>"
+  )
+
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/mathil "jmm-tempo")
 (define-jmm-tempo jmm-tempo/jmm-xhtml/mathil
   "MathML inline"
@@ -452,6 +680,257 @@ Basically just `edit-abbrevs' for a provided table. "
   "<ruby>" r> (P "Ruby base: ") "<rp>(</rp><rt>" p (P "Ruby text: ") "</rt><rp>)</rp>" p  "</ruby>")
 
 
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/spaul "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/spaul
+  "Note from Paul"
+  nil
+  "<span class=\"paul\" data-datetime=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\">" p "</span>" >
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/figrel "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/figrel
+  "Make a figure with an image whose src is a relative path to the current killed text"
+  nil
+  "<figure>" n>
+  "<img src=\"" (xml-escape-string (file-relative-name (expand-file-name (current-kill 0)))) "\"/>" n>
+  "<figcaption>" p "</figcaption>" n>
+  "</figure>" >
+)
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/sec2a "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/sec2a
+  "Make an h2 section, automatically add an ID"
+  nil
+  (P "Header title: " title t)
+  (j:let (id title)
+	 (setf id (jmm-tempo--string-to-xml-id title))
+	 nil)
+  "<section id=\"" (s id) "\">" n>
+  "<h2>" (s title) "<a class=\"anchor\" href=\"#" (s id) "\"></a>" "</h2>" n>
+  r> n>
+  "</section>" >
+)
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/h3a "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/h3a
+  "Make an h3 header with an anchor"
+  nil
+  (P "Header title: " title t)
+  (j:let (id title)
+	 (setf id (jmm-tempo--string-to-xml-id title))
+	 nil)
+  "<h3 id=\"" (s id) "\">" (s title) " <a class=\"anchor\" href=\"#" (s id) "\"></a>" "</h3>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/detl "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/detl
+  "A <details> tag, but makes the current line the summary"
+  nil
+  (jt:set l1 (jt--delete-and-return-line))
+  "<details>" n>
+  "<summary>" (s l1) "</summary>" n>
+  p > n>
+  "</details>" >
+  )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/detlo "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/detlo
+  "Details, but open"
+  nil
+  (jt:set l1 (jt--delete-and-return-line))
+  "<details open=\"open\">" n>
+  "<summary>" (s l1) "</summary>" n>
+  p > n>
+  "</details>" >
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/kbd1 "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/kbd1
+  "Enter a keyboard key"
+  nil
+  "<kbd>" (P "Key: ") "</kbd>"
+)
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/imgrel "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/imgrel
+  "Insert a relative image.  Takes an absolute path in the kill ring and makes an img tag."
+  nil
+  "<img src=\"" (xml-escape-string (file-relative-name (expand-file-name (current-kill 0)))) "\"/>" >
+  )
+
+(defun jmm-paragraph-to-sentences (str)
+  "Convert paragraph STR to a list of string sentences."
+  (cl-labels ((sentence-start ()
+		(forward-sentence 1)
+		(backward-sentence 1)
+		(point))
+	      (next-sentence ()
+		(forward-sentence 1)
+		(sentence-start)))
+    (let (lastpoint)
+      (with-temp-buffer
+	(insert str)
+	(goto-char (point-min))
+	(save-excursion
+	  (while (re-search-forward (rx "*" (group (minimal-match (1+ nonl))) "*") nil t)
+	    (replace-match "<em>\\1</em>")))
+	(sentence-start)
+	(cl-loop collect (progn
+			   (setq lastpoint (point))
+			   (thing-at-point 'sentence))
+		 until (eq (next-sentence) lastpoint))))))
+
+(defun jmm-interleave (separators lst)
+  "Interleave list SEPARATORS between elements of list LST."
+  (let (notfirst)
+    (cl-loop for x in lst
+	     append (if notfirst
+			`(,@separators ,x)
+		      (setq notfirst t)
+		      `(,x)))))
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/kps1 "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/kps1
+  "Killed paragraph to sentences.  Converts lightly-formatted text to separate lines."
+  nil
+  (progn
+    `(l ,@(thread-last (jmm-paragraph-to-sentences (current-kill 0))
+		       (jmm-interleave `(> n)))
+	>
+	)))
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/cdat "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/cdat
+  "Create a CDATA section."
+  nil
+  "<![CDATA[" p "]]>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/prek "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/prek
+  "Code block from current kill."
+  nil
+  "<pre>"
+  (xml-escape-string (current-kill 0))
+  "</pre>")
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/fontify-kill-html "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/fontify-kill-html
+  "Fontify the current kill, returning HTML in a <code> block."
+  nil
+  "<code class=\"fontify\">"
+  (car (jmm-htmlfontify-string (current-kill 0)))
+  "</code>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/xhtmlpage "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/xhtmlpage
+  "A basic XHTML page with some metadata"
+  nil
+  "<?xml version=\"1.0\" encoding=\"utf-8\"?>" n>
+  "<html xmlns=\"http://www.w3.org/1999/xhtml\" lang=\"en-US\"" n>
+  "xmlns:dc=\"http://purl.org/dc/terms/\">" n>
+  "<head>" n>
+  "<meta charset=\"UTF-8\"/>" n>
+  "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"/>" n>
+  "<meta name=\"author\" content=\"Josh Moller-Mara\"/>" n>
+  "<meta name=\"dc:created\" content=\"" (format-time-string "%Y-%m-%d") "\"/>" n>
+  "<title>" (P "Title: " title) "</title>" n>
+  "<link rel=\"canonical\" href=\"" (P "Canonical url: ") "\"/>" n>
+  "<link rel=\"stylesheet\" href=\"" (P "Stylesheet: ") "\" type=\"text/css\" title=\"Default style\"/>" n>
+  "<script src=\"http://localhost:8081/skewer\"></script>" n>
+  "</head>" n>
+  "<body>" n>
+  "<header>" n>
+  "<h1>" (s title) "</h1>" n>
+  "</header>" n>
+  "<main>" n>
+  "</main>" n>
+  "<footer>" n>
+  "<p>" n>
+  "Last updated: <time property=\"dc:modified\" datetime=\"" (format-time-string "%Y-%m-%d") "\">" (format-time-string "%Y-%m-%d") "</time>" n>
+  "</p>" n>
+  "</footer>" n>
+  "</body>" n>
+  "</html>" n> )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/dtdd "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/dtdd
+  "Definition term and definition <dt> and <dd>"
+  nil
+  "<dt>" (P "Term: ") "</dt>" n>
+  "<dd>" n>
+  p > n>
+  "</dd>" > )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/pnew "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/pnew
+  "New <p> with id, last edited attribute, and \"tofix\" class."
+  nil
+  "<p class=\"tofix\" data-last-edited=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\" id=\"" (jmm-xhtml--gen-new-id) "\">" n>
+  p r> > n
+  "</p>" > )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/p-new-d "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/p-new-d
+  "Like `jmm-tempo/jmm-xhtml/pnew' but makes a draft."
+  nil
+  "<p class=\"draft tofix\" data-last-edited=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\" id=\"" (jmm-xhtml--gen-new-id) "\" aria-hidden=\"true\">" n>
+  p r> > n
+  "</p>" >
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/1lc "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/1lc
+  "List element and cite"
+  nil
+  "<li><cite>" (P "Cite: ") "</cite></li>")
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/1time "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/1time
+  "Insert a <time> with a datetime attribute"
+  nil
+  "<time datetime=\"" (j:prompt date (format-time-string "%Y-%02m-%02d" (org-read-date nil t nil "Date: "))) "\">" (s date) "</time>")
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/make-tooltip "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/make-tooltip
+  "Wrap the region with a tooltip and a thought"
+  nil
+  ;; TODO: Figure out cleaner way to wrap region.  Maybe interregions in general.
+  (jte:set v1 (point-marker))
+  '(goto-char (region-beginning))
+  "<span class=\"tooltip\">"
+  '(goto-char (jtu:get v1))
+  (j:subtempo jmm-tempo/jmm-xhtml/stht)
+  "</span>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/a-figure-reference "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/a-figure-reference
+  "Make a link that refers to a specific figure and its number"
+  nil
+  (jte:set id (current-kill 0))
+  (jte:set figinfo (jmm-xhtml--get-figure-info-from-kill))
+  "<a href=\"" (s id) "\" class=\"figurelink\">Figure " (jte:bind (figinfo) (alist-get 'number figinfo))"</a>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/a-anchor "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/a-anchor
+  "Embed an anchor link pointing to ancestor with ID."
+  nil
+  (jte:set ancestor (jmm-xhtml--get-ancestor-id))
+  '(delete-horizontal-space t)
+  "<a class=\"anchor\" href=\"#" (s ancestor) "\"></a>" )
+
+
+
 
 ;;;;;;;;;;
 ;; (edit-abbrevs-mode-abbrev-table)
@@ -479,6 +958,13 @@ Basically just `edit-abbrevs' for a provided table. "
   "}" > n>
   "}" > )
 
+;;;###autoload (autoload 'jmm-tempo/css/fontify-kill-css "jmm-tempo")
+(define-jmm-tempo jmm-tempo/css/fontify-kill-css
+  "Add fontification styles for current kill"
+  nil
+  (cdr (jmm-htmlfontify-string (current-kill 0))))
+
+
 
 ;;;;;;;;;;
 ;; (js2-mode-abbrev-table)
@@ -494,8 +980,104 @@ Basically just `edit-abbrevs' for a provided table. "
 
 
 
+;;;;;;;;;;
+;; (timebox-xml-mode-abbrev-table)
+
+;;;###autoload (autoload 'jmm-tempo/timebox-xml/ttodo "jmm-tempo")
+(define-jmm-tempo jmm-tempo/timebox-xml/ttodo
+  "Make a <todo> element"
+  nil
+  (P "Title: " title t)
+  (jte:set id (jmm-skeleton-prompt "ID: " (list (jmm-tempo--string-to-xml-id (jtu:get title))
+					      (jmm-xhtml--gen-new-id))))
+  "<todo"
+  " created=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\""
+  (jte:when-some id
+    " id=\"" (xml-escape-string id) "\"")
+  ">" n>
+  "<summary>" (jt:if-some title (s title) p) "</summary>" n>
+  "<description>" n>
+  p > n
+  "</description>" > n>
+  "</todo>" >
+)
+
+;;;###autoload (autoload 'jmm-tempo/timebox-xml/workk "jmm-tempo")
+(define-jmm-tempo jmm-tempo/timebox-xml/workk
+  "Add <work> tag using ID in current kill."
+  nil
+  (jt:set id (xml-escape-string (current-kill 0)))
+  (jt:set title (xml-escape-string (timebox-xml--get-title-for-todo-id (jtu:get id))))
+  (jt:if-some title
+      (l "<work on=\"" (s id) "\" title=\"" (s title) "\">" p "</work>")
+    (l "<work on=\"" (s id) "\"/> <!-- " p " -->")))
+
+
+;;;###autoload (autoload 'jmm-tempo/timebox-xml/depends-k "jmm-tempo")
+(define-jmm-tempo jmm-tempo/timebox-xml/depends-k
+  "Add dependency on current ID in kill"
+  nil
+  (jt:set id (current-kill 0))
+  (jt:set title (timebox-xml--get-title-for-todo-id (jtu:get id)))
+  "<dependency on=\"" (xml-escape-string (jtu:get id)) "\" title=\"" (xml-escape-string (jtu:get title)) "\"/>" > )
+
+
+;;;###autoload (autoload 'jmm-tempo/timebox-xml/goalk "jmm-tempo")
+(define-jmm-tempo jmm-tempo/timebox-xml/goalk
+  "Add a goal using ID of current kill"
+  nil
+  (jt:set id (current-kill 0))
+  (jt:set title (timebox-xml--get-title-for-todo-id (jtu:get id)))
+  "<goal todo=\"" (xml-escape-string (jtu:get id)) "\" title=\"" (xml-escape-string (jtu:get title)) "\"/>" > )
+
+;;;###autoload (autoload 'jmm-tempo/timebox-xml/sstat "jmm-tempo")
+(define-jmm-tempo jmm-tempo/timebox-xml/sstat
+  "Update status of a todo"
+  nil
+  (jte:set state (completing-read "State: " '("todo" "done" "cancelled" "waiting")))
+  (ignore (save-excursion (timebox-xml-update-todo-state (jtu:get state))))
+  ;; TODO: Also set parent state.
+  "<status"
+  (l
+    " state=\"" (s state) "\"")
+  " timestamp=\"" (format-time-string "%FT%T%z") "\">" n> 
+  p n> 
+  "</status>" > )
+
+
+
+;;;;;;;;;;
+;; (eshell-mode-abbrev-table)
+
+;;;###autoload (autoload 'jmm-tempo/eshell/ffrecord "jmm-tempo")
+(define-jmm-tempo jmm-tempo/eshell/ffrecord
+  "A template for recording with ffmpeg"
+  nil
+  "ffmpeg -fflags nobuffer -flags low_delay "
+  "-f pulse -i " (jmm-read-pulseaudio 'source "Left side") " "
+  "-f pulse -i " (jmm-read-pulseaudio 'source "Right side") " "
+  "-filter_complex \"[0:a][1:a]amerge=inputs=2,pan=stereo|c0<c0+c1|c1<c2+c3[a]\" -map \"[a]\" "
+  "-fflags +genpts " (P "Filename: " filename))
+
+
+;;;###autoload (autoload 'jmm-tempo/eshell/ffmeta "jmm-tempo")
+(define-jmm-tempo jmm-tempo/eshell/ffmeta
+  "Add metadata to a file"
+  nil
+  (jte:set file (file-relative-name (expand-file-name (read-file-name "File: "))))
+  "ffmpeg -i " (shell-quote-argument (jtu:get file))
+  (jte:when-set (title (read-string "Title: "))
+    " -metadata title=\"" (s title) "\"")
+  (jte:while-set (field (read-string "Field: "))
+     " -metadata " (s field) "=\"" (read-string "Value: ") "\"")
+  " -c copy "
+  (shell-quote-argument (file-name-sans-extension (jtu:get file)))
+  p "." (file-name-extension (jtu:get file)))
+
+
+
 (provide 'jmm-tempo)
 ;;; jmm-tempo.el ends here
 ;; Local Variables:
-;; read-symbol-shorthands: (("jt-" . "jmm-tempo-"))
+;; read-symbol-shorthands: (("jt-" . "jmm-tempo-") ("jt:" . "jmm-tempo-element:") ("jte:" . "jmm-tempo-element:") ("jtu:" . "jmm-tempo-util:"))
 ;; End:
