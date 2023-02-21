@@ -1,0 +1,4 @@
+Signature: 8a477f597d28d172789f06886806bc55
+# Name this file "CACHEDIR.TAG"
+# See the Cache Directory Tagging Specification at https://bford.info/cachedir/
+# You can delete these comments, except for the first line.

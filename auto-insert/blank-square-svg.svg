@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- 
+TODO:
+ - [ ] Figure out better default sizes and unit scaling.
+ - [ ] Add metadata.
+                                              -->
+<svg
+   version="1.1"
+   viewBox="0 0 100 100"
+   xml:space="preserve"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <style><![CDATA[
+]]></style>
+</svg>

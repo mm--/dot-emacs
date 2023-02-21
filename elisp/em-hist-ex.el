@@ -479,6 +479,8 @@ This runction returns a completion table that adds sorting and a default complet
 			     ;; 'jmm-zsh-history-list
 			     ))))
 
+;; TODO: Maybe this package shouldn't bind keys directly but add them
+;; to a minor mode.
 (bind-key "M-H" #'ehe-insert-dhist eshell-mode-map)
 
 ;;;###autoload

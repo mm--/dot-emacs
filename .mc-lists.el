@@ -19,6 +19,7 @@
 	c-electric-semi&comma
 	c-electric-slash
 	c-electric-star
+	capitalize-dwim
 	cljr-slash
 	clojure-align
 	comment-dwim
@@ -33,6 +34,7 @@
 	dired-previous-line
 	dired-unmark-all-marks
 	dired-unmark-backward
+	duplicate-line
 	electric-newline-and-maybe-indent
 	end-of-visual-line
 	ess-eval-line
@@ -44,6 +46,7 @@
 	ess-smart-comma
 	ess-yank
 	eval-last-sexp
+	expand-abbrev
 	fill-paragraph
 	forward-sexp
 	helm-dabbrev
@@ -51,6 +54,8 @@
 	indent-for-tab-command
 	indent-region
 	insert-register
+	jmm-activate-mark-toggle
+	jmm-mark-activate-toggle
 	jmm-xhtml-insert-span
 	jmm/eshell-ls-input-insert-filename-at-point
 	jmm/nxml-blockify-element

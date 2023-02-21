@@ -451,11 +451,28 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 (global-set-key [remap point-to-register] #'jmm-point-to-register)
 (bind-key "M-J" #'jump-to-register)
 
+(global-set-key [remap capitalize-word] #'capitalize-dwim)
+(global-set-key [remap upcase-word] #'upcase-dwim)
+(global-set-key [remap downcase-word] #'downcase-dwim)
+
+;; Handy for skipping past junk kills.
+;; Another cool trick is to use "M-0 C-M-y" to save the current kill from
+;; another program without actually pasting it.  Otherwise, you probably want to set `save-interprogram-paste-before-kill'
+(bind-key "C-M-y" #'rotate-yank-pointer)
+
 ;; Set up a key for temporary bindings
 (defvar-keymap jmm-temp-map
   :doc "Temporary keymap for commands.")
 (defalias 'jmm-temp-prefix jmm-temp-map)
 (keymap-global-set "C-c d" #'jmm-temp-prefix)
+
+(defvar-keymap jmm-yank-map
+  :doc "Keymap for yanking things."
+  "c" #'yank-in-context ;; Cool new command that lets you yank while escaping.
+  "m" #'yank-media
+  )
+(defalias 'jmm-yank-prefix jmm-yank-map)
+(keymap-global-set "C-c y" #'jmm-yank-prefix)
 
 (defvar-keymap jmm-x-map
   :doc "Keymap for things I might use a lot."
@@ -470,11 +487,32 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
   "e d" #'jmm-eshell-same-dir-other-window
   "l c" #'copy-from-above-command
   "l d" #'duplicate-line
+  "y" jmm-yank-map
   "z"	#'zsh-history-run
   )
 (defalias 'jmm-x-prefix jmm-x-map)
 (keymap-global-set "C-c x" #'jmm-x-prefix)
 ;; (keymap-set jmm-x-map "1" last-command)
+
+;; Actually, check out `window-prefix-map'
+(defvar-keymap jmm-window-map
+  :doc "Keymap for window-related things."
+  "z" #'minimize-window
+  "x" #'maximize-window
+  "m" #'maximize-window
+  "C-m" #'minimize-window
+  "+" #'balance-windows ;; You should probably just use "C-x +"
+  "q" #'quit-window
+  "r" #'bury-buffer
+  "R" #'unbury-buffer
+  "u" #'winner-undo
+  "p" #'previous-buffer
+  "n" #'next-buffer
+  "3 0" #'delete-other-windows-vertically
+  "C-3" #'split-root-window-right
+  "C-2" #'split-root-window-below)
+(defalias 'jmm-window-prefix jmm-window-map)
+(keymap-global-set "C-c w" #'jmm-window-prefix)
 #+end_src
 ** Keybindings to load org
    Again, most of my org-mode configuration is [[./jmm-org-config.org][here]], but for some dumb
@@ -1122,6 +1160,23 @@ Here's two things [[./elisp/jmm-inkscape.el][jmm-inkscape.el]] does that you mig
   (add-hook 'jmm-inkscape-svg-mode-hook 'rainbow-mode))
 #+end_src
 
+*** HTML
+
+AKA “XHTML”, though [[https://html.spec.whatwg.org/multipage/xhtml.html#the-xhtml-syntax][WHATWG calls it the XML syntax of HTML]].
+
+
+Make it easier to automatically browse ~.xhtml~ files in the browser.
+
+#+begin_src emacs-lisp
+(defun jmm-browse-url--xhtml-local-file-p (url)
+  "Match (x)htm(l) local files, so we can browse them with `browse-url-generic'.
+Set this in `browse-url-handlers'."
+  (string-match-p "\\`file://.*\\.x?html?\\b" url))
+
+(setf (alist-get 'jmm-browse-url--xhtml-local-file-p browse-url-handlers) #'browse-url-generic)
+#+end_src
+
+
 * R/ESS
   This seems to be necessary when installing ESS from MELPA.
 #+begin_src emacs-lisp
@@ -1686,6 +1741,9 @@ You'll need to manually connect the REPL afterwards."
 	eshell-history-size 10000
 	eshell-last-dir-ring-size 500
 	eshell-destroy-buffer-when-process-dies t)
+  ;; Actually this doesn't work that well when the buffer already exists.
+  ;; (add-to-list 'display-buffer-alist
+  ;; 	       `("^\\*Eshell Command Output\\*" . (,#'display-buffer-at-bottom)))
   ;; TODO: Automatically load eshell-hist-ex
   ;; (add-to-list 'eshell-modules-list 'eshell-hist-ex)
   :config
@@ -3714,7 +3772,7 @@ See also `notmuch-multipart/alternative-discouraged'"
 	(message "Saved")))
 
 (use-package elfeed
-  :bind (("C-x w" . elfeed)
+  :bind (;; ("C-x w" . elfeed) ;; Shadows `window-prefix-map'
 	 :map elfeed-show-mode-map
 	 ("I" . elfeed-toggle-images)
 	 ("i" . elfeed-temporarily-inhibit-images)
@@ -5505,7 +5563,7 @@ completion. This code from the manual brings it back.
 	      ("C-M-p" . sp-previous-sexp)
 
 	      ("C-M-k" . sp-kill-sexp)
-	      ("C-M-w" . sp-copy-sexp)
+	      ;; ("C-M-w" . sp-copy-sexp) ;; Shadows `append-next-kill'
 	      ;; ("M-<delete>" . sp-unwrap-sexp)
 	      ;; I usually use backword kill
 	      ;; ("M-<backspace>" . sp-backward-unwrap-sexp)
@@ -6042,5 +6100,15 @@ obscuring other windows.
    ("C-c t T" . tmr-with-description)
    ("C-c t l" . tmr-tabulated-view)))
 #+end_src
+** outline-minor-mode
 
+Outline minor mode is a somewhat nice mode for code folding.
+Reveal mode is also useful with outline minor mode.
 
+#+begin_src emacs-lisp
+(use-package outline
+  :init
+  (setf outline-minor-mode-use-buttons 'in-margins)
+  :bind (:map outline-minor-mode
+	      ("M-O" . outline-cycle)))
+#+end_src

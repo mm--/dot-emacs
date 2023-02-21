@@ -24,6 +24,10 @@ You'll probably load other themes on top of this.")
  '(transient-mark-mode nil nil nil "You know, I think I prefer using the mark just to remember where I was.")
  '(jmm-mark-mode t)
  '(set-mark-command-repeat-pop t)
+ ;; Killing/yanking
+ '(kill-read-only-ok t nil nil "You can set the buffer read only temporarily to copy a region without killing it.")
+ '(copy-region-blink-delay 0.1 nil nil "The default 1 second is too long and kinda confuses me.")
+ ; Maybe set `yank-pop-change-selection'?
  ;; Some modes to turn on
  '(column-number-mode t)
  '(show-paren-mode t)
@@ -33,14 +37,20 @@ You'll probably load other themes on top of this.")
  '(horizontal-scroll-bar-mode nil)
  '(blink-cursor-mode nil nil nil "I tended to find cursor blinking distracting.")
  '(pixel-scroll-precision-mode t nil nil "Makes scrolling a lot nicer with the mouse wheel.")
+ ;; Mode line appearance
+ ;; I just get rid of `global-mode-string' since I want that shown in the tab bar.
+ '(mode-line-misc-info '((which-function-mode (which-func-mode ("" which-func-format " ")))))
+ '(mode-line-compact nil nil nil "Warning, setting this to 'long messes up the separation of minor modes when hovering over them with a mouse.")
  ;; Tab bar
+ '(tab-bar-format
+   '(tab-bar-format-history tab-bar-format-tabs tab-bar-separator tab-bar-format-align-right tab-bar-format-global)) ;; `tab-bar-format-global' seems interesting
  '(tab-bar-mode 1 nil nil "I kind of like tab bar.  I use it for what I used to use \"eyebrowse\" for.")
+ '(tab-bar-new-tab-to 'rightmost)
  '(tab-bar-select-tab-modifiers '(control meta))
+ '(tab-bar-show t nil nil "Always show the tab bar since I'm using `tab-bar-format-global'.")
  '(tab-bar-tab-hints t)
- '(tab-bar-show 1)
  '(tab-bar-tab-name-function 'tab-bar-tab-name-truncated)
  '(tab-bar-tab-name-truncated-max 10)
- '(tab-bar-new-tab-to 'rightmost)
  ;; Completions
  '(completion-styles '(basic partial-completion emacs22 initials) nil nil "Some better completions for M-x and find-file. I particularly like \"initials\".")
  '(completion-cycle-threshold nil nil nil "TODO: I need to figure out a way to signal that other completions exist")
@@ -57,13 +67,13 @@ You'll probably load other themes on top of this.")
  '(mouse-autoselect-window nil nil nil "I used to use sloppy focus, but now I don't.")
  '(xterm-mouse-mode 1 nil nil "Allow people to click around if using the terminal.")
  ;; Dictionary
- '(dictionary-server "dict.org" nil nil "I haven't yet installed a dictionary locally.")
+ '(dictionary-server "dict.org" nil nil "I haven’t yet installed a dictionary locally.  This might be a bad idea if the dict protocol doesn’t use encryption.")
  '(dictionary-use-single-buffer t)
  ;; isearch
  '(isearch-allow-motion t nil nil "Being able to press M-< instead of M-s M-< is helpful")
  '(isearch-lazy-count t nil nil "I like knowing whether or not I'm at the first match.")
  ;; Repeat mode
- '(repeat-exit-key "<return>")
+ '(repeat-exit-key "<return>") ;; Not sure if I actually like this.
  '(repeat-mode t)
  ;; Grep and ripgrep
  '(xref-search-program (if (executable-find "rg") 'ripgrep 'grep))
