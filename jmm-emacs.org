@@ -6112,3 +6112,13 @@ Reveal mode is also useful with outline minor mode.
   :bind (:map outline-minor-mode
 	      ("M-O" . outline-cycle)))
 #+end_src
+
+** eww
+
+Cool web browser.  I made a mode for displaying all URLs in a buffer.
+
+#+begin_src emacs-lisp
+(use-package eww
+  :bind (:map eww-mode-map
+	      ("L" . jmm-eww-links)))
+#+end_src
