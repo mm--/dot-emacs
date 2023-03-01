@@ -33,6 +33,7 @@
 
 ;;; Code:
 (require 'eshell)
+(require 'bookmark)
 
 ;;;###autoload
 (defun jmm-eshell-other-window (&optional arg)
@@ -104,6 +105,36 @@ Returns a list of dired marked files in dired buffers in visible windows for the
 (defun eshell/rg (&rest args)
   "Use Emacs grep facility with ripgrep."
   (eshell-grep "rg" (append (list "--no-heading" "--null" "--color=ansi" "--follow" "--no-messages" "--search-zip") args) t))
+
+;;;###autoload
+(defun eshell/cdb (&rest arguments)
+  "Change to directory of bookmark."
+  ;; MAYBE: Properly parse argument?
+  (eshell-eval-using-options
+   "cdb" arguments
+   '((?h "help" nil nil "Output this help screen.")
+     :preserve-args
+     :usage ""
+     :post-usage "Changes to the default-directory of an emacs bookmark")
+   (if-let (other-dir (save-window-excursion
+			(bookmark-handle-bookmark (car args))
+			default-directory))
+       (eshell/cd other-dir)
+     (eshell-show-usage))))
+
+(defun jmm-eshell--bookmark-collection ()
+  "Return completion table for bookmarks."
+  (bookmark-maybe-load-default-file)
+  (lambda (string pred action)
+    (if (eq action 'metadata)
+	'(metadata (category . bookmark))
+      (complete-with-action
+       action bookmark-alist string pred))))
+
+;;;###autoload
+(defun pcomplete/eshell-mode/cdb ()
+  "Completion for `cdb'."
+  (pcomplete-here (jmm-eshell--bookmark-collection)))
 
 ;;;###autoload
 (defun jmm-eshell-pred-replace-extension (&optional repeat)
