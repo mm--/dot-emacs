@@ -73,6 +73,10 @@
 ;;       parameters to methods.  I figured some of these out through
 ;;       trial-and-error in elisp, but I don't know how to do the same
 ;;       thing in busctl or D-feet.
+;; - [X] A command to make a rectangle the size of the viewport.
+;;     	 Makes it easier to resize the document in Inkscape using
+;;     	 “Resize Page to Selection”.
+
 
 ;;; Code:
 (require 'align)
@@ -152,7 +156,7 @@ Includes a #."
 
 (defun jmm-inkscape-selection-add-node ()
   "Select the node at point."
-  (interactive nil jmm-inkscape-mode)
+  (interactive nil jmm-inkscape-svg-mode)
   (let ((id (save-excursion
 	      (jnx--element-for-point)
 	      (jnx--attribute-value "id"))))
@@ -301,6 +305,91 @@ If `jmm-inkscape-process' is live, call `jmm-inkscape-open-file' instead."
 	  (cl-loop while (re-search-forward (rx bol (group (1+ (not blank)))) nil t)
 		   collect (match-string-no-properties 1)))
       (kill-buffer buf))))
+
+(defun jmm-inkscape--query-to-string (action)
+  "Run a org.gtk.Actions Activate query, returning a string.
+ACTION is a string like \"query-height\". "
+  (let* ((buf (generate-new-buffer " *inkscape query*"))
+	 (called nil)
+	 (newfilter (lambda (proc string)
+		      (with-current-buffer buf
+			(setq called t)
+			(goto-char (point-max))
+			(insert string)))))
+    (add-function :before (process-filter jmm-inkscape-process) newfilter)
+
+    (if executing-kbd-macro
+	;; There's a weird issue with `dbus-call-method' that prevents it
+	;; from working inside of a keyboard macro.  It has something to
+	;; do with the fact that it processes events rather than treats a
+	;; dbus call like a process.
+	;;
+	;; This hack works around that, but it's only used inside a macro.
+	;;
+	;; FIXME: The filter will not be called if the selection is empty,
+	;; and thus the function will hang.
+	(progn (dbus-call-method-asynchronously
+		:session "org.inkscape.Inkscape"
+		"/org/inkscape/Inkscape"
+		"org.gtk.Actions" "Activate"
+		nil
+		action
+		'(:array :signature "v")
+		'(:array :signature "{sv}"))
+	       ;; I'm assuming we only need to be called once.  This might not be accurate.
+	       (while (not called)
+		 (accept-process-output jmm-inkscape-process)))
+       (dbus-call-method
+		:session "org.inkscape.Inkscape"
+		"/org/inkscape/Inkscape"
+		"org.gtk.Actions" "Activate"
+		action
+		'(:array :signature "v")
+		 '(:array :signature "{sv}")))
+    ;; Also, theoretically something could interrupt Inkscape in the
+    ;; middle and cause the filter to get more than just the selection.
+    (remove-function (process-filter jmm-inkscape-process) newfilter)
+    (prog1
+	(with-current-buffer buf
+	  (buffer-substring-no-properties (point-min) (point-max)))
+      (kill-buffer buf))))
+
+(defun jmm-inkscape--query-dimension (query clampfun)
+  "Get a dimension (x, y, width, height), using CLAMPFUN for multiple values.
+For example, if you're querying X, CLAMPFUN should be #'min."
+  (thread-first
+    (jmm-inkscape--query-to-string query)
+    (string-split  ",")
+    (thread-last
+      (mapcar #'string-to-number)
+      (apply clampfun))))
+
+(defun jmm-inkscape--selected-bounds ()
+  "Get the outer bounding box of all selected objects.
+Returns an alist with 'left, 'top, 'right, 'bottom, 'width, 'height."
+  ;; TODO: Round floating point numbers
+  (cl-labels ((runquery (querystr)
+		(thread-first
+		  (jmm-inkscape--query-to-string querystr)
+		  (string-split  ",")
+		  (thread-last
+		    (mapcar #'string-to-number)))))
+    (let* ((xs (runquery "query-x"))
+	   (ys (runquery "query-y"))
+	   (widths (runquery "query-width"))
+	   (heights (runquery "query-height"))
+	   (left (apply #'min xs))
+	   (top (apply #'min ys))
+	   (right (apply #'max (cl-mapcar #'+ xs widths)))
+	   (bottom (apply #'max (cl-mapcar #'+ ys heights)))
+	   (width (- right left))
+	   (height (- bottom top)))
+      `((left . ,left)
+	(top . ,top)
+	(right . ,right)
+	(bottom . ,bottom)
+	(width . ,width)
+	(height . ,height)))))
 
 (defun jmm-inkscape--goto-id (id)
   "Go to id.
@@ -533,7 +622,7 @@ without causing a transform, which prevents bounding box live
 path effects from working.
 
 Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
-  (interactive nil jmm-inkscape-mode)
+  (interactive nil jmm-inkscape-svg-mode)
   (atomic-change-group
     (save-excursion
       (jnx--element-for-point)
@@ -551,6 +640,97 @@ Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
 	      (jnx--set-attribute-value "transform" nil)))
 	;; Should it not error?
 	(error "Missing either x, y, or transform attribute.")))))
+
+;;;###autoload
+(defun ji-svg-insert-image (file)
+  "Embed an image tag, adding the appropriate width and height.
+Uses a relative file name."
+  ;; Note: This isn't really inkscape-specific.
+  ;; Maybe it should just be called "jmm-svg-insert-image".
+  (interactive (list (read-file-name "Image file: ")) jmm-inkscape-svg-mode)
+  (save-excursion
+    (insert "<image preserveAspectRatio=\"none\" style=\"image-rendering:optimizeQuality\" x=\"0\" y=\"0\" />"))
+  (jnx-at-element-start
+    (jnx--set-attribute-value "xlink:href" (file-relative-name (expand-file-name file)))
+    (let ((size (image-size (create-image file) t)))
+      (jnx--set-attribute-value "width"  (number-to-string (car size)))
+      (jnx--set-attribute-value "height" (number-to-string (cdr size))))))
+
+;;;###autoload
+(defun ji-svg-element-bounds-from-viewbox ()
+  "Set the element's dimensions to be same size as viewbox."
+  (interactive nil jmm-inkscape-svg-mode)
+  (jnx-at-element-start
+    (let* ((dom (libxml-parse-xml-region (point-min) (point-max)))
+	   (svgnode (car (dom-by-tag dom 'svg)))
+	   (viewbox (dom-attr svgnode 'viewBox)))
+      (pcase-let* (((rx (let x (1+ graph)) " "
+			(let y (1+ graph)) " "
+			(let width (1+ graph)) " "
+			(let height (1+ graph)))
+		    viewbox))
+	(unless (and x y) (error "Can't find or parse viewbox attribute."))
+	(jnx--set-attribute-value "x" x)
+	(jnx--set-attribute-value "y" y)
+	(jnx--set-attribute-value "width" width)
+	(jnx--set-attribute-value "height" height)))))
+
+;;;###autoload
+(defun ji-svg-element-bounds-from-selection ()
+  "Set the element's dimensions from outer bounding box of selection.
+See `jmm-inkscape--selected-bounds'."
+  (interactive nil jmm-inkscape-svg-mode)
+  (jnx-at-element-start
+    (pcase-let* (((map left top width height) (jmm-inkscape--selected-bounds)))
+      (jnx--set-attribute-value "x" (number-to-string left))
+      (jnx--set-attribute-value "y" (number-to-string top))
+      (jnx--set-attribute-value "width" (number-to-string width))
+      (jnx--set-attribute-value "height" (number-to-string height))
+      )))
+
+(defun ji--read-delta ()
+  "Get delta value from interactive prefix."
+  (let ((defaultdelta 10))
+    (pcase current-prefix-arg
+      ('- (- defaultdelta))
+      ((pred null) defaultdelta)
+      (t (prefix-numeric-value current-prefix-arg)))))
+
+;;;###autoload
+(defun ji-svg-element-bounds-adjust-delta (delta)
+  "Adjust the element's dimensions by DELTA units in all directions."
+  (interactive (list (ji--read-delta))
+	       jmm-inkscape-svg-mode)
+  (let ((add1 (lambda (oldx)
+		(number-to-string (- (string-to-number oldx) delta))))
+	(add2 (lambda (oldwidth)
+		(number-to-string (+ (string-to-number oldwidth) (* delta 2))))))
+    (jnx-at-element-start
+      (jnx--update-attribute-value "x" add1)
+      (jnx--update-attribute-value "y" add1)
+      (jnx--update-attribute-value "width" add2)
+      (jnx--update-attribute-value "height" add2))))
+
+;;;###autoload
+(defun ji-svg-insert-viewbox-rectangle ()
+  "Insert a rectangle the same size as the viewport."
+  (interactive nil jmm-inkscape-svg-mode)
+  (save-excursion
+    (insert "<rect style=\"opacity:0.3;fill:#deddda\" />"))
+  (ji-svg-element-bounds-from-viewbox))
+
+;;;###autoload
+(defun ji-svg-insert-bounding-rectangle (&optional delta)
+  "Insert a rectangle the same size as the selection."
+  (interactive (list
+		(when current-prefix-arg
+		  (prefix-numeric-value current-prefix-arg)))
+	       jmm-inkscape-svg-mode)
+  (save-excursion
+    (insert "<rect style=\"opacity:0.3;fill:#deddda\" />"))
+  (ji-svg-element-bounds-from-selection)
+  (when delta
+    (ji-svg-element-bounds-adjust-delta delta)))
 
 ;; Note: I still haven't found a way to determine which windows belong
 ;; to which documents/files.
@@ -613,6 +793,11 @@ Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
   "C-c C-e C-b" #'jnx-blockify-element
   "C-c C-e C-i" #'jnx-inline-element
   "C-c C-e C-f" #'jnx-flatten-element
+  "C-c C-e r B" #'ji-svg-insert-bounding-rectangle
+  "C-c C-e r V" #'ji-svg-insert-viewbox-rectangle
+  "C-c C-e r b" #'ji-svg-element-bounds-from-selection
+  "C-c C-e r +" #'ji-svg-element-bounds-adjust-delta
+  "C-c C-e r v" #'ji-svg-element-bounds-from-viewbox
   ;; TODO: Add jmm-xhtml-set-class
   ;; "C-c C-e C-c" #'jmm-xhtml-set-class
   "C-M-<backspace>" #'jmm/nxml-unwrap
@@ -655,7 +840,15 @@ Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
      :style toggle
      :selected (eval auto-revert-mode)
      :help "Automatically revert current buffer"]
-    ))
+    "--"
+    ("Insert"
+     ["Image" jmm-inkscape-insert-image
+      :help "Embed a relative image"]
+     ("Rectangle"
+      ["Viewport sized" ji-svg-insert-viewbox-rectangle
+       :help "Insert rectangle the size of the viewbox"]
+      ["Bounding box" ji-svg-insert-bounding-rectangle
+       :help "Insert rectangle that bounds the selection"]))))
 
 ;; TODO: Remember `jmm-inkscape-window-id', which gets reset if we
 ;; switch using `image-minor-mode'.
