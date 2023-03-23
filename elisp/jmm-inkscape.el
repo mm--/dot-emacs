@@ -76,12 +76,15 @@
 ;; - [X] A command to make a rectangle the size of the viewport.
 ;;     	 Makes it easier to resize the document in Inkscape using
 ;;     	 “Resize Page to Selection”.
-
+;; - [ ] Be able to change "transform" translations to x,y attributes, and
+;;       vice versa
+;; - [ ] Turn objects into clones, using bounding boxes to correctly position them
 
 ;;; Code:
 (require 'align)
 (require 'dbus)
 (require 'jmm-nxml)
+(require 'dom)
 
 (defvar-local jmm-inkscape-window-id nil
   "The Inkscape document number for this buffer.
@@ -594,9 +597,9 @@ Returns a new string of space-separated classes."
   "Try to convert the style to a class."
   (interactive (if (use-region-p)
 		   (list (region-beginning) (region-end))
-		 (let ((bounds(save-excursion
-				(jnx--element-for-point)
-				(jnx--element-bounds))))
+		 (let ((bounds (save-excursion
+				 (jnx--element-for-point)
+				 (jnx--element-bounds))))
 		   (list (car bounds) (cdr bounds))))
 	       jmm-inkscape-svg-mode)
   (let ((markend (point-marker))
@@ -641,6 +644,215 @@ Might be related to https://gitlab.com/inkscape/inkscape/-/issues/3663"
 	;; Should it not error?
 	(error "Missing either x, y, or transform attribute.")))))
 
+;;; xref backend for SVGs
+
+;; This xref backend lets me easily jump to definitions for things
+;; like patterns and clones (i.e., <use>).  It also lets me see where
+;; elements are referenced elsewhere (like with <use> elements).
+
+;; TODO: Get a list of all classes as well.
+;; 	 There's probably an easy way to hook into the new treesit library
+;; 	 so I don't have to parse things myself.
+
+;; TODO: Some elements may not have ids (though this isn't the case
+;; 	 for Inkscape SVGs).  We should return some kind of marker for
+;; 	 them.
+
+;; TODO: What's `xref-backend-apropos' for, and should I implement it?
+
+;; TODO: This isn't Inkscape-specific, so maybe it should be renamed
+;; 	 to jmm-svg-location, for example.
+
+;; I might be cargo-culting the xref elisp backend too much.  Having
+;; "symbol", "type", and "file" (from `xref-elisp-location') may be
+;; more flexible and might not need to be named this way.  See
+;; `xref-file-location' for example.
+
+(defun ji--get-all-ids (&optional buffer)
+  "Get all ids in an SVG buffer.
+Returns a list of strings."
+  (let (ids)
+    (with-current-buffer (or buffer (current-buffer))
+      (let* ((dom (libxml-parse-xml-region (point-min) (point-max)))
+	     (ids (cl-loop for elem in (dom-by-id dom ".")
+			   append (when-let* ((id (dom-attr elem 'id)))
+				    ;; MAYBE: Propertize with some "id" type, compared to a class?
+				    (list id)))))
+	(delete-dups ids)))))
+
+(defun ji--id-at-point ()
+  "Try to return a string ID around point.
+Returns nil if an ID isn't found, which causes xref to prompt for an ID."
+  ;; MAYBE: If we're not directly on an id, we could get the id of the
+  ;; current element or look for an xlink:href.
+  (save-excursion
+    (let* ((start (progn (skip-chars-backward "[:alnum:]-_") (point)))
+	   (end (progn (skip-chars-forward "[:alnum:]-_") (point)))
+	   (maybeid (buffer-substring-no-properties start end))
+	   (allids (ji--get-all-ids))) ;; TODO: Cache this, probably using buffer modified tick.
+      (when (member maybeid allids)
+	maybeid))))
+
+(defun ji--xref-goto-id (id)
+  "Find where an ID is defined.
+Only goes to the attribute, not the beginning of the element."
+  (when-let* ((loc (save-excursion
+		     (goto-char (point-min))
+		     (re-search-forward (format "id=[\"']%s[\"']" (regexp-quote id))))))
+    (goto-char loc)
+    ;; (nxml-backward-up-element)
+    ))
+
+(defun ji--make-xref-for-element ()
+  "Assuming we just scanned an element and are at its point, return an xref."
+  (save-excursion
+    (jnx--element-for-point) ;; Rescan out of paranoia?
+    (ji--xref-make-xref (xmltok-start-tag-qname) (jnx--attribute-value "id") (buffer-file-name))))
+
+(defun ji--find-references (id)
+  "Find all mentions of #id in current buffer.
+Returns a list of xrefs (specifically `xref-match-item' so we can perform replacements)."
+  ;; FIXME: Should an item reference itself?
+  ;; It's useful for renaming ids (though it's easy to do this with "M-s .")
+  (let ((file (buffer-file-name))
+	refs)
+    (save-excursion
+      (save-restriction
+	(widen)
+	(goto-char (point-min))
+	;; Use "#\\(%s\\)\\>" if you don't want self references.
+	(cl-loop while (re-search-forward (format "\\<\\(%s\\)\\>" (regexp-quote id)) nil t)
+		 collect (ji--xref-make-match 1))))))
+
+(cl-defstruct (xref-jmm-inkscape-location
+               (:constructor xref-make-jmm-inkscape-location (symbol type file)))
+  "Location of an ID definition.
+SYMBOL is the id.
+TYPE is the qname of the tag.
+FILE is the file it's located in.
+
+This is mostly cargo-culted from `xref-elisp-location'."
+  symbol type file)
+
+(cl-defstruct (xref-jmm-inkscape-match-location
+               (:constructor xref-make-jmm-inkscape-match-location (symbol type file)))
+  "Location of a match, probably for references to an ID.
+SYMBOL is the id.
+TYPE is the qname of the tag.
+FILE is the file it's located in.
+
+This is mostly cargo-culted from `xref-elisp-location'."
+  symbol type file)
+
+(defvar ji--xref-format
+  ;; This is used to format stuff for the *xref* buffer, for example
+  ;; when finding references.
+  ;; Maybe: We might want to return the Inkscape label of something.
+  #("<%s %s>"
+    1 3 (face nxml-element-local-name)
+    4 6 (face font-lock-variable-name-face)))
+
+(defun ji--xref-make-xref (type symbol file &optional summary)
+  "Return an xref for TYPE SYMBOL in FILE.
+If SUMMARY is non-nil, use it for the summary; otherwise the
+summary is formatted using `jmm-inkscape--xref-format' with the
+TYPE and SYMBOL.
+
+For now, TYPE is a string returning the element name
+and SYMBOL is a string representing an ID.
+FILE is included, but currently we only look at the current file."
+  ;; Is it appropriate for type to be a qname? Or should these all be some "element" type?
+  ;; Type could be like 'element vs 'class.
+  (xref-make (or summary
+		 (format ji--xref-format type symbol))
+	     (xref-make-jmm-inkscape-location symbol type file)))
+
+(defun ji--xref-make-match (subexp)
+  "See `xref-match-item'.
+Assume we just matched some reference.
+Pass in SUBEXP of the match data to use.
+Returns an xref that's also a match item, so it can be used for `xref-query-replace-in-results'."
+  ;; Calculate these here because jnx--element-for-point might mess with match data.
+  (let* ((loc (xref-make-buffer-location (current-buffer) (match-beginning subexp)))
+	 (len (- (match-end subexp) (match-beginning subexp)))
+	 (matchstr (match-string-no-properties subexp)))
+    (xref-make-match
+     ;; Hack for `xref-query-replace-in-results' because of an
+     ;; assumption in `xref--outdated-p'.
+     (propertize
+      matchstr
+      ;; This is a hack to display *where* a match occurs because
+      ;; `xref--outdated-p' assumes the summary is the same as the
+      ;; region between location and match length.
+      'display
+      (save-excursion
+	(jnx--element-for-point)
+	(format ji--xref-format (xmltok-start-tag-qname) (jnx--attribute-value "id"))))
+     loc
+     len)))
+
+(defun ji--xref-find-definitions (symbol)
+  "Returns a list of xrefs for definitions of SYMBOL."
+  (when (ji--xref-goto-id symbol)
+    ;; In the future, we could return multiple definition locations
+    ;; for things like classes.
+    (list (ji--make-xref-for-element))))
+
+(defun ji--xref-backend ()
+  ;; TODO: Is there a time we should return a different backend or nil?
+  ;; Like, is there a time when this backend isn't applicable?
+  'jmm-inkscape)
+
+(cl-defmethod xref-backend-identifier-at-point ((_backend (eql 'jmm-inkscape)))
+  ;; Note: I used to propertize the returned string with a 'pos, but I
+  ;; didn't use it.  In the future, we might propertize the string
+  ;; with a type.  For example, to show that an identifier is a class
+  ;; name instead of an element ID.
+  (ji--id-at-point))
+
+(cl-defmethod xref-backend-identifier-completion-table ((_backend
+                                                         (eql 'jmm-inkscape)))
+  ;; This is used when prompting for an ID.
+  ;; It could theoretically be annotated, grouped, etc.
+  ;; It also might use Inkscape labels or <title> elements.
+  (let ((buf (current-buffer)))
+    (completion-table-dynamic
+     (lambda (_)
+       (ji--get-all-ids buf)))))
+
+(cl-defmethod xref-backend-definitions ((_backend (eql 'jmm-inkscape)) identifier)
+  ;; MAYBE: Check properties on the "identifier" string to see what
+  ;; kind of identifier it is.  For example, it could be a class,
+  ;; element, or something else.
+  (ji--xref-find-definitions identifier))
+
+(cl-defmethod xref-backend-references ((_backend (eql 'jmm-inkscape)) identifier)
+  ;; MAYBE: Scan ids in all project files using ripgrep?
+  (ji--find-references identifier))
+
+(cl-defmethod xref-location-group ((l xref-jmm-inkscape-location))
+  ;; Needed for `xref-backend-references'
+  ;; I think we could also group things by, for example, layer.
+  ;; This basically just returns a string, I think.
+  (xref-jmm-inkscape-location-file l))
+
+(cl-defmethod xref-location-marker ((l xref-jmm-inkscape-location))
+  ;; Should this return the point of the reference or the point of the element?
+  ;; For `xref-query-replace-in-results' it seems like it should start exactly at the ID.
+  (pcase-let (((cl-struct xref-jmm-inkscape-location symbol type file) l))
+    (with-current-buffer (find-file-noselect file)
+      (save-excursion
+	(save-restriction
+          (widen)
+	  (goto-char (point-min))
+	  ;; This is a hack, but it's close enough for now.
+	  (re-search-forward (format "id=[\"']\\(%s\\)[\"']" (regexp-quote symbol)))
+	  (goto-char (match-beginning 1))
+	  ;; (nxml-backward-up-element)
+          (point-marker))))))
+
+;;; continue other stuff.
+
 ;;;###autoload
 (defun ji-svg-insert-image (file)
   "Embed an image tag, adding the appropriate width and height.
@@ -674,6 +886,21 @@ Uses a relative file name."
 	(jnx--set-attribute-value "y" y)
 	(jnx--set-attribute-value "width" width)
 	(jnx--set-attribute-value "height" height)))))
+
+;;;###autoload
+(defun ji-svg-element-set-dimensions-from-width (newwidth)
+  "Set the element's dimensions from a new width."
+  ;; TODO: Handle old width with units.  For example, "500px".
+  (interactive (list (string-to-number (read-string "New width: "))) jmm-inkscape-svg-mode)
+  (jnx-at-element-start
+    ;; Numbers may be integers, convert to float.
+    (let* ((width  (* 1.0 (string-to-number (jnx--attribute-value "width"))))
+	   (height (* 1.0 (string-to-number (jnx--attribute-value "height"))))
+	   (ratio (/ newwidth width))
+	   (newheight (* ratio height)))
+      (atomic-change-group
+	(jnx--set-attribute-value "width" (number-to-string newwidth))
+	(jnx--set-attribute-value "height" (number-to-string newheight))))))
 
 ;;;###autoload
 (defun ji-svg-element-bounds-from-selection ()
@@ -842,7 +1069,7 @@ See `jmm-inkscape--selected-bounds'."
      :help "Automatically revert current buffer"]
     "--"
     ("Insert"
-     ["Image" jmm-inkscape-insert-image
+     ["Image" jmm-inkscape-svg-insert-image
       :help "Embed a relative image"]
      ("Rectangle"
       ["Viewport sized" ji-svg-insert-viewbox-rectangle
@@ -864,7 +1091,8 @@ See `jmm-inkscape--selected-bounds'."
 	  (spacing  . 0)
 	  (modes    . '(jmm-inkscape-svg-mode))))
   (rng-set-vacuous-schema)
-  (rng-validate-mode -1))
+  (rng-validate-mode -1)
+  (add-hook 'xref-backend-functions #'ji--xref-backend nil t))
 
 (add-hook 'jmm-inkscape-svg-mode-hook 'jmm-inkscape-auto-reload-mode)
 
