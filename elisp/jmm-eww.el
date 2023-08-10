@@ -22,11 +22,25 @@
 
 ;; `jmm-eww-links' generates a table of links, letting you see all URLs at once.
 
+;; Maybe I should just make a "cybersurf" minor mode for eww.
+
 ;; To-dos/Ideas:
 ;; - [ ] Show only unique links or unique domain names
 ;; - [ ] Add filters like ibuffer.  For now just use `kill-matching-lines'.
+;;       - [ ] Filter out mainstream sites like instagram, twitter, etc.
+;; - [ ] Show only external links
 ;; - [ ] Remove javascript links
 ;; - [ ] Use the DOM to get "title=" attribute, when available.
+;;     	 Possibly "alt" text for images.
+;; - [ ] Remember "seen" links (possibly for filtering)
+;;     	 Could probably use sqlite that comes with emacs now.
+;; - [ ] Mark or filter dead links using DNS lookups
+;; - [ ] Implement buffer undo or history
+;;     	 (See `eww-save-history' for an example.)
+;; - [ ] Make a command that tries to get the Wayback Machine version of a site,
+;;       if it's down
+;; - [ ] Make a `buffer-stale-function' for local files.
+;;     	 Might also need to set `revert-buffer-function'
 
 ;;; Code:
 (require 'vtable)
@@ -62,10 +76,14 @@ Returns list of plists like ((:text \"some text\" :url \"http://example.com\")..
       (thread-last
 	(cl-loop while (setq match (text-property-search-forward 'shr-tab-stop nil nil t))
 		 collect (progn
-			   (setq blah match)
 			   (goto-char (prop-match-beginning match))
 			   (list
-			    :text (buffer-substring-no-properties (prop-match-beginning match) (prop-match-end match))
+			    :text (thread-last
+				    (buffer-substring-no-properties
+				     (prop-match-beginning match)
+				     (prop-match-end match))
+				    (string-replace "\n" " " )
+				    (string-trim))
 			    :pos (point)
 			    :buf buf
 			    :win win
