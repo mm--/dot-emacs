@@ -40,3 +40,6 @@ company-statistics-cache.el
 /var/
 /transient/
 /hippie/
+type-break
+/tree-sitter/
+/eww-bookmarks
