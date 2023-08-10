@@ -43,7 +43,7 @@
 ;;     - any permutation of splits in one symbol
 ;; -  `jmm-isearch-permuted-splits-in-multiline-regexp' - bound to "M-s j M"
 ;;     - any permutation of splits in multiple line
-  
+
 ;; The permutation modes match splits in any order, similar to the
 ;; "orderless" library.  I say "permuted" here to remind the user that
 ;; the regexp created tries every permutation, so if you have 5
@@ -52,6 +52,12 @@
 ;; Some of these keys are hard to press, so for more frequent usage,
 ;; bind keys like so:
 ;; (define-key isearch-mode-map (kbd "M-s l") #'isearch-toggle-permuted-splits-in-line)
+
+;; To-dos:
+;;
+;;  - [ ] Maybe create a mode like “jmm-isearch-mode” where
+;;        “jmm-isearch-mode-map”.  This way, you could easily disable
+;;        or enable my keybindings.
 
 ;;; Code:
 
@@ -81,7 +87,7 @@
 
 
 ;;;;;;;;;;
-;; Internal utilities 
+;;;; Internal utilities
 (defun jmm-isearch--interleave-separator (lst &rest separators)
   "Interleaves separators between list members.
 (jmm-isearch-interleave-separator '(1 2 3) 'hi 'there) =>
@@ -95,7 +101,7 @@
   "Convert string of words to regexp, splitting words and interleaving a separator.
 STRING is the input string, like \"hello world\".
 RXSEPARATOR is an `rx' separator to interleave, like `(minimal-match
-(0+ not-newline))' (aka \".*?\").
+ (0+ not-newline))' (aka \".*?\").
 Returns a string regexp."
   (thread-last (split-string string nil t)
 	       (seq-map-indexed (lambda (a i) `(group-n ,(1+ i) ,a)))
@@ -121,7 +127,7 @@ See `seq-uniq' for TESTFN."
   "Split string into words, interleave all permutations with separator.
 STRING is the input string, like \"hello world\".
 RXSEPARATOR is an `rx' separator to interleave, like `(minimal-match
-(0+ not-newline))' (aka \".*?\").
+ (0+ not-newline))' (aka \".*?\").
 Returns a string regexp."
   (let ((list1 (split-string string nil t)))
     (thread-last
@@ -136,8 +142,9 @@ Returns a string regexp."
       (funcall (lambda (l) `(or ,@l)))
       (rx-to-string))))
 
+
 ;;;;;;;;;;
-;; Modes
+;;;; Modes
 (defun jmm-isearch-splits-in-line-regexp (string &optional _lax)
   "Create regexp for space-separated splits in order on same line.
 
@@ -230,7 +237,7 @@ _LAX search is not implemented."
 
 
 ;;;;;;;;;;
-;; Multi Isearch and multi occur
+;;;; Multi Isearch and multi occur
 
 (defun jmm-isearch-multi-isearch-dired-buffers (&optional no-recursive-edit)
   "Search all dired buffers using `multi-isearch-buffers'."
@@ -337,7 +344,7 @@ STRING is transformed using `jmm-isearch-permuted-splits-in-line-regexp'."
 
 
 ;;;;;;;;;;
-;; Delete region
+;;;; Delete region
 
 (defun jmm-isearch-delete-region (&optional nomove)
   "End the current isearch, deleting the region from starting end.
@@ -354,6 +361,41 @@ Basically, you can use this like a more complicated `zap-to-char' that doesn't k
     (delete-region (mark t) (point))))
 
 (define-key isearch-mode-map (kbd "C-<backspace>") #'jmm-isearch-delete-region)
+
+
+;;;;;;;;;;
+;;;; Other end
+
+;; A lot of people have an “isearch-other-end” function for easier
+;; navigation.  This is the same thing.
+;;
+;; See also https://endlessparentheses.com/leave-the-cursor-at-start-of-match-after-isearch.html
+
+(defun jmm-isearch-other-end ()
+  "Exit isearch, leaving point at other end."
+  (interactive)
+  ;; `isearch-done' might not clean overlays like `isearch-exit'
+  ;; (isearch-done)
+  (goto-char isearch-other-end)
+  ;; We call goto-char before `isearch-exit' because the latter exits
+  ;; recursive edits.
+  (isearch-exit))
+
+(defun jmm-isearch-exit-goto-beginning ()
+  "Exit isearch, leaving point at the match's beginning."
+  (interactive)
+  (goto-char (min isearch-other-end (point)))
+  (isearch-exit))
+
+(define-key isearch-mode-map (kbd "C-<return>") #'jmm-isearch-exit-goto-beginning)
+
+(defun jmm-isearch-exit-goto-end ()
+  "Exit isearch, leaving point at the match's end."
+  (interactive)
+  (goto-char (max isearch-other-end (point)))
+  (isearch-exit))
+
+(define-key isearch-mode-map (kbd "S-<return>") #'jmm-isearch-exit-goto-end)
 
 (provide 'jmm-isearch)
 ;;; jmm-isearch.el ends here
