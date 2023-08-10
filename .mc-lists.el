@@ -208,6 +208,8 @@
 	revert-buffer
 	set-input-method
 	start-xterm
+	tab-new
+	tab-recent
 	text-scale-adjust
 	undefined
 	wdired-exit

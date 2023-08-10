@@ -209,6 +209,12 @@ Example:
 (format \"Hello %s\" (jtu:get v1))"
   `(jmm-tempo-lookup-named ',variable))
 
+(defmacro jmm-tempo-element:do (&rest body)
+  "Run the body, ignoring the result."
+  `(progn
+     ,@body
+     '(l nil)))
+
 (defun jmm-tempo--empty-p (x)
   "Is X nil or the empty string?"
   (or (null x)
@@ -537,6 +543,15 @@ Basically just `edit-abbrevs' for a provided table. "
   (prin1-to-string (file-name-sans-extension (file-name-nondirectory buffer-file-name)))
   ")")
 
+;;;###autoload (autoload 'jmm-tempo/emacs-lisp/letstar "jmm-tempo")
+(define-jmm-tempo jmm-tempo/emacs-lisp/letstar
+  "Insert a let* expression"
+  nil
+  "(let* ((" p "))" n>
+  p
+  ")" >)
+
+
 
 ;;;;;;;;;;
 ;; (jmm-xhtml-mode-abbrev-table)
@@ -728,6 +743,7 @@ Basically just `edit-abbrevs' for a provided table. "
 (define-jmm-tempo jmm-tempo/jmm-xhtml/detl
   "A <details> tag, but makes the current line the summary"
   nil
+  (ignore (jmm/nxml-blockify-element))
   (jt:set l1 (jt--delete-and-return-line))
   "<details>" n>
   "<summary>" (s l1) "</summary>" n>
@@ -931,6 +947,60 @@ Basically just `edit-abbrevs' for a provided table. "
 
 
 
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/rp1 "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/rp1
+  "Repeat last element, inline"
+  nil
+  (ignore (jmm/nxml-wrap (save-excursion (nxml-backward-element) (xmltok-start-tag-qname)))))
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/akill-with-title "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/akill-with-title
+  "Insert a link using the current kill. Add a title attribute with the title of the page."
+  nil
+  (jte:set urlstr (current-kill 0))
+  (jte:set title (jmm--get-url-html-title (jtu:get urlstr)))
+  "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" title=\"" (xml-escape-string (jtu:get title)) "\">"
+  (jte:set url (ignore-errors (url-generic-parse-url (jtu:get urlstr))))
+  p
+  (jte:bind (urlstr url title)
+  (jmm-skeleton-prompt "Link text: "
+			(seq-uniq
+			 (seq-remove
+			  #'null
+			  (list
+			   (xml-escape-string urlstr)
+			   (ignore-errors (url-host url))
+			   (ignore-errors (url-domain url))
+			   title)))))
+  "</a>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/details-to-end "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/details-to-end
+  "Create details where current line is summary and all following content is enclosed"
+  nil
+  (jte:set l1 (jt--delete-and-return-line))
+  "<details open=\"open\">" n>
+  "<summary>" (s l1) "</summary>" >
+  (ignore
+   (forward-line 1)
+   ;; Hmm... it doesn't seem to exactly stay at the beginning of the
+   ;; next line.  Probably has to do with the marker type used by
+   ;; tempo
+   (back-to-indentation))
+  p
+  (jte:set p1 (point))
+  (ignore (jmm/nxml-end-of-inner-sexp))
+  n>
+  (jte:set p2 (point))
+  "</details>" >
+  (ignore
+   (indent-region (jtu:get p1) (jtu:get p2)))
+  )
+
+
 
 ;;;;;;;;;;
 ;; (edit-abbrevs-mode-abbrev-table)
@@ -976,6 +1046,31 @@ Basically just `edit-abbrevs' for a provided table. "
   "then((" (P "Argument: " name) ") => {" n>
   p n>
   "})" >
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/js2/arrow-function "jmm-tempo")
+(define-jmm-tempo jmm-tempo/js2/arrow-function
+  "Makes an arrow function, putting the cursor at the body"
+  nil
+  "(" p ") => {" n> 
+  "" > p n
+  "}" > 
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/js2/add-event-listener "jmm-tempo")
+(define-jmm-tempo jmm-tempo/js2/add-event-listener
+  "Template for addEventListener"
+  nil
+  "addEventListener(\"" p "\", " p ")")
+
+
+;;;###autoload (autoload 'jmm-tempo/js2/set-attribute "jmm-tempo")
+(define-jmm-tempo jmm-tempo/js2/set-attribute
+  "Template for setAttribute"
+  nil
+  "setAttribute(\"" p "\", " p ")"
   )
 
 
@@ -1074,6 +1169,126 @@ Basically just `edit-abbrevs' for a provided table. "
   (shell-quote-argument (file-name-sans-extension (jtu:get file)))
   p "." (file-name-extension (jtu:get file)))
 
+
+
+;;;;;;;;;;
+;; (org-mode-abbrev-table)
+
+(defun jmm-tempo--random-base58 ()
+  (let* ((alnum "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz")
+         (i (random (length alnum))))
+    (substring alnum i (1+ i))))
+
+(defun jmm-tempo--jmm-org-random-id (title)
+  "A random org CUSTOM_ID, given a title."
+  (format "%s-%s-%s%s%s%s"
+	  (jmm-tempo--string-to-xml-id title)
+	  (format-time-string "%Y%02m%02d")
+	  (jmm-random-base58) (jmm-random-base58)
+	  (jmm-random-base58) (jmm-random-base58)))
+
+;;;###autoload (autoload 'jmm-tempo/org/ttodo "jmm-tempo")
+(define-jmm-tempo jmm-tempo/org/ttodo
+  "A simple new todo"
+  nil
+  (P "Title: " title t)
+  (jte:set id (jmm-tempo--jmm-org-random-id (jtu:get title)))
+  "** TODO " (s title) p "
+:PROPERTIES:
+:CREATED:  " (format-time-string "[%Y-%02m-%02d %a %H:%M]") "
+:ID:       " (string-trim-right (shell-command-to-string "uuidgen")) "
+:END:
+" p
+)
+
+(defun jmm-tempo--org-inactive-timestamp ()
+  "A simple inactive timestamp for current time."
+  (format-time-string "[%Y-%02m-%02d %a %H:%M]"))
+
+(defun jmm-tempo--org-maybe-set-property (property value)
+  "Set PROPERTY, if it does not exist, to VALUE."
+  (unless (org-entry-get (point) property)
+     (save-excursion
+       (org-entry-put (point) property value))))
+
+;;;###autoload (autoload 'jmm-tempo/org/crtd "jmm-tempo")
+(define-jmm-tempo jmm-tempo/org/crtd
+  "Set CREATED property if it doesn't exist."
+  nil
+  (ignore
+   (jmm-tempo--org-maybe-set-property "CREATED" (jmm-tempo--org-inactive-timestamp))
+   (jmm-tempo--org-maybe-set-property "ID" (string-trim-right (shell-command-to-string "uuidgen")))
+   ))
+
+(defun jmm-tempo--org-link (linkinfo)
+  "Take LINKINFO from popping `org-stored-links', return text of org link."
+  (format "[[%s][%s]]" (car linkinfo) (cadr linkinfo)))
+
+(defun jmm-tempo--org-link-tag-notmuch (linkinfo tags)
+  "Add tags to notmuch email.
+LINKINFO is like from `org-stored-links'.
+TAGS is a list like (list \"+inorg\" \"+todo\")"
+  (save-window-excursion
+    (org-link-open-from-string (car linkinfo))
+    (notmuch-show-tag tags))
+  nil)
+
+;;;###autoload (autoload 'jmm-tempo/org/temail "jmm-tempo")
+(define-jmm-tempo jmm-tempo/org/temail
+  "Make a todo for an email"
+  nil
+  ;; TODO: Should we pop or just leave it?
+  (jte:set link (pop org-stored-links))
+  (jte:set etitle (cadr (jtu:get link)))
+  (jte:set title (jmm-skeleton-prompt "Title: " (list (jtu:get etitle))))
+
+  "** TODO " p  (s title) " :email:toread:" p "
+:PROPERTIES:
+:ID:       " (string-trim-right (shell-command-to-string "uuidgen")) "
+:CREATED:  " (jmm-tempo--org-inactive-timestamp) "
+:END:
+" (jmm-tempo--org-link (jtu:get link)) "
+
+"
+  (jmm-tempo--org-link-tag-notmuch (jtu:get link) (list "+inorg" "+todo"))
+)
+
+;; Maybe for reading tags in the future.
+;; (let ((crm-separator " "))
+;;   (completing-read-multiple
+;;    "Tags: "
+;;    (apply-partially
+;;     #'completion-table-with-terminator " "
+;;     (org-global-tags-completion-table
+;;      (org-agenda-files)))))
+
+
+;;;###autoload (autoload 'jmm-tempo/org/oemail "jmm-tempo")
+(define-jmm-tempo jmm-tempo/org/oemail
+  "Insert link to email, mark email as inorg"
+  nil
+  (jte:set link (car org-stored-links))
+  (jmm-tempo--org-link (jtu:get link))
+  (jmm-tempo--org-link-tag-notmuch (jtu:get link) (list "+inorg"))
+  )
+
+;;;###autoload (autoload 'jmm-tempo/org/grocery "jmm-tempo")
+(define-jmm-tempo jmm-tempo/org/grocery
+  "Part of a template for capturing groceries within `org-capture-templates'.
+Trying to do this as a hook."
+  nil
+  (ignore
+   (move-end-of-line 1) ;; Org capture starts with the point at the beginning.
+   (just-one-space))
+  (P "Grocery item: " title t)
+  (jte:set id (jmm-tempo--jmm-org-random-id (jtu:get title)))
+  "TODO " (s title) p " :SHOPPING:grocery:" p "
+:PROPERTIES:
+:CREATED:  " (format-time-string "[%Y-%02m-%02d %a %H:%M]") "
+:ID:       " (string-trim-right (shell-command-to-string "uuidgen")) "
+:END:
+" p
+)
 
 
 (provide 'jmm-tempo)

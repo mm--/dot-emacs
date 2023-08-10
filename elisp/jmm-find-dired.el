@@ -89,7 +89,7 @@ For example, you could use it to quickly list files --in=here."
   (interactive (list (read-directory-name "Run find in directory: " nil nil t)
 		     (read-string "Git annex matching args: " jmm/git-annex-dired-args
 				  '(jmm/git-annex-dired-args-history . 1))))
-  (setq jmm/jmm/git-annex-dired-args args                ; save for next interactive call
+  (setq jmm/git-annex-dired-args args                ; save for next interactive call
 	args (concat "git annex find --print0"
 		     " " args
 		     " " (shell-quote-argument (expand-file-name dir))

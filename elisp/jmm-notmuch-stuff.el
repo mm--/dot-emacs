@@ -89,6 +89,7 @@ ORIG is the original function, ARGS is the args passed to it."
 Searches my org mode project for the notmuch ID, to see if I have
 something already entered somewhere."
   (interactive)
+  (push-mark)
   (let* ((messageid (notmuch-show-get-message-id))
 	 (default-directory "~/org")
 	 (xref-auto-jump-to-first-xref nil)

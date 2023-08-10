@@ -524,6 +524,16 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
 ;; another program without actually pasting it.  Otherwise, you probably want to set `save-interprogram-paste-before-kill'
 (bind-key "C-M-y" #'rotate-yank-pointer)
 
+;; Sometimes I don't like text going to the kill ring.
+;; Though maybe I should make a command that takes in a prefix arg and either calls `kill-region` or `delete-region`.
+(bind-key "S-<delete>" #'delete-region)
+(bind-key "S-<backspace>" #'delete-region)
+
+;; Not sure which of these keys I’ll use more.
+(bind-key "H-l"		#'jmm-duplicate-line-and-move)
+(bind-key "H-<return>"	#'jmm-duplicate-line-and-move)
+(bind-key "S-<RET>"	#'jmm-duplicate-line-and-move)
+
 ;; Set up a key for temporary bindings
 (defvar-keymap jmm-temp-map
   :doc "Temporary keymap for commands.")
@@ -549,14 +559,46 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
   "e e"	#'eshell
   "e o" #'jmm-eshell-other-window
   "e d" #'jmm-eshell-same-dir-other-window
+  "k g" #'global-set-key ;; Interactive `keymap-global-set' is still buggy for me 2023-05-31
+  "k l" #'local-set-key
   "l c" #'copy-from-above-command
   "l d" #'duplicate-line
-  "y" jmm-yank-map
-  "z"	#'zsh-history-run
+  ;; "y" 	jmm-yank-map
+  "z" 	#'zsh-history-run
+  ;; "TAB" #'jmm-indent-relative
   )
 (defalias 'jmm-x-prefix jmm-x-map)
 (keymap-global-set "C-c x" #'jmm-x-prefix)
 ;; (keymap-set jmm-x-map "1" last-command)
+
+(defalias 'jmm-windmove-left #'windmove-left)
+(defalias 'jmm-windmove-right #'windmove-right)
+(defalias 'jmm-windmove-up #'windmove-up)
+(defalias 'jmm-windmove-down #'windmove-down)
+(put 'jmm-windmove-left  'repeat-map 'jmm-windmove-repeat-map)
+(put 'jmm-windmove-right 'repeat-map 'jmm-windmove-repeat-map)
+(put 'jmm-windmove-up    'repeat-map 'jmm-windmove-repeat-map)
+(put 'jmm-windmove-down  'repeat-map 'jmm-windmove-repeat-map)
+
+(defalias 'jmm-windmove-swap-states-left #'windmove-swap-states-left)
+(defalias 'jmm-windmove-swap-states-right #'windmove-swap-states-right)
+(defalias 'jmm-windmove-swap-states-up #'windmove-swap-states-up)
+(defalias 'jmm-windmove-swap-states-down #'windmove-swap-states-down)
+(put 'jmm-windmove-swap-states-left  'repeat-map 'jmm-windmove-repeat-map)
+(put 'jmm-windmove-swap-states-right 'repeat-map 'jmm-windmove-repeat-map)
+(put 'jmm-windmove-swap-states-up    'repeat-map 'jmm-windmove-repeat-map)
+(put 'jmm-windmove-swap-states-down  'repeat-map 'jmm-windmove-repeat-map)
+
+(defvar-keymap jmm-windmove-repeat-map
+  :doc "For repeating windmove"
+  "<left>"  #'jmm-windmove-left
+  "<right>" #'jmm-windmove-right
+  "<up>"    #'jmm-windmove-up
+  "<down>"  #'jmm-windmove-down
+  "C-<left>"  #'jmm-windmove-swap-states-left
+  "C-<right>" #'jmm-windmove-swap-states-right
+  "C-<up>"    #'jmm-windmove-swap-states-up
+  "C-<down>"  #'jmm-windmove-swap-states-down)
 
 ;; Actually, check out `window-prefix-map'
 (defvar-keymap jmm-window-map
@@ -567,6 +609,8 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
   "C-m" #'minimize-window
   "+" #'balance-windows ;; You should probably just use "C-x +"
   "q" #'quit-window
+  ;; Eh, I forgot it's not a default command.
+  ;; "d" #'toggle-current-window-dedication
   "r" #'bury-buffer
   "R" #'unbury-buffer
   "u" #'winner-undo
@@ -574,9 +618,27 @@ https://old.reddit.com/r/emacs/comments/o49v2w/automatically_switch_emacs_theme_
   "n" #'next-buffer
   "3 0" #'delete-other-windows-vertically
   "C-3" #'split-root-window-right
-  "C-2" #'split-root-window-below)
+  "C-2" #'split-root-window-below
+  "<left>"  #'jmm-windmove-left
+  "<right>" #'jmm-windmove-right
+  "<up>"    #'jmm-windmove-up
+  "<down>"  #'jmm-windmove-down
+  "C-<left>"  #'jmm-windmove-swap-states-left
+  "C-<right>" #'jmm-windmove-swap-states-right
+  "C-<up>"    #'jmm-windmove-swap-states-up
+  "C-<down>"  #'jmm-windmove-swap-states-down)
 (defalias 'jmm-window-prefix jmm-window-map)
 (keymap-global-set "C-c w" #'jmm-window-prefix)
+
+(defalias 'jmm-indent-relative #'indent-relative)
+(put 'jmm-indent-relative 'repeat-map 'jmm-indent-relative-repeat-map)
+;; (bind-key (kbd "C-c x TAB") #'jmm-indent-relative)
+
+(defvar-keymap jmm-indent-relative-repeat-map
+  :doc "Keymap to repeat `jmm-relative-indent'
+Used in `repeat-mode'."
+  ;; Standard keys:
+  "TAB" #'jmm-indent-relative)
 #+end_src
 ** Keybindings to load org
    Again, most of my org-mode configuration is [[./jmm-org-config.org][here]], but for some dumb
@@ -912,6 +974,10 @@ Right click to correct a word (instead of middle click).
    (define-key flyspell-mode-map (kbd "C-M-;") 'flyspell-accept-prev)
    (define-key flyspell-mode-map (kbd "C-:") 'flyspell-accept-prev-save)
    ))
+
+(with-eval-after-load 'flyspell
+  ;; This overlaps with `completion-at-point'
+  (keymap-set flyspell-mode-map "C-M-i" nil))
 #+end_src
 ** Looking up dictionary words
 
@@ -939,6 +1005,19 @@ Some configuration for plain ~text-mode~
 (add-hook 'text-mode-hook #'abbrev-mode)
 (add-hook 'text-mode-hook #'word-wrap-whitespace-mode)
 #+end_src
+
+** Typographic quotes
+Typographic quotes are nice looking, but hard to search for.
+If I enable ~electric-quote-local-mode~, I should also enable ~isearch-fold-quotes-mode~.
+
+#+begin_src emacs-lisp
+;; Well, I guess I don’t turn `isearch-fold-quotes-mode' off after
+;; turning off `electric-quote-local-mode'.
+(add-hook 'electric-quote-local-mode-hook #'isearch-fold-quotes-mode)
+#+end_src
+
+Org mode seems to already have something like
+~isearch-fold-quotes-mode~, but I’m not sure why.
 
 * LaTeX
 
@@ -1666,6 +1745,13 @@ of erc-modified-channels-alist"
     (context 2))
   :hook ((clojure-mode . aggressive-indent-mode)))
 
+;; Hide shadow-cljs files from `project-find-file' (when using "include-all")
+(add-to-list 'vc-directory-exclusion-list ".shadow-cljs")
+(add-to-list 'vc-directory-exclusion-list "node_modules")
+(add-to-list 'vc-directory-exclusion-list "cljs-runtime")
+(add-to-list 'vc-directory-exclusion-list "cljs-out")
+(add-to-list 'vc-directory-exclusion-list ".cpcache")
+
 (use-package aggressive-indent
   :ensure t
   :after cider)
@@ -1767,32 +1853,47 @@ You'll need to manually connect the REPL afterwards."
 #+END_SRC
 
 * Shells
-#+begin_src emacs-lisp
-(defun run-half-shell ()
-   "Run a shell in half a window."
-   (interactive)
-   (split-window-vertically nil)
-   ;; (other-window 1)
-   (shell (concat (buffer-name) " shell")))
 
-;; (bind-key "C-x 4 s" 'run-half-shell)
+** Bash
+
+I use [[https://www.gnu.org/software/bash/][GNU Bash]] a lot.  When
+writing bash scripts, I don’t generally limit myself to some base
+POSIX shell; I mean, even Debian’s ~dash~ has non-POSIX extensions
+like ~echo -n~.  Because bash is free software and portable, I think
+it’s easier to just install bash rather than hamstring yourself with POSIX.
+
+Emacs 29 has tree sitter support for bash mode.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'sh-script
+  ;; My interactive shell currently is still zsh, but I’m normally writing bash scripts.
+  ;; I need to set this so `bash-ts-mode' doesn't automatically fall back to zsh.
+  (setq-default sh-shell-file (locate-file "bash" exec-path))
+  ;; TODO: Add customization for org mode languages so bash code blocks call `bash-ts-mode'.
+  )
+(add-hook 'bash-ts-mode-hook 'flyspell-prog-mode)
 #+end_src
-** Shell pop
-   [[https://github.com/kyagi/shell-pop-el][Shell pop]] is kinda handy for shells. I still mostly just use xterms
-   (see the `start-xterm` function), but maybe I'll switch to `ansi-term` in Emacs.
-#+BEGIN_SRC emacs-lisp
-(use-package shell-pop
-  :if window-system
-  :unless noninteractive
-  :disabled t
-  :ensure t
-  :bind ("C-c t" . shell-pop)
-  :init
-  (setq shell-pop-shell-type '("ansi-term" "*ansi-term*"
-			       (lambda ()
-				 (ansi-term shell-pop-term-shell))))
-  (setq shell-pop-universal-key "C-c t"))
-#+END_SRC
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'shell
+  (defun jmm-shell-setup-fontification ()
+    "Called after shell mode starts.
+Tries to set up bash tree-sitter fontification."
+    (with-current-buffer (comint-indirect-buffer)
+      (bash-ts-mode)))
+  ;; I think bash-ts-mode might not be great for fontifying currently
+  ;; because it sees the prompts.  Maybe if the indirect buffer was
+  ;; narrowed when fontifying it would work better.
+  ;; (add-hook 'shell-mode-hook #'jmm-shell-setup-fontification 'append)
+
+  ;; We actually can't use the following because
+  ;; `comint-indirect-setup-function' gets overwritten in
+  ;; `shell-mode'.
+  ;; (setq-default comint-indirect-setup-function #'bash-ts-mode)
+  )
+#+end_src
+
+
 ** Eshell
 #+BEGIN_SRC emacs-lisp
 (use-package eshell
@@ -2251,6 +2352,24 @@ For example, ARGS could be \"--in=here\""
 
 #+END_SRC
 
+** Shell pop
+
+I used to use [[https://github.com/kyagi/shell-pop-el][shell pop]], but as of 2023 I just use the builtin ~C-x 4
+4~ prefix with ~M-x eshell~ or my own ~jmm/eshell-other-window~.
+
+#+BEGIN_SRC emacs-lisp
+(use-package shell-pop
+  :if window-system
+  :unless noninteractive
+  :disabled t
+  :ensure t
+  :bind ("C-c t" . shell-pop)
+  :init
+  (setq shell-pop-shell-type '("ansi-term" "*ansi-term*"
+			       (lambda ()
+				 (ansi-term shell-pop-term-shell))))
+  (setq shell-pop-universal-key "C-c t"))
+#+END_SRC
 * Encryption and compression
 #+begin_src emacs-lisp
 (require 'epa-file)			;So we can encrypt authinfo
@@ -3269,7 +3388,21 @@ If it isn't being accessed with sudo, return the same path that is."
     (jmm/tramp-add-sudo-method file)))
 #+END_SRC
 
-* Notmuch
+* Email
+
+** Message mode
+
+#+begin_src emacs-lisp
+;; Do typographic quotes by default
+;; Note: Since `message-mode' derives from `text-mode', I should make
+;;       sure that I don’t accidentally turn these off if I add the
+;;       same hooks there.
+(add-hook 'message-mode-hook 'electric-quote-local-mode)
+(add-hook 'message-mode-hook 'isearch-fold-quotes-mode)
+#+end_src
+
+
+** Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
   got a couple of main selling points. First is that things are
   organized into tags instead of folders, so messages can have more
@@ -3291,8 +3424,8 @@ If it isn't being accessed with sudo, return the same path that is."
 	   ("S")
 	   ("S F" . jmm-notmuch-search-from)
 	   ("S f" . jmm-notmuch-search-from)
-	   ("S o" . jmm/notmuch-search-org)
-	   ("S O" . jmm/notmuch-search-org-jump)
+	   ("S o" . jmm-notmuch-search-org)
+	   ("S O" . jmm-notmuch-search-org-jump)
 	   ("S R" . jmm-notmuch-find-sender-rule)
 	   :map notmuch-search-mode-map
 	   ("S")
@@ -3376,7 +3509,7 @@ Function to send HTML part to the browser
       (notmuch-show-view-part))))
 #+END_SRC
 
-** Open an email with gmail
+*** Open an email with gmail
 
 Gmail does some nice stuff occasionally. One of the things I like is
 that it caches loading of external images, so senders can't track when
@@ -3410,7 +3543,7 @@ For example, if mail to your school account is user 0,
   (interactive)
   (browse-url (jmm/notmuch-show-get-gmail-link)))
 #+END_SRC
-** Store Org mode links to sent messages
+*** Store Org mode links to sent messages
 
 Sometimes when sending reply emails, I want to track the email in Org mode.
 This function stores an Org mode link to the email (viewed in notmuch), any time I send an email.
@@ -3424,7 +3557,7 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 
 (add-hook 'message-sent-hook 'jmm/message-send-store-notmuch-link)
 #+END_SRC
-** Wash out annoyingly long links from ~text/plain~
+*** Wash out annoyingly long links from ~text/plain~
 
    A lot of mailing lists will put long tracking links in the
    ~plain/text~ part of their mail. These are long because they're
@@ -3446,7 +3579,7 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
     (when (--some-p (string-match-p it (match-string 0)) jmm/tracking-link-regexps)
       (replace-match "" nil t))))
 #+END_SRC
-** Search for other emails from the same author
+*** Search for other emails from the same author
 
    This just adds a hotkey to search for emails from the same email
    author. This is useful for me when deciding to make new email
@@ -3455,7 +3588,7 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 
    (See ~jmm-notmuch-search-from~ in [[file:elisp/jmm-notmuch-stuff.el][jmm-notmuch-stuff.el]])
 
-** Limit a search to emails from the same author
+*** Limit a search to emails from the same author
 
    Some of my tags and searches aren't refined enough. Sometimes I
    have a lot of unread email from the same author and want to go
@@ -3475,7 +3608,7 @@ The SEARCH-TERMS should be a list"
     (->> (apply #'notmuch-call-notmuch-sexp (append args search-terms))
 	 (--map (plist-get it :address)))))
 #+END_SRC
-** Other search limiting functions
+*** Other search limiting functions
 
    I get a lot of scientific journal articles emailed to me. I also
    read a lot of list emails. Sometimes I'm really behind on reading
@@ -3495,7 +3628,7 @@ With optional prefix ARG, invert the search."
   (notmuch-search-filter (concat (when arg "not ") "date:1M..")))
 #+END_SRC
 
-** Decode Proofpoint urls
+*** Decode Proofpoint urls
 
 Many email providers use Proofpoint to provide a kind of email defense
 against phishing and malware. Unfortunately, this can often make plain
@@ -3640,7 +3773,7 @@ Useful for extracting redirects."
       (replace-match decoded-url
 		     nil t))))
 #+END_SRC
-** Remove superfluous tracking parameters
+*** Remove superfluous tracking parameters
 
 Tracking parameters like [[https://en.wikipedia.org/wiki/UTM_parameters][UTM parameters]] (e.g. ~utm_source~) in URLs is
 really ugly and clutters my display. These functions help to wash out
@@ -3699,7 +3832,7 @@ See the variable `jmm/url-superfluous-parameters' for what gets cleaned."
   		     nil
   		     t))))
 #+END_SRC
-** Other plain text washing functions for links
+*** Other plain text washing functions for links
 
    Emacs weirdly lets links end in a closing parenthesis, which is not
    usually what people do. Here I add a space between the parenthesis
@@ -3727,7 +3860,7 @@ tracking parameters.
   (jmm/notmuch-wash-tracking-links msg depth)
   (jmm/notmuch-wash-superfluous-parameters msg depth))
 #+END_SRC
-** Link washing where we remove links
+*** Link washing where we remove links
 This is used for espeak, since I normally don't want links to be read out loud.
 
 #+begin_src emacs-lisp
@@ -3739,7 +3872,7 @@ This is used for espeak, since I normally don't want links to be read out loud.
 #+end_src
 
 
-** Occasionally show HTML multipart instead of text/plain
+*** Occasionally show HTML multipart instead of text/plain
 
    Some senders have a ~text/plain~ multipart, but it's so cluttered
    and poorly formatted that it might as well not be there at
@@ -3791,7 +3924,7 @@ See also `notmuch-multipart/alternative-discouraged'"
 #+end_src
 
 
-** Remove trailing whitespace from HTML
+*** Remove trailing whitespace from HTML
 
    ~shr~ leaves trailing whitespace when formatting. I find this kind
    of annoying when trying to copy links or text.
@@ -4340,6 +4473,8 @@ Works with remote (Tramp) files as well."
   :after (dired)
   :bind (("C-x g" . magit-status)
 	 ("C-x M-g" . magit-dispatch-popup)
+	 :map project-prefix-map
+	 ("m" . magit-project-status)
 	 :map dired-mode-map
 	 ("C-c C-l" . magit-dired-log))
   :init
@@ -5446,20 +5581,49 @@ zapping to a character.
   of reminds me of Emacs's version control mode, which is nice in that
   you only need to learn one set of keybindings.
 
+  I briefly used ~lsp-mode~, but these days I’m trying to use ~eglot~ more.
+  I’ve commented out some of my old configuration.
+
 #+BEGIN_SRC emacs-lisp
 ;; See https://emacs-lsp.github.io/lsp-mode/page/performance/
 ;; (setq gc-cons-threshold 100000000)
+;; TODO: Do I still need this:
 (setq read-process-output-max (* 1024 1024)) ;; 1mb
 
 ;; Adapted from https://emacs-lsp.github.io/lsp-mode/page/installation/
-(setq lsp-keymap-prefix "M-k")
+;; (setq lsp-keymap-prefix "M-k")
 ;; (define-key lsp-mode-map (kbd "M-k") lsp-command-map)
 
-(use-package lsp-mode
-  :if (not noninteractive)
-  :hook ((python-mode . lsp))
-  :commands lsp)
+;; (use-package lsp-mode
+;;   :if (not noninteractive)
+;;   :hook ((python-mode . lsp))
+;;   :commands lsp)
 #+END_SRC
+
+* Tree Sitter
+
+Emacs 29 comes with Tree Sitter support for fontification.  Tree
+Sitter’s nice since it allows different editors to share and
+collaborate on the same fontification grammars.  Emacs’s font locking
+otherwise is typically regex based (though there also is Semantic
+Bovine, but it’s not commonly used).
+
+Here are just some notes for using Tree Sitter.
+
+** Adding tree sitter libraries
+
+This is described in the “Language Definitions” part of the Elisp manual.
+I’m using Nix, so an easy way to add a library is to do the following:
+
+#+begin_src bash :tangle no
+#!/usr/bin/env bash
+# Yeah, I should probably switch to using XDG config directory
+mkdir -p ~/.emacs.d/tree-sitter/
+cd ~/.emacs.d/tree-sitter/
+nix build -vL -f channel:nixos-22.11 tree-sitter-grammars.tree-sitter-bash -o tree-sitter-bash
+ln --symbolic tree-sitter-bash/parser libtree-sitter-bash 
+#+end_src
+
 
 * Other modes
 ** Enriched Mode
@@ -5516,7 +5680,8 @@ completion. This code from the manual brings it back.
 ** js2-mode
    Use js2-mode by default
 #+begin_src emacs-lisp
-  (add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+(add-to-list 'auto-mode-alist '("\\.js$" . js2-mode))
+(add-hook 'js2-mode-hook #'abbrev-mode)
 #+end_src
    I prefer less indentation.
 #+begin_src emacs-lisp
@@ -5605,7 +5770,11 @@ completion. This code from the manual brings it back.
 	 (add-to-list 'sp-ignore-modes-list 'mhtml-mode)
 	 (add-to-list 'sp-ignore-modes-list 'nxml-mode)
 	 (add-to-list 'sp-ignore-modes-list 'jmm-inkscape-svg-mode)
-         (smartparens-global-mode t)
+	 ;; Actually, doing this is kinda annoying.  I should just add
+         ;; hooks to the programming languages that make sense.
+         ;; (smartparens-global-mode t)
+	 (add-hook 'clojure-mode-hook #'smartparens-mode)
+	 
 	 (fset 'my-wrap-with-paren "\C-](")
 
          (show-smartparens-global-mode t))
@@ -5626,7 +5795,8 @@ completion. This code from the manual brings it back.
 	      ("C-M-n" . sp-next-sexp)
 	      ("C-M-p" . sp-previous-sexp)
 
-	      ("C-M-k" . sp-kill-sexp)
+	      ;; Actually, I kind of don't like the way `sp-kill-sexp' kills behind point.
+	      ;; ("C-M-k" . sp-kill-sexp)
 	      ;; ("C-M-w" . sp-copy-sexp) ;; Shadows `append-next-kill'
 	      ;; ("M-<delete>" . sp-unwrap-sexp)
 	      ;; I usually use backword kill
@@ -6185,4 +6355,11 @@ Cool web browser.  I made a mode for displaying all URLs in a buffer.
 (use-package eww
   :bind (:map eww-mode-map
 	      ("L" . jmm-eww-links)))
+#+end_src
+
+*** Render XHTML files correctly.
+
+#+begin_src emacs-lisp
+(with-eval-after-load 'mailcap
+  (add-to-list 'mailcap-mime-extensions '(".xhtml" . "application/xhtml+xml")))
 #+end_src
