@@ -3752,7 +3752,29 @@ Useful for extracting redirects."
        (cdr (url-path-and-query it))
        (url-parse-query-string it)
        (car (alist-get parameter it nil nil #'equal))))
+
+;; Some URLs don't use query parameters directly
+(defun jmm/url-get-query-parameter-in-path (url parameter)
+  "Get a pseudo-query parameter that's in the path instead of the query.
+That is, an encoded parameter for a URL without a question mark.
+URL is a string of the url.
+PARAMETER is a string of the parameter."
+  (--> url
+       (url-generic-parse-url it)
+       (car (url-path-and-query it)) ;; Parameters in path (car) instead of query (cdr)
+       (url-parse-query-string it)
+       (car (alist-get parameter it nil nil #'equal))))
 #+END_SRC
+
+Decode ~mail-tracking.hive.co~ links.
+
+#+begin_src emacs-lisp
+(defun jmm/url-decode-hivemailtracking (url)
+  (if (string-equal "mail-tracking.hive.co" (url-host (url-generic-parse-url url)))
+      (jmm/url-get-query-parameter-in-path url "next")
+    url))
+#+end_src
+
 
 
 #+BEGIN_SRC emacs-lisp
@@ -3768,6 +3790,7 @@ Useful for extracting redirects."
 			      jmm/url-decode-appspot
 			      jmm/url-decode-convertkitmail
 			      jmm/url-decode-pocket
+			      jmm/url-decode-hivemailtracking
 			      jmm/url-decode-base64url
 			      ))))
       (replace-match decoded-url
