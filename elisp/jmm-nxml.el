@@ -110,9 +110,9 @@ It's the parent element, or current element if looking at the start of a tag."
   "Delete the current line if it's blank.
 Like `delete-blank-lines', but only for one line."
   (save-excursion
-  (beginning-of-line)
-  (when (looking-at "[ \t]*$")
-    (delete-region (line-beginning-position) (progn (forward-line 1) (point))))))
+    (beginning-of-line)
+    (when (looking-at "[ \t]*$")
+      (delete-region (line-beginning-position) (progn (forward-line 1) (point))))))
 
 
 ;;; Navigating between tags
@@ -684,6 +684,8 @@ Returns the bounds of what's been inserted."
 	      (marker-position e2))))))
 
 ;; MAYBE: Convert empty-element?
+;; Though since you can't be inside the empty element, you might have
+;; to provide some prefix argument.
 (defun jnx-blockify-element ()
   "Ensure the current element is a block element, not inline.
 Should be idempotent.
@@ -893,7 +895,21 @@ This assumes you already have `xmltok-attributes' scanned."
     (save-excursion
       (goto-char beg)
       (delete-region beg end)
-      (jnx--delete-blank-line))))
+      (jnx--delete-blank-line)
+      ;; If you remove "two" in
+      ;; <element one="one" two="two"
+      (when (eolp)
+	(delete-horizontal-space t))
+      ;; If we're looking at a line like "    >"
+      (when (and
+	     ;; Is there a ">" or "/>" ahead of us?
+	     (looking-at-p "\\s-*/?>")
+	     ;; and only whitespace behind us
+	     (save-excursion
+	       (re-search-backward
+		"^\\s-*\\=" nil t)))
+	(replace-match "" t t)
+	(delete-char -1)))))
 
 (defun jnx--attribute-replace (attr str)
   "Set xmltok ATTR to be escaped value STR.
