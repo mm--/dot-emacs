@@ -79,6 +79,7 @@
 ;; - [ ] Be able to change "transform" translations to x,y attributes, and
 ;;       vice versa
 ;; - [ ] Turn objects into clones, using bounding boxes to correctly position them
+;; - [X] Utility to remove unused/unreferenced "id" attributes.
 
 ;;; Code:
 (require 'align)
@@ -101,6 +102,42 @@ See `jmm-inkscape-launch'.")
   "A list of selection IDs.
 See `jmm-inkscape-refresh-selection'.")
 
+(defun jmm-inkscape-gtk-action (action &optional arg)
+  "Send a GTK Action to Inkscape (app).
+ACTION is a string, a name of the action like \"object-align\".
+ARG, if non-nil, is a string like \"hcenter vcenter page\"."
+  (dbus-call-method :session "org.inkscape.Inkscape"
+		    "/org/inkscape/Inkscape"
+		    "org.gtk.Actions" "Activate"
+		    action
+		    (if arg
+			`(:array (:variant ,arg))
+		      '(:array :signature "v"))
+		    '(:array :signature "{sv}")))
+
+(defun jmm-inkscape-window-gtk-action (action &optional arg win)
+  "Send a GTK Action to Inkscape \"win\".
+ACTION is a string, a name of the win.action like \"tool-switch\".
+ARG, if non-nil, is a string like \"Select\".
+WIN is the window ID (as a string like \"3\"), defaults to `jmm-inkscape-window-id'"
+  (unless win
+    (setq win jmm-inkscape-window-id))
+  (dbus-call-method :session "org.inkscape.Inkscape"
+		    (format "/org/inkscape/Inkscape/window/%s" win)
+		    "org.gtk.Actions" "Activate"
+		    action
+		    (if arg
+			`(:array (:variant ,arg))
+		      '(:array :signature "v"))
+		    '(:array :signature "{sv}")))
+
+;; (dbus-call-method :session "org.inkscape.Inkscape"
+;; 		    "/org/inkscape/Inkscape"
+;; 		    "org.gtk.Actions" "Activate"
+;; 		    "object-align"
+;; 		    `(:array (:variant "hcenter vcenter page"))
+;; 		    '(:array :signature "{sv}"))
+
 (defun jmm-inkscape-revert ()
   "Tell Inkscape to revert the document.
 This is the same as going to File > Revert.
@@ -109,24 +146,26 @@ need to be reflected in Inkscape."
   (interactive)
   ;; I have no idea how to actually use org.gtk.Actions
   ;; This just seemed to work
-  (dbus-call-method :session "org.inkscape.Inkscape"
-		    (format "/org/inkscape/Inkscape/window/%s" jmm-inkscape-window-id)
-		    "org.gtk.Actions" "Activate"
-		    "document-revert"
-		    '(:array :signature "v")
-		    '(:array :signature "{sv}"))
+  (ji-window-gtk-action "document-revert" nil jmm-inkscape-window-id)
   ;; I assume if it doesn't error that it succeeded
   (message "Inkscape reverted window %s" jmm-inkscape-window-id))
+
+(defun jmm-inkscape-selection-clear ()
+  "Clear Inkscape's selection."
+  (interactive nil jmm-inkscape-svg-mode)
+  (ji-gtk-action "select-clear"))
 
 (defun jmm-inkscape-select-by-id (id)
   "Selects an ID in Inkscape.
 ID is a string."
-  (dbus-call-method :session "org.inkscape.Inkscape"
-		    "/org/inkscape/Inkscape"
-		    "org.gtk.Actions" "Activate"
-		    "select-by-id"
-		    `(:array (:variant ,id))
-		    '(:array :signature "{sv}")))
+  (ji-gtk-action "select-by-id" id))
+
+;; TODO: Use this to unset style and add a class
+;; (jmm-inkscape-object-set-attribute "style" "")
+;; (jmm-inkscape-object-set-attribute "class" "someclass1")
+(defun jmm-inkscape-object-set-attribute (attr val)
+  "Set attribute for selection in Inkscape"
+  (ji-gtk-action "object-set-attribute" (format "%s,%s" attr val)))
 
 (defun jmm-inkscape--read-selection-register (prompt)
   "Read a key from 1 to 9."
@@ -554,13 +593,20 @@ Returns a new string of space-separated classes."
 			       (split-string classes)))
 	     " "))
 
-;; TODO: Append ";" at end of style.
+(defun jmm-inkscape-style-insert-rules-block (&optional style)
+  "Insert CSS rules formatted for a class.
+Looks at current kill string."
+  (interactive nil jmm-inkscape-svg-mode)
+  (unless style
+    (setq style (current-kill 0)))
+  (thread-first style ji-css-split-style ji-css-format-rules insert))
+
 (defun jmm-inkscape-style-to-class (classname)
   "Try to convert the style to a class."
   (interactive (list (read-string "Class: ")) jmm-inkscape-svg-mode)
   (when-let* ((style (save-excursion
-		 (jnx--element-for-point)
-		 (jnx--attribute-value "style"))))
+		       (jnx--element-for-point)
+		       (jnx--attribute-value "style"))))
     (let* ((stylerx (format "style=\"%s\"" (regexp-quote style)))
 	   (matching (save-excursion
 		       (goto-char (point-min))
@@ -568,33 +614,153 @@ Returns a new string of space-separated classes."
 				collect (save-excursion
 					  (jnx--element-for-point)
 					  (point))))))
+      (push-mark)
       (message "Found %s matching" matching)
-      (when-let* ((huh (save-excursion
-			 (goto-char (point-min))
-			 (when (jnx--next-tagname "style")
-			   (pcase-let* ((`(,start . ,end) (jnx--element-bounds)))
-			     (re-search-forward "]]>" nil t)
-			     (match-beginning 0))))))
+      (when-let* ((stylepos (save-excursion
+			      (goto-char (point-min))
+			      (when (jnx--next-tagname "style")
+				(pcase-let* ((`(,start . ,end) (jnx--element-bounds)))
+				  (re-search-forward "]]>")
+				  (match-beginning 0))))))
 	(atomic-change-group
-	  (goto-char huh)
-	  (insert (format ".%s { %s }\n" classname style))
-	  (goto-char (point-min))
-	  (cl-loop while (re-search-forward stylerx nil t)
-		   do (save-excursion
-			(jnx--element-for-point)
-			(jnx--set-attribute-value "style" nil)
-			(jnx--update-attribute-value "class"
-						     #'jmm-inkscape--add-class-str
-						     nil
-						     classname))))))))
+	  (goto-char stylepos)
+	  (save-excursion
+	    (insert (format ".%s {\n%s\n}\n" classname
+			    (thread-first style ji-css-split-style ji-css-format-rules))))
+	  (save-excursion
+	    (goto-char (point-min))
+	    ;; TODO: Interactively query whether to update each (except for the first)
+	    (cl-loop while (re-search-forward stylerx nil t)
+		     do (save-excursion
+			  (jnx--element-for-point)
+			  (jnx--set-attribute-value "style" nil)
+			  (jnx--update-attribute-value "class"
+						       #'jmm-inkscape--add-class-str
+						       nil
+						       classname)))))))))
+
+(defun jmm-inkscape-style-copy ()
+  "Copy the style of current element.
+Only copies the value."
+  (interactive nil jmm-inkscape-svg-mode)
+  (if-let* ((style (save-excursion
+		       (jnx--element-for-point)
+		       (jnx--attribute-value "style"))))
+      (kill-new style)
+    (error "No style found")))
+
+(defun jmm-inkscape-style-delete ()
+  "Delete style attribute of current element."
+  (interactive nil jmm-inkscape-svg-mode)
+  (atomic-change-group
+    (save-excursion
+      (jnx--element-for-point)
+      (jnx--set-attribute-value "style" nil))))
+
+(defun jmm-inkscape-style-kill ()
+  "Kill style attribute of current element, copying its text."
+  (interactive nil jmm-inkscape-svg-mode)
+  (jmm-inkscape-style-copy)
+  (jmm-inkscape-style-delete))
+
+(defun jmm-inkscape-style-delete-add-class (classname &optional all)
+  "Delete style attribute of current element, add a class.
+With non-nil prefix ALL, apply to each element in the selection."
+  (interactive (list (read-string "Class: ")
+		     current-prefix-arg)
+	       jmm-inkscape-svg-mode)
+  (if all
+      (jmm-inkscape-for-each-selected-node
+       (lambda ()
+	 (jmm-inkscape-style-delete-add-class classname)))
+      (atomic-change-group
+	(save-excursion
+	  (jnx--element-for-point)
+	  (jnx--set-attribute-value "style" nil)
+	  (jnx--update-attribute-value "class"
+				       #'jmm-inkscape--add-class-str
+				       nil
+				       classname)))))
+
+(defun jmm-inkscape-style-delete-add-class (classname)
+  "Delete style attribute of current element, add a class."
+  (interactive (list (read-string "Class: ")) jmm-inkscape-svg-mode)
+  (atomic-change-group
+    (save-excursion
+      (jnx--element-for-point)
+      (jnx--set-attribute-value "style" nil)
+      (jnx--update-attribute-value "class"
+				   #'jmm-inkscape--add-class-str
+				   nil
+				   classname))))
+
+(defun jmm-inkscape-selection-add-matching-style ()
+  "Select all elements that match this style."
+  (interactive nil jmm-inkscape-svg-mode)
+  (when-let* ((style (save-excursion
+		       (jnx--element-for-point)
+		       (jnx--attribute-value "style"))))
+    (let* ((stylerx (format "style=\"%s\"" (regexp-quote style)))
+	   (id nil)
+	   (matching (save-excursion
+		       (goto-char (point-min))
+		       (cl-loop while (re-search-forward stylerx nil t)
+				collect (save-excursion
+					  (jnx--element-for-point)
+					  (setf id (jnx--attribute-value "id"))
+					  (jmm-inkscape-select-by-id id)
+					  id)))))
+      (message "Selected %d nodes" (length matching))
+      matching)))
+
+(defun jmm-inkscape-selection-add-class (class)
+  "Select all elements that have some CLASS."
+  (interactive (list (let ((defaultclass (save-excursion
+					   (jnx--element-for-point)
+					   (jnx--attribute-value "class"))))
+		       (read-string (format-prompt "Class" defaultclass)
+				    nil nil
+				    defaultclass)))
+	       jmm-inkscape-svg-mode)
+  (let* ((matching (dom-by-class (libxml-parse-xml-region (point-min) (point-max)) class))
+	 (count 0))
+
+    (mapc (lambda (dom)
+	    (jmm-inkscape-select-by-id (dom-attr dom 'id))
+	    (incf count))
+	  matching)
+    (message "Selected %d nodes" count)))
+
+(defun jmm-inkscape-selection-clear-style-set-class (class)
+  "For the selection inside Inkscape, tell Inkscape to unset the style and set a class."
+  (interactive (list (let ((defaultclass (save-excursion
+					   (jnx--element-for-point)
+					   (jnx--attribute-value "class"))))
+		       (read-string (format-prompt "Class" defaultclass)
+				    nil nil
+				    defaultclass)))
+	       jmm-inkscape-svg-mode)
+  ;; This won't actually remove the attribute, but just set it to empty.
+  (jmm-inkscape-object-set-attribute "style" "")
+  (jmm-inkscape-object-set-attribute "class" class))
 
 ;; TODO: Iterate through styles, count how often each style is repeated.
 
-;; TODO: Check if IDs are referenced elsewhere
+(defun ji--id-has-references (id)
+  "Return non-nil if ID is referenced besides itself.
+ID is a string without a hash."
+  ;; MAYBE: See if id is an inkscape auto-generated version.
+  (save-excursion
+    (save-restriction
+      (widen)
+      (goto-char (point-min))
+      (re-search-forward (format "#\\(%s\\)\\>" (regexp-quote id)) nil t))))
+
+;; DONE: Check if IDs are referenced elsewhere
 ;; TODO: Add option to strip only Inkscape generated IDs (which have
 ;; the tag plus a series of numbers)
 (defun jmm-inkscape-strip-ids (beg end)
-  "Try to convert the style to a class."
+  "Strip unused ID attributes for element or region."
   (interactive (if (use-region-p)
 		   (list (region-beginning) (region-end))
 		 (let ((bounds (save-excursion
@@ -603,15 +769,17 @@ Returns a new string of space-separated classes."
 		   (list (car bounds) (cdr bounds))))
 	       jmm-inkscape-svg-mode)
   (let ((markend (point-marker))
-	(count 0))
+	(count 0)
+	id)
     (set-marker markend end)
     (atomic-change-group
       (save-excursion
 	(goto-char beg)
 	(while (jnx--next-tagname
-		(lambda () (jnx--attribute-value "id")) markend)
-	  (jnx--set-attribute-value "id" nil)
-	  (cl-incf count))))
+		(lambda () (setf id (jnx--attribute-value "id"))) markend)
+	  (unless (ji--id-has-references id)
+	    (jnx--set-attribute-value "id" nil)
+	    (cl-incf count)))))
     (message "Removed %d ids" count)
     (set-marker markend nil)))
 
@@ -851,6 +1019,30 @@ Returns an xref that's also a match item, so it can be used for `xref-query-repl
 	  ;; (nxml-backward-up-element)
           (point-marker))))))
 
+;;; Styles ↔ CSS
+
+(defun ji-css-rule-to-kv (rule)
+  "Takes in a CSS string RULE and returns a cons.
+Like \"fill:none\" => (\"fill\" . \"none\")."
+  (let* ((string rule))
+    (string-match ":" string)
+    (cons (string-trim (substring string 0 (match-beginning 0)))
+	  (string-trim (substring string (match-end 0))))))
+
+(defun ji-css-split-style (string)
+  "Split a style string into an alist of properties and values."
+  (thread-last
+    (string-split string ";")
+    (mapcar #'ji-css-rule-to-kv)))
+
+(defun ji-css-format-rules (rulekvs)
+  "Takes in an alist of rules and inserts strings."
+  (thread-first
+    (mapcar (lambda (rule)
+	    (format "  %s: %s;" (car rule) (cdr rule)))
+	    rulekvs)
+    (string-join "\n")))
+
 ;;; continue other stuff.
 
 ;;;###autoload
@@ -898,6 +1090,21 @@ Uses a relative file name."
 	   (height (* 1.0 (string-to-number (jnx--attribute-value "height"))))
 	   (ratio (/ newwidth width))
 	   (newheight (* ratio height)))
+      (atomic-change-group
+	(jnx--set-attribute-value "width" (number-to-string newwidth))
+	(jnx--set-attribute-value "height" (number-to-string newheight))))))
+
+;;;###autoload
+(defun ji-svg-element-set-dimensions-from-height (newheight)
+  "Set the element's dimensions from a new height."
+  ;; TODO: Handle old width with units.  For example, "500px".
+  (interactive (list (string-to-number (read-string "New height: "))) jmm-inkscape-svg-mode)
+  (jnx-at-element-start
+    ;; Numbers may be integers, convert to float.
+    (let* ((width  (* 1.0 (string-to-number (jnx--attribute-value "width"))))
+	   (height (* 1.0 (string-to-number (jnx--attribute-value "height"))))
+	   (ratio (/ newheight height))
+	   (newwidth (* ratio width)))
       (atomic-change-group
 	(jnx--set-attribute-value "width" (number-to-string newwidth))
 	(jnx--set-attribute-value "height" (number-to-string newheight))))))
@@ -958,6 +1165,42 @@ See `jmm-inkscape--selected-bounds'."
   (ji-svg-element-bounds-from-selection)
   (when delta
     (ji-svg-element-bounds-adjust-delta delta)))
+
+(defun jmm-inkscape--replace-with-clone (parentid childid)
+  "Replace childid with a clone of parentid."
+  (ji-gtk-action "select-clear")
+  (jmm-inkscape-select-by-id parentid)
+  (ji-gtk-action "clone")
+  (jmm-inkscape-select-by-id childid)
+  (ji-gtk-action "object-align" "hcenter vcenter last")
+  (ji-gtk-action "select-clear")
+  (jmm-inkscape-select-by-id childid)
+  (ji-gtk-action "delete"))
+
+(defun jmm-inkscape-replace-with-clone ()
+  "Use a clone of the first selected object to replace every remaining selected object."
+  (interactive)
+  (let* ((selection (jmm-inkscape-get-selection-ids))
+	 (parent (car selection)))
+    (cl-loop for child in (cdr selection)
+	     do (jmm-inkscape--replace-with-clone parent child))))
+
+(defun jmm-inkscape--pack-right (parentid childid)
+  "Align childid to the right of parentid."
+  (ji-gtk-action "select-clear")
+  (jmm-inkscape-select-by-id parentid)
+  (jmm-inkscape-select-by-id childid)
+  (ji-gtk-action "object-align" "left anchor first"))
+
+(defun jmm-inkscape-pack-right ()
+  "Using first selected object, pack all other objects to the right."
+  (interactive)
+  (let* ((selection (jmm-inkscape-get-selection-ids))
+	 (parent (car selection)))
+    (cl-loop for child in (cdr selection)
+	     do (progn
+		  (jmm-inkscape--pack-right parent child)
+		  (setq parent child)))))
 
 ;; Note: I still haven't found a way to determine which windows belong
 ;; to which documents/files.
@@ -1025,6 +1268,11 @@ See `jmm-inkscape--selected-bounds'."
   "C-c C-e r b" #'ji-svg-element-bounds-from-selection
   "C-c C-e r +" #'ji-svg-element-bounds-adjust-delta
   "C-c C-e r v" #'ji-svg-element-bounds-from-viewbox
+  "C-c C-y M-w" #'ji-style-copy
+  "C-c C-y C-k" #'ji-style-kill
+  "C-c C-y <backspace>" #'ji-style-delete
+  "C-c C-y C-c" #'ji-style-delete-add-class
+  "C-c C-y b" #'ji-style-insert-rules-block
   ;; TODO: Add jmm-xhtml-set-class
   ;; "C-c C-e C-c" #'jmm-xhtml-set-class
   "C-M-<backspace>" #'jmm/nxml-unwrap
@@ -1032,8 +1280,11 @@ See `jmm-inkscape--selected-bounds'."
   "C-c C-r" #'jmm-inkscape-revert
   "C-c C-j C-l" #'jmm-inkscape-launch
   "C-c C-j C-w" #'jmm-inkscape-set-window
+  "C-c C-s C-d" #'jmm-inkscape-selection-clear
   "C-c C-s C-s" #'jmm-inkscape-selection-add-node
   "C-c C-s C-l" #'jmm-inkscape-selection-refresh
+  "C-c C-s C-m" #'jmm-inkscape-selection-add-matching-style
+  "C-c C-s C-c" #'jmm-inkscape-selection-add-class
   "C-c C-s j" #'jmm-inkscape-selection-jump-to-register
   "C-c C-s i" #'jmm-inkscape-selection-insert-register
   "C-c C-k C-n" #'jmm-inkscape-new-macro-for-each-selected-node
