@@ -293,6 +293,14 @@ Show color emojis.
   (set-fontset-font t 'symbol (font-spec :family "Noto Color Emoji")))
 #+end_src
 
+Show playing cards symbols.  You can find supported fonts by using
+~fc-list ':charset=1f0bd'~ (this checks fonts for the Queen of hearts
+codepoint).
+
+#+begin_src emacs-lisp
+;; (set-fontset-font t 'playing-cards "Noto Sans Symbols2") ;; Hard to read at small sizes.
+(set-fontset-font t 'playing-cards "DejaVu Sans")
+#+end_src
 
 For whatever reason, when trying to view the HELLO file in Emacs 28 in NixOS, Emacs hangs.
 Using ~csysdig~, I found a lot of accesses to an "Adobe Blank" font
