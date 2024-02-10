@@ -85,7 +85,7 @@ An alist of (regex replacement).
 Regex is a form that can be recognized by `rx-to-string'.
 Replacement is either a string, or a function that takes in two arguments (the match, and the point of the match) and returns a string.
 Alist is iterated in order, and only the first match is used to escape a property.
-See also `hfy-html-quote-map'.")
+See also `hfy-html-quote-map', which you can let bind this to if you want normal pre-style escaping.")
 
 (defvar jhfy-ignore-styles
   '(("text-decoration" "none")
@@ -194,14 +194,29 @@ If the region is active, only htmlfontify the region.
 	  (goto-char (point-min)))
 	(pop-to-buffer html-buffer)))))
 
+(defun jhfy-convert-font-lock-props ()
+  "Some major modes use the property font-lock-face instead of face.
+This converts the buffer to also have a face property.
+Use it in temporary buffers before converting."
+  (atomic-change-group
+    (save-excursion
+      (goto-char (point-min))
+      (let (pmatch)
+	(while (setq pmatch (text-property-search-forward 'font-lock-face nil))
+	  (put-text-property (prop-match-beginning pmatch) (prop-match-end pmatch) 'face (prop-match-value pmatch)))))))
+
 ;;;###autoload
-(defun jmm-htmlfontify-string (string)
+(defun jmm-htmlfontify-string (string &optional preformat)
   "Fontifies a string, returning a cons of HTML and CSS.
-Like `jmm-htmlfontify-buffer'."
+Like `jmm-htmlfontify-buffer'.
+With optional argument PREFORMAT, uses <pre> block formatting and doesn’t escape whitespace.
+"
   (let ((oldbuf (current-buffer)))
     (with-temp-buffer
       (insert string)
-      (let* (;; This overrides something when compiling the stylesheet
+      (jhfy-convert-font-lock-props)
+      (let* ((jhfy-html-quote-map (if preformat hfy-html-quote-map jhfy-html-quote-map))
+	     ;; This overrides something when compiling the stylesheet
 	     (hfy-face-to-css #'jhfy-face-to-css-default)
 	     (css-sheet (hfy-compile-stylesheet))
 	     (css-map (hfy-compile-face-map))
@@ -215,6 +230,25 @@ Like `jmm-htmlfontify-buffer'."
       (if (null ignorevals)
 	  t ;; We're ignoring any value
 	(member (if (stringp value) value (format "%S" value)) ignorevals)))))
+
+(defvar jhfy-css-simpler-name-map
+  '(("nxml-prolog-literal-content" . "string")
+    ("nxml-prolog-literal-delimiter" . "string")
+    ("nxml-attribute-value" . "string")
+    ("nxml-attribute-value-delimiter" . "string")
+    ("nxml-tag-slash" . "default")
+    ("nxml-text" . "default")
+    ("nxml-tag-delimiter" . "default")
+    ("nxml-prolog-keyword" . "keyword")
+    ("nxml-attribute-local-name" . "variable-name")
+    ("nxml-processing-instruction-target" . "keyword")
+    ("nxml-element-local-name" . "function-name")))
+
+(defun jhfy-css-strip-name (fn)
+  "Strips more names on top of `hfy-css-name`"
+  ;; FIXME: Use a hash map instead.
+  (or (alist-get fn  jhfy-css-simpler-name-map nil nil #'equal)
+      fn) )
 
 (defun jhfy-face-to-css-default (fn)
   "See `hfy-face-to-css-default'."
@@ -230,7 +264,7 @@ Like `jmm-htmlfontify-buffer'."
 		   (push property seen)
 		   (format " %s: %s;\n" property value)))))
 	   css-list)))
-    (cons (hfy-css-name fn) (format "{\n%s}" css-text)))) 
+    (cons (jhfy-css-strip-name (hfy-css-name fn)) (format "{\n%s}" css-text))))
 
 (defun jhfy-sprintf-stylesheet (css)
   "Like `hfy-sprintf-stylesheet', but doesn't do any link stuff.
