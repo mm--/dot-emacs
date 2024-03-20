@@ -142,7 +142,7 @@ If body returns nil, return \"_\" anyway so we leave the skeleton-point there."
     (url-insert-file-contents url)
     (let* ((dom (libxml-parse-html-region (point-min) (point-max))))
       (when-let* ((title-elements (dom-by-tag dom 'title)))
-	(dom-text (car title-elements))))))
+	(string-trim (dom-text (car title-elements)))))))
 
 
 ;;;;;;;;;;
@@ -531,7 +531,8 @@ texenv = texlive.combine {
 (define-skeleton skeleton/jmm-xhtml/br
   "Insert a line break"
   nil
-  "<br/>" \n
+  '(delete-horizontal-space t)
+  "<br/>" > \n
   > )
 
 ;;;###autoload

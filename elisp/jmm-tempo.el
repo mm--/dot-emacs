@@ -551,6 +551,21 @@ Basically just `edit-abbrevs' for a provided table. "
   p
   ")" >)
 
+;;;###autoload (autoload 'jmm-tempo/emacs-lisp/string-split "jmm-tempo")
+(define-jmm-tempo jmm-tempo/emacs-lisp/string-split
+  "Split a string with quotes, put cursor in middle"
+  nil
+  "\" " p " \""
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/emacs-lisp/string-split-quote "jmm-tempo")
+(define-jmm-tempo jmm-tempo/emacs-lisp/string-split-quote
+  "Split a string using quotes, adding escaped quotes on the inside."
+  nil
+  "\\\"\" " p " \"\\\""
+  )
+
 
 
 ;;;;;;;;;;
@@ -726,6 +741,20 @@ Basically just `edit-abbrevs' for a provided table. "
   "<h2>" (s title) "<a class=\"anchor\" href=\"#" (s id) "\"></a>" "</h2>" n>
   r> n>
   "</section>" >
+  )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/sec3a "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/sec3a
+  "Make an h3 section, automatically add an ID"
+  nil
+  (P "Header title: " title t)
+  (j:let (id title)
+	 (setf id (jmm-tempo--string-to-xml-id title))
+	 nil)
+  "<section id=\"" (s id) "\">" n>
+  "<h3>" (s title) "<a class=\"anchor\" href=\"#" (s id) "\"></a>" "</h3>" n>
+  r> n>
+  "</section>" >
 )
 
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/h3a "jmm-tempo")
@@ -831,7 +860,7 @@ Basically just `edit-abbrevs' for a provided table. "
 (define-jmm-tempo jmm-tempo/jmm-xhtml/prek
   "Code block from current kill."
   nil
-  "<pre>"
+  "<pre xml:space=\"preserve\">"
   (xml-escape-string (current-kill 0))
   "</pre>")
 
@@ -843,6 +872,34 @@ Basically just `edit-abbrevs' for a provided table. "
   (car (jmm-htmlfontify-string (current-kill 0)))
   "</code>")
 
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/fontify-kill-html-pre-code "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/fontify-kill-html-pre-code
+  "Take current kill, htmlfontify it, and return a pre code block"
+  nil
+  "<pre class=\"code\" xml:space=\"preserve\"><code class=\"fontify\">"
+  (car (jmm-htmlfontify-string (current-kill 0) t))
+  "</code></pre>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/fontify-kill-html-pre-samp "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/fontify-kill-html-pre-samp
+  "Fontify the current kill as a <samp> element in a <pre>"
+  nil
+  "<pre class=\"samp\" xml:space=\"preserve\"><samp class=\"fontify\">"
+  ;; TODO: Replace <span class="comint-highlight-input"> with <kbd>
+  (car (jmm-htmlfontify-string (current-kill 0) t))
+  "</samp></pre>"
+  )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/fontify-kill-code-inline "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/fontify-kill-code-inline
+  "Fontify the kill, insert as an inline <code> element.
+Use when you don’t want a separate block."
+  nil
+  "<code class=\"fontify\" xml:space=\"preserve\">"
+  (car (jmm-htmlfontify-string (current-kill 0) t))
+  "</code>"
+  )
 
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/xhtmlpage "jmm-tempo")
 (define-jmm-tempo jmm-tempo/jmm-xhtml/xhtmlpage
@@ -879,10 +936,22 @@ Basically just `edit-abbrevs' for a provided table. "
 (define-jmm-tempo jmm-tempo/jmm-xhtml/dtdd
   "Definition term and definition <dt> and <dd>"
   nil
-  "<dt>" (P "Term: ") "</dt>" n>
+  "<dt>" p "</dt>" n>
   "<dd>" n>
   p > n>
-  "</dd>" > )
+  "</dd>" > p )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/div-dd-dt "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/div-dd-dt
+  "Insert a div, then a dt, then a dd."
+  nil
+  "<div>" n>
+  "<dt>" p "</dt>" n>
+  "<dd>" n>
+  p > n>
+  "</dd>" > n>
+  "</div>" > n> p
+  )
 
 
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/pnew "jmm-tempo")
@@ -959,7 +1028,7 @@ Basically just `edit-abbrevs' for a provided table. "
   "Insert a link using the current kill. Add a title attribute with the title of the page."
   nil
   (jte:set urlstr (current-kill 0))
-  (jte:set title (jmm--get-url-html-title (jtu:get urlstr)))
+  (jte:set title (or (jmm--get-url-html-title (jtu:get urlstr)) ""))
   "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" title=\"" (xml-escape-string (jtu:get title)) "\">"
   (jte:set url (ignore-errors (url-generic-parse-url (jtu:get urlstr))))
   p
@@ -975,6 +1044,51 @@ Basically just `edit-abbrevs' for a provided table. "
 			   title)))))
   "</a>"
   )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/akill-external "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/akill-external
+  "Insert link from current kill. Mark it as external (with text class)."
+  nil
+  (jte:set urlstr (current-kill 0))
+  (jte:set title (or (jmm--get-url-html-title (jtu:get urlstr)) ""))
+  "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" title=\"" (xml-escape-string (jtu:get title)) "\" class=\"external text\" rel=\"external\" data-retrieved=\"" (format-time-string "%Y-%m-%d") "\">"
+  (jte:set url (ignore-errors (url-generic-parse-url (jtu:get urlstr))))
+  p
+  (jte:bind (urlstr url title)
+  (jmm-skeleton-prompt "Link text: "
+			(seq-uniq
+			 (seq-remove
+			  #'null
+			  (list
+			   (xml-escape-string urlstr)
+			   (ignore-errors (url-host url))
+			   (ignore-errors (url-domain url))
+			   title)))))
+  "</a>"
+
+  )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/akill-external-notitle "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/akill-external-notitle
+  "Make external <a href>, but without prefetching the title."
+  nil
+  (jte:set urlstr (current-kill 0))
+  "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" class=\"external text\" rel=\"external\" data-retrieved=\"" (format-time-string "%Y-%m-%d") "\">"
+  (jte:set url (ignore-errors (url-generic-parse-url (jtu:get urlstr))))
+  p
+  (jte:bind (urlstr url title)
+    (jmm-skeleton-prompt "Link text: "
+			 (seq-uniq
+			  (seq-remove
+			   #'null
+			   (list
+			    (xml-escape-string urlstr)
+			    (ignore-errors (url-host url))
+			    (ignore-errors (url-domain url))
+			    title)))))
+  "</a>"
+  )
+
 
 
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/details-to-end "jmm-tempo")
@@ -999,6 +1113,204 @@ Basically just `edit-abbrevs' for a provided table. "
   (ignore
    (indent-region (jtu:get p1) (jtu:get p2)))
   )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/pre-code-kill "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/pre-code-kill
+  "Make a <pre><code> block from kill."
+  nil
+  "<pre class=\"code\" xml:space=\"preserve\"><code>"
+  (xml-escape-string (current-kill 0))
+  "</code></pre>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/pre-samp-kill "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/pre-samp-kill
+  "Format a kill as a samp"
+  nil
+  "<pre class=\"samp\" xml:space=\"preserve\"><samp>"
+  (xml-escape-string (current-kill 0))
+  "</samp></pre>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/var-contenteditable "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/var-contenteditable
+  "Make a contenteditable var"
+  nil
+  "<var contenteditable=\"true\" spellcheck=\"false\">" p "</var>"
+  )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/var-contenteditable-from-kill "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/var-contenteditable-from-kill
+  "Insert kill as content-editable var. Doesn't do escaping."
+  nil
+  "<var contenteditable=\"true\" spellcheck=\"false\">"
+  (current-kill 0)
+  "</var>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/quote-code "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/quote-code
+  "Put code in curly quotes"
+  nil
+  "“<code>" p "</code>”")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/ahref "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/ahref
+  "Simple a href link"
+  nil
+  "<a href=\"" p "\">" p "</a>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/1date "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/1date
+  "Insert a <time> element with current date."
+  nil
+  "<time datetime=\"" (format-time-string "%Y-%m-%d") "\">" (format-time-string "%Y-%m-%d") "</time>")
+
+(defvar jmm-unicode-superscript-table
+  #s(hash-table size 10 test equal
+		data ("1" "¹" "2" "²" "3" "³" "4" "⁴" "5" "⁵" "6" "⁶" "7" "⁷" "8" "⁸" "9" "⁹" "0" "⁰")))
+
+
+(defvar jmm-unicode-subscript-table
+  #s(hash-table size 10 test equal
+		data ("1" "₁" "2" "₂" "3" "₃" "4" "₄" "5" "₅" "6" "₆" "7" "₇" "8" "₈" "9" "₉" "0" "₀")))
+
+(defun jmm-get-unicode-superscript (char)
+  (gethash char jmm-unicode-superscript-table char))
+
+(defun jmm-translate-numbers-to-superscript (string)
+  "Convert numbers in STRING to a unicode superscript"
+  (replace-regexp-in-string "[0-9]" #'jmm-get-unicode-superscript string))
+
+;; (jmm-translate-numbers-to-superscript "12390")
+
+(defun jmm-get-unicode-subscript (char)
+  (gethash char jmm-unicode-subscript-table char))
+
+(defun jmm-translate-numbers-to-subscript (string)
+  "Convert numbers in STRING to a unicode subscript"
+  (replace-regexp-in-string "[0-9]" #'jmm-get-unicode-subscript string))
+
+;; (jmm-translate-numbers-to-subscript "12390")
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/fraction-slash "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/fraction-slash
+  "Fraction solidus and two numbers"
+  nil
+  (jmm-translate-numbers-to-superscript (read-string "Numerator: "))
+  "⁄"
+  (jmm-translate-numbers-to-subscript (read-string "Denominator: ")))
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/code-quick "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/code-quick
+  "Quickly insert an inline code element"
+  nil
+  "<code>" (xml-escape-string (read-string "Code: ")) "</code>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/ahref-internal "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/ahref-internal
+  "A href, but for internal pages"
+  nil
+  "<a class=\"internal\" href=\"" p "\">" p "</a>")
+
+;;;###autoload (autoload 'a-kill-samepage "jmm-tempo")
+(define-jmm-tempo a-kill-samepage
+  "Make a link to the current kill, give it \"samepage\" class."
+  nil
+  (jte:set urlstr (current-kill 0))
+  "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" class=\"samepage\">"
+  p
+  "</a>")
+
+
+
+
+(defun jmm--kbd-element (s)
+  (format "<kbd>%s</kbd>" (xml-escape-string s)))
+
+;;;###autoload (autoload 'kbd-space-separated "jmm-tempo")
+(define-jmm-tempo kbd-space-separated
+  "Keyboard key sequences, space separated"
+  nil
+  (P "Key sequence (space separated): " keyseq t)
+  "<kbd class=\"keycaps\">"
+  (mapconcat #'jmm--kbd-element (string-split (jtu:get keyseq) " ") " ")
+  "</kbd>"
+  )
+
+(defun jmm--kbd-plus-separate (str)
+  (mapconcat #'jmm--kbd-element (string-split str "+") "+"))
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/kbd-plus-separated "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/kbd-plus-separated
+  "Keyboard key caps, separated with plusses"
+  nil
+  (P "Key sequence (plus separated): " keyseq t)
+  "<kbd class=\"keycaps\">"
+  (mapconcat #'jmm--kbd-plus-separate (string-split (jtu:get keyseq) " ") " ")
+  "</kbd>"
+
+  )
+
+(defun jmm--kbd-hyphen-separate (str)
+  (mapconcat #'jmm--kbd-element (string-split str "-") "-"))
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/kbd-minus-separated "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/kbd-minus-separated
+  "Keyboard key caps, separated with minuses/hyphens. Easier to type than plusses."
+  nil
+  (P "Key sequence (hyphen separated): " keyseq t)
+  "<kbd class=\"keycaps\">"
+  (mapconcat #'jmm--kbd-hyphen-separate (string-split (jtu:get keyseq) " ") " ")
+  "</kbd>"
+  )
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/labeled-checkbox "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/labeled-checkbox
+  "Make a <label> with an <input type=\"checkbox\"/> inside"
+  nil
+  "<label><input type=\"checkbox\"/> " p "</label>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/redaction "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/redaction
+  "Redact the current kill with light shade and a span."
+  nil
+  "<span class=\"redacted\">"
+  (make-string (length (string-trim (current-kill 0))) ?░)
+  "</span>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/a-external-link-kill-title-no-text "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/a-external-link-kill-title-no-text
+  "Make a link from URL in current kill, fetching title and adding it as attribute. Text for link will be the URL directly. Classes are \"external\""
+  nil
+  (jte:set urlstr (current-kill 0))
+  (jte:set title (or (jmm--get-url-html-title (jtu:get urlstr)) ""))
+  "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" title=\"" (xml-escape-string (jtu:get title)) "\" class=\"external\" rel=\"external\" data-retrieved=\"" (format-time-string "%Y-%m-%d") "\">"
+  (jte:set url (ignore-errors (url-generic-parse-url (jtu:get urlstr))))
+  p
+  (jte:bind (urlstr url title)
+    (xml-escape-string urlstr))
+  "</a>")
+
+
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/td1 "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/td1
+  "Inline table cell"
+  nil
+  "<td>" p "</td>")
 
 
 
@@ -1071,6 +1383,14 @@ Basically just `edit-abbrevs' for a provided table. "
   "Template for setAttribute"
   nil
   "setAttribute(\"" p "\", " p ")"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/js2/document-createelement "jmm-tempo")
+(define-jmm-tempo jmm-tempo/js2/document-createelement
+  "Template for document.createElement"
+  nil
+  "document.createElement(\"" (P "Element type: " name) "\")"
   )
 
 
