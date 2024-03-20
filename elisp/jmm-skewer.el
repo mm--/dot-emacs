@@ -52,6 +52,8 @@ This will send a reload to any listening page with skewer."
   (let ((port (jsk--find-port)))
     (unless (and (httpd-running-p)
 		 (or (not port) (= httpd-port port)))
+      (unless port
+	(setq port (read-number "Skewer port: ")))
       (when (yes-or-no-p (format "Start skewer on port %d?" port))
 	(setq httpd-port port)
 	(httpd-start)))))
