@@ -1,6 +1,6 @@
 ;;; jmm-eshell-utils.el --- Personal convenience functions for Eshell  -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022  Joshua Moller-Mara
+;; Copyright (C) 2022,2024  Joshua Moller-Mara
 
 ;; Author: Joshua Moller-Mara <jmm@cns.nyu.edu>
 ;; Keywords: convenience
@@ -22,7 +22,7 @@
 
 ;; A helpful variable to get a list of dired marked files:
 ;;  (setf (alist-get "dm" eshell-variable-aliases-list nil nil #'equal)
-;;         (list 'jmm-eshell--dired-marked-relative nil t))
+;;         (list 'jmm-eshell-dired-marked-relative nil t))
 
 ;; Make it easier to change extensions:
 ;;  (setf (alist-get ?X eshell-modifier-alist)
@@ -34,6 +34,7 @@
 ;;; Code:
 (require 'eshell)
 (require 'bookmark)
+(require 'em-hist-ex)
 
 ;;;###autoload
 (defun jmm-eshell-other-window (&optional arg)
@@ -95,6 +96,42 @@ Returns a list of dired marked files in dired buffers in visible windows for the
    ((bufferp arg) (buffer-local-value 'default-directory arg))
    ((stringp arg) (file-name-directory (expand-file-name arg)))
    ((listp arg) (apply #'eshell/dirof (flatten-tree arg)))))
+
+
+;;;###autoload
+(defun jmm-eshell-utils-other-window-directory ()
+  "Get the directory of the other window.
+Make this an eshell variable.
+ (setf (alist-get \"owdir\" eshell-variable-aliases-list nil nil #'equal)
+        (list 'jmm-eshell-utils-other-window-directory nil t))"
+  (save-window-excursion
+    (other-window 1)
+    (if (derived-mode-p 'dired-mode)
+	(dired-current-directory)
+      (expand-file-name default-directory))))
+
+;;;###autoload
+(defun jmm-eshell-utils-other-window-file ()
+  "Get the file name/path of the other window.
+Make this an eshell variable.
+ (setf (alist-get \"owf\" eshell-variable-aliases-list nil nil #'equal)
+        (list 'jmm-eshell-utils-other-window-file nil t))"
+  (save-window-excursion
+    (other-window 1)
+    (buffer-file-name)))
+
+;;;###autoload
+(defun jmm-eshell-utils-last-modified-file ()
+  "Get the path of the last modified file in default directory
+(setf (alist-get \"lmf\" eshell-variable-aliases-list nil nil #'equal)
+        (list 'jmm-eshell-utils-last-modified-file nil t))"
+  (file-relative-name
+   (caar
+    (last
+     (seq-sort-by
+      (lambda (x) (file-attribute-modification-time (cdr x)))
+      #'time-less-p
+      (directory-files-and-attributes default-directory 'full nil t))))))
 
 ;;;###autoload
 (defun eshell/async-shell (&rest args)
@@ -171,5 +208,27 @@ Mostly just for keybindings.
 \\{jmm-eshell-minor-mode-map}"
   :keymap jmm-eshell-minor-mode-map)
 
+(defun jmm/eshell-all-history ()
+  "Show all commands that were run."
+  ;; TODO: Maybe filter by success rate?
+  (thread-last (multisession-value jmm/eshell-expanded-history-list-multisession)
+	       (mapcar #'cdr)))
+
+;;;###autoload
+(defun jmm/eshell-insert-any-history ()
+  "Prompt for any history element (even looking at zsh history) and insert it."
+  (interactive nil eshell-mode)
+  (let* ((collection (ehe--completions-for-collection
+		      (thread-last (append (mapcar (lambda (x) (plist-get x :input)) (jmm/eshell-all-history))
+					   (jmm-zsh-get-history))
+				   (seq-uniq)))))
+    (insert (completing-read "Any history: " collection
+			     nil t nil))))
+
+
 (provide 'jmm-eshell-utils)
 ;;; jmm-eshell-utils.el ends here
+
+;; Local Variables:
+;; read-symbol-shorthands: (("ehe-" . "em-hist-ex-") ("jeu-" . "jmm-eshell-utils-"))
+;; End:

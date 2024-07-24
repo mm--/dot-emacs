@@ -1930,7 +1930,14 @@ Tries to set up bash tree-sitter fontification."
 	  '(jmm-eshell-pred-replace-extension)))
   (with-eval-after-load "esh-var"
     (setf (alist-get "dm" eshell-variable-aliases-list nil nil #'equal)
-          (list 'jmm-eshell-dired-marked-relative nil t)))
+          (list 'jmm-eshell-dired-marked-relative nil t))
+    (setf (alist-get "owd" eshell-variable-aliases-list nil nil #'equal)
+          (list 'jmm-eshell-utils-other-window-directory nil t))
+    (setf (alist-get "owf" eshell-variable-aliases-list nil nil #'equal)
+          (list 'jmm-eshell-utils-other-window-file nil t))
+    (setf (alist-get "lmf" eshell-variable-aliases-list nil nil #'equal)
+          (list 'jmm-eshell-utils-last-modified-file nil t))
+    )
   (add-hook 'eshell-mode-hook
 	    (lambda ()
 	      ;; TODO: Don't rewrite aliases that already exist.
