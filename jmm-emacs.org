@@ -52,7 +52,6 @@ My org-mode configuration is [[./jmm-org-config.org][here]].
 		      dash
 		      hydra
                       js2-mode
-                      flycheck
                       use-package
 		      diminish
                       ))
@@ -1027,7 +1026,7 @@ If I enable ~electric-quote-local-mode~, I should also enable ~isearch-fold-quot
 Org mode seems to already have something like
 ~isearch-fold-quotes-mode~, but I’m not sure why.
 
-* LaTeX
+* LaTeX/ConTeXt
 
 #+begin_src emacs-lisp
 (setq latex-run-command "pdflatex")
@@ -1044,6 +1043,13 @@ Make it easier to insert Greek symbols
 #+begin_src emacs-lisp
   (add-hook 'LaTeX-mode-hook 'LaTeX-math-mode)
 #+end_src
+** ConTeXt modes
+
+#+begin_src emacs-lisp
+(add-to-list 'auto-mode-alist '("\\.\\(?:mkiv\\|mkvi\\|mkii\\|mklx\\|mkxl\\)\\'" . context-mode))
+(add-to-list 'auto-mode-alist '("\\.lmt" . lua-mode))
+#+end_src
+
 ** Minor modes for LaTeX editing
 
    Make it easier to visualize colors, for example with TikZ.
@@ -4536,7 +4542,7 @@ Works with remote (Tramp) files as well."
   times with Emacs lisp packages.
 #+BEGIN_SRC emacs-lisp
 (use-package flycheck
-  :ensure t
+  :disabled
   :commands (flycheck-mode global-flycheck-mode)
   :config
   ;; Disable jshint. I use eslint
@@ -6282,9 +6288,10 @@ With optional ARG, quote the string."
 (use-package company
   :if (not noninteractive)
   :diminish company-mode
-  :ensure t
-  :defer 3
-  :init (global-company-mode 1)
+  :disabled t
+  ;; :ensure t
+  ;; :defer 3
+  ;; :init (global-company-mode 1)
 
   :bind (:map company-active-map
 	 ("TAB" . nil)
