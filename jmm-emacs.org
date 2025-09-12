@@ -2415,7 +2415,9 @@ I used to use [[https://github.com/kyagi/shell-pop-el][shell pop]], but as of 20
 #+END_SRC
 
 * GNUS
-  I don't really use GNUS much anymore. I used to use it for email,
+   I’m starting to use Gnus more again in 2025.
+
+  +I don't really use GNUS much anymore.+ I used to use it for email,
   news groups (when CS classes at Berkeley had them before Piazza),
   and reading RSS feeds.
 #+begin_src emacs-lisp
@@ -3414,8 +3416,13 @@ If it isn't being accessed with sudo, return the same path that is."
 ;;       same hooks there.
 (add-hook 'message-mode-hook 'electric-quote-local-mode)
 (add-hook 'message-mode-hook 'isearch-fold-quotes-mode)
+(add-hook 'message-mode-hook 'ruler-mode)
+;; `message-mode' derives from `text-mode', which rebinds the default
+;; `completion-at-point' binding.  This sets it back.  Useful for
+;; completing email addresses or Gnus Gcc headers.
+(with-eval-after-load 'message-mode
+  (define-key message-mode-map (kbd "C-M-i") 'completion-at-point))
 #+end_src
-
 
 ** Notmuch
   Notmuch is an email interface I started using to replace Gnus. It's
@@ -3458,7 +3465,7 @@ If it isn't being accessed with sudo, return the same path that is."
     ;; This provides address completion, like in the "To:" field
     ;; TODO: This doesn't make it autoload notmuch-mua though.
     ;; notmuch-mua calls define-mail-user-agent
-    (setq mail-user-agent 'notmuch-user-agent)
+    ;; (setq mail-user-agent 'notmuch-user-agent)
     (require 'notmuch-mua)
     ;; TODO: This is only called with notmuch-mua-new-mail, which isn't called by "compose-mail"
     ;; Maybe define the composefunc of notmuch-user-agent to be notmuch-mua-new-mail
@@ -3570,7 +3577,8 @@ This function stores an Org mode link to the email (viewed in notmuch), any time
 	(subject (message-fetch-field "subject")))
     (push (list link subject) org-stored-links)))
 
-(add-hook 'message-sent-hook 'jmm/message-send-store-notmuch-link)
+(with-eval-after-load 'org
+  (add-hook 'message-sent-hook 'jmm/message-send-store-notmuch-link))
 #+END_SRC
 *** Wash out annoyingly long links from ~text/plain~
 
