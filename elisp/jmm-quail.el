@@ -1,6 +1,6 @@
 ;;; jmm-quail.el --- Josh's extra input methods      -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2022  Joshua Moller-Mara
+;; Copyright (C) 2022,2026  Joshua Moller-Mara
 
 ;; Author: Joshua Moller-Mara <jmm@cns.nyu.edu>
 ;; Keywords: input method
@@ -67,6 +67,64 @@ Also escapes some stuff for HTML.
  ;; Actually, you can just use “C-x 8 a <”
  ;; ("<-" ["<-" "←"])
  ;; ("->" ["->" "→"])
+ )
+
+;;;###autoload (register-input-method "jmm-dozenal-domino" "Latin-1" 'quail-use-package "J🂓" "Josh's dozenal domino input" "jmm-quail.el")
+
+(quail-define-package
+ "jmm-dozenal-domino" "Latin-1" "J🂓" t
+ "JMM's dozenal domino input
+Enter numerals and convert them to domino tiles.
+Like 1→🁪 x→🂑
+" nil t nil nil nil nil nil nil nil nil t)
+
+(quail-define-rules
+ ("0" ?🁣)
+ ("1" ?🁪)
+ ("2" ?🁱)
+ ("3" ?🁸)
+ ("4" ?🁿)
+ ("5" ?🂆)
+ ("6" ?🂍)
+ ("7" ?🂎)
+ ("8" ?🂏)
+ ("9" ?🂐)
+ ("x" ?🂑)
+ ("X" ?🂑)
+ ("t" ?🂑)
+ ("T" ?🂑)
+ ("a" ?🂑)
+ ("A" ?🂑)
+ ("b" ?🂒)
+ ("B" ?🂒)
+ ("e" ?🂒)
+ ("E" ?🂒)
+ ("d" ?🂓)
+ ("c" ?🂓)
+ ("C" ?🂓)
+ ("z" ?🂓)
+ )
+
+;;;###autoload (register-input-method "jmm-dozenal-digits" "Latin-1" 'quail-use-package "J↊↋" "Josh's dozenal digits input" "jmm-quail.el")
+
+(quail-define-package
+ "jmm-dozenal-digits" "Latin-1" "J↊↋" t
+ "JMM's dozenal digit input
+Convert notations AB or XE to Unicode ↊↋
+Like X→↊ E→↋
+" nil t nil nil nil nil nil nil nil nil t)
+
+(quail-define-rules
+ ("X" ?↊)
+ ("x" ?↊)
+ ("T" ?↊)
+ ("t" ?↊)
+ ("A" ?↊)
+ ("a" ?↊)
+ ("B" ?↋)
+ ("b" ?↋)
+ ("E" ?↋)
+ ("e" ?↋)
  )
 
 (provide 'jmm-quail)
