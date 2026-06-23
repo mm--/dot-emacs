@@ -278,26 +278,35 @@ If SET-WINDOW is non-nil, set current buffer `jmm-inkscape-window-id' as well."
 ;; 		  '(:array :signature "v")
 ;; 		  '(:array :signature "{sv}"))
 
+;;;###autoload
 (defun jmm-inkscape-launch (file)
   "Launch Inkscape opening FILE.
 Runs Inkscape inside of Emacs so we can collect query responses from
   standard output.
 
 Sets `jmm-inkscape-process'.
-If `jmm-inkscape-process' is live, call `jmm-inkscape-open-file' instead."
+If `jmm-inkscape-process' is live, call `jmm-inkscape-open-file' instead.
+
+When not called from `jmm-inkscape-svg-mode' this can be used to ensure Inkscape is started.
+"
   (interactive
-   (list (expand-file-name (buffer-file-name)))
+   (list (when (derived-mode-p 'jmm-inkscape-svg-mode)
+	   (expand-file-name (buffer-file-name))))
    jmm-inkscape-svg-mode)
   (if (process-live-p jmm-inkscape-process)
-      (jmm-inkscape-open-file file t)
+      (when file
+	(jmm-inkscape-open-file file t))
       ;; MAYBE: Set some unique D-Bus address
       (setq jmm-inkscape-process (make-process :name "inkscape"
 				  :buffer "inkscape"
-				  :command (list "inkscape" (expand-file-name (buffer-file-name)))
+				  :command (if file
+					       (list "inkscape" file)
+					     (list "inkscape"))
 				  :stderr "*inkscape err*"))
       ;; Calling this too early won't work, and it should just be "1" anyway.
       ;; (ji-set-window (car (ji--get-inkscape-windows)))
-      (ji-set-window "1")))
+      (when (derived-mode-p 'jmm-inkscape-svg-mode)
+	(ji-set-window "1"))))
 
 (defun jmm-inkscape-get-selection-ids ()
   "Return a list of IDS of the current selection."
