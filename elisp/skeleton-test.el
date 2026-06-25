@@ -504,11 +504,11 @@ texenv = texlive.combine {
 
 ;;;###autoload
 (define-skeleton skeleton/jmm-xhtml/stodo
-  "Add a todo span with current date"
+  "Add a jmm-todo with current date"
   nil
-  "<span class=\"todo\" data-added=\""
+  "<jmm-todo data-added=\""
   (xml-escape-string (format-time-string "%Y-%m-%d %H:%M"))
-  "\">" (read-string "Todo text: ")  | _ "</span>")
+  "\">" (read-string "Todo text: ")  | _ "</jmm-todo>")
 
 
 ;;;###autoload

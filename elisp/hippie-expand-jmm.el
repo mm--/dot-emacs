@@ -714,6 +714,8 @@ The benefit here is that the most recent buffers are suggested first."
 
 ;;; Visible buffers
 
+;; FIXME: Completions shouldn't match themselves.  Probably use an
+;; overlay to mark the current search string as off limits.
 (defun jmm-visible-symbol-completions (str)
   "Returns a list of visible symbols starting with STR.
 Tries to sort by distance to window's cursor."
@@ -725,7 +727,7 @@ Tries to sort by distance to window's cursor."
 			     (beg (window-start win))
 			     (end (window-end win)))
 			 (goto-char beg)
-			 (cl-loop while (re-search-forward (rx-to-string `(seq bow ,str (1+ (or wordchar (syntax symbol))) eow)) end t)
+			 (cl-loop while (re-search-forward (rx-to-string `(seq symbol-start ,str (1+ (or wordchar (syntax symbol))) eow)) end t)
 				  collect (cons (match-string-no-properties 0)
 						(abs (- (point) pos)))
 				  )))))
@@ -804,6 +806,8 @@ Doesn't include affixes.")
   "A file with words and their frequencies.
 Download from https://norvig.com/ngrams/count_1w.txt")
 
+;; FIXME: This becomes a pretty large variable, at about 20MiB.
+;; Maybe move this into a SQLite database.
 (defvar jmm-hippie-word-frequency-table nil
   "Will be a hash table of words to their frequencies.")
 

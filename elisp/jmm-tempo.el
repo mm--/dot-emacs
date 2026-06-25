@@ -958,8 +958,8 @@ Use when you don’t want a separate block."
 (define-jmm-tempo jmm-tempo/jmm-xhtml/pnew
   "New <p> with id, last edited attribute, and \"tofix\" class."
   nil
-  "<p class=\"tofix\" data-last-edited=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\" id=\"" (jmm-xhtml--gen-new-id) "\">" n>
-  p r> > n
+  "<p class=\"tofix\" data-last-edited=\"" (xml-escape-string (format-time-string "%Y-%m-%d %H:%M")) "\" id=\"" (jmm-xhtml--gen-new-id) "\">" n n>
+  p r> > n n
   "</p>" > )
 
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/p-new-d "jmm-tempo")
@@ -1003,7 +1003,7 @@ Use when you don’t want a separate block."
   nil
   (jte:set id (current-kill 0))
   (jte:set figinfo (jmm-xhtml--get-figure-info-from-kill))
-  "<a href=\"" (s id) "\" class=\"figurelink\">Figure " (jte:bind (figinfo) (alist-get 'number figinfo))"</a>")
+  "<a href=\"" (s id) "\" class=\"figurelink\">Figure <span class=\"num\">" (jte:bind (figinfo) (alist-get 'number figinfo))"</span></a>")
 
 
 ;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/a-anchor "jmm-tempo")
@@ -1313,6 +1313,89 @@ Use when you don’t want a separate block."
   "<td>" p "</td>")
 
 
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/abbr-title "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/abbr-title
+  "Make an abbreviation with a title"
+  nil
+  "<abbr title=\"" p "\">" p "</abbr>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/math-operatorname "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/math-operatorname
+  "LaTeX operatorname"
+  nil
+  "\\operatorname{" p "}\\left(" p " \\right)"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/mathml-inline "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/mathml-inline
+  "Insert an inline MathML block"
+  nil
+  "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">" p "</math>"
+  )
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/mathml-block "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/mathml-block
+  "Insert a MathML block"
+  nil
+  "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">" n> 
+  "<mrow>" n>
+  p r> > n>
+  "</mrow>" n> 
+  "</math>" n> 
+)
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/mathml-table "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/mathml-table
+  "Make a MathML table for equations usually"
+  nil
+  "<math xmlns=\"http://www.w3.org/1998/Math/MathML\" display=\"block\">" n> 
+  "<mtable style=\"math-style: normal;\">" n> 
+  "<mtr>" n> 
+  "<mtd columnalign=\"left\">" p "</mtd>" n> 
+  "</mtr>" n> 
+  "</mtable>" n> 
+  "</math>" n> 
+)
+
+
+
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/mathml-function "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/mathml-function
+  "MathML function application and parens"
+  nil
+  "<mrow><mi>" p "</mi><mo>⁡</mo><mrow><mo>(</mo>" p "<mo>)</mo></mrow></mrow>"
+)
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-xhtml/akillb "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-xhtml/akillb
+  "a href link from kill with target=_blank"
+  nil
+  (jte:set urlstr (current-kill 0))
+  "<a href=\"" (xml-escape-string (jtu:get urlstr)) "\" class=\"external\" rel=\"external\" target=\"_blank\">"
+  (jte:set url (ignore-errors (url-generic-parse-url (jtu:get urlstr))))
+  p
+  (jte:bind (urlstr url title)
+    (jmm-skeleton-prompt "Link text: "
+			 (seq-uniq
+			  (seq-remove
+			   #'null
+			   (list
+			    (xml-escape-string urlstr)
+			    (ignore-errors (url-host url))
+			    (ignore-errors (url-domain url))
+			    title)))))
+  "</a>"
+  )
+
+
 
 ;;;;;;;;;;
 ;; (edit-abbrevs-mode-abbrev-table)
@@ -1609,6 +1692,54 @@ Trying to do this as a hook."
 :END:
 " p
 )
+
+
+;;;;;;;;;;
+;; (jmm-inkscape-svg-mode-abbrev-table)
+
+;;;###autoload (autoload 'jmm-tempo/jmm-inkscape-svg/fontify-kill-text "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-inkscape-svg/fontify-kill-text
+  "Add a text block in an SVG that fontifies code."
+  nil
+  "<text class=\"fontify\" xml:space=\"preserve\" style=\"white-space: pre;\">"
+  (string-replace "</span" "</tspan" (string-replace "<span" "<tspan" (car (jmm-htmlfontify-string (current-kill 0) t))))
+  "</text>")
+
+
+;;;###autoload (autoload 'jmm-tempo/jmm-inkscape-svg/fontify-kill-style "jmm-tempo")
+(define-jmm-tempo jmm-tempo/jmm-inkscape-svg/fontify-kill-style
+"Add CSS style block for last fontify kill"
+nil
+"<style xml:space=\"preserve\"><![CDATA[
+.fontify {
+ font-size: 10pt;
+ font-family: monospace, monospace;
+ white-space: pre;
+}
+"
+(thread-last (cdr (jmm-htmlfontify-string (current-kill 0)))
+	     (string-replace "span." "tspan.")
+	     (string-replace "color:" "fill:")
+	     )
+"]]></style>"
+)
+
+
+
+;;;;;;;;;;
+;; (context-mode-abbrev-table)
+
+;;;###autoload (autoload 'jmm-tempo/context/placefig "jmm-tempo")
+(define-jmm-tempo jmm-tempo/context/placefig
+  "Place a figure"
+  nil
+  "\\placefigure" n> 
+  "[" (P "location (e.g. here): " title ) "]" n> 
+  "[fig:" (P "Figure name") "]" n> 
+  "{" (P "caption") "}" n> 
+  "{\\externalfigure[" (P "Figure location") "][width=\\textwidth]}" n> 
+)
+
 
 
 (provide 'jmm-tempo)
