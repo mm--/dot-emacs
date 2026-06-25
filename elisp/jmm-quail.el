@@ -63,6 +63,10 @@ Also escapes some stuff for HTML.
  ("&&" ["&amp;"])
  ("<<" ["&lt;"])
  (">>" ["&gt;"])
+ ("**" ?•)
+ ("[ ]" ?☐)
+ ("[x]" ?☒)
+ ("[v]" ?☑)
  ;; The "compose" input method is probably better here.
  ;; Actually, you can just use “C-x 8 a <”
  ;; ("<-" ["<-" "←"])
